@@ -6,6 +6,7 @@ import net.jojoaddison.abofonsa.domain.ContentEntity;
 import net.jojoaddison.abofonsa.domain.ContentRevision;
 import net.jojoaddison.abofonsa.domain.enumeration.ContentType;
 import net.jojoaddison.abofonsa.domain.enumeration.Locale;
+import net.jojoaddison.abofonsa.domain.enumeration.PublicationStatus;
 import net.jojoaddison.abofonsa.repository.ContentRevisionRepository;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -57,7 +58,61 @@ public class ContentRevisionService {
         return repository.save(revision);
     }
 
+    /** Raw-document twin of {@link #recordRevision} — the generic admin CRUD path (Phase 6)
+     * snapshots the exact BSON it wrote, no typed mapping in between. */
+    public ContentRevision recordRawRevision(
+            ContentType entityType,
+            String entityId,
+            Document snapshot,
+            String status,
+            String changeSummary,
+            String actorId) {
+        var nextRevisionNumber = repository
+                .findTopByEntityTypeAndEntityIdOrderByRevisionNumberDesc(entityType, entityId)
+                .map(r -> r.revisionNumber() + 1)
+                .orElse(1);
+        var revision = new ContentRevision(
+                null,
+                1,
+                entityType,
+                entityId,
+                nextRevisionNumber,
+                new Document(snapshot),
+                PublicationStatus.valueOf(status),
+                changeSummary,
+                List.of(),
+                Instant.now(),
+                actorId);
+        return repository.save(revision);
+    }
+
     public List<ContentRevision> history(ContentType entityType, String entityId) {
         return repository.findByEntityTypeAndEntityIdOrderByRevisionNumberDesc(entityType, entityId);
+    }
+
+    public ContentRevision required(ContentType entityType, String entityId, int revisionNumber) {
+        return history(entityType, entityId).stream()
+                .filter(r -> r.revisionNumber() == revisionNumber)
+                .findFirst()
+                .orElseThrow(() -> net.jojoaddison.abofonsa.web.rest.errors.ContentNotFoundException.forId(
+                        "revision " + revisionNumber + " of", entityId));
+    }
+
+    /**
+     * Retention (spec §8.2): keep the latest {@code keepLatest} revisions per entity plus every
+     * revision that was ever published; prune the rest. Run monthly by
+     * {@code RevisionRetentionService}.
+     */
+    public long prune(ContentType entityType, String entityId, int keepLatest) {
+        var history = history(entityType, entityId); // newest first
+        var removed = 0L;
+        for (int i = keepLatest; i < history.size(); i++) {
+            var revision = history.get(i);
+            if (revision.status() != PublicationStatus.PUBLISHED) {
+                repository.deleteById(revision.id());
+                removed++;
+            }
+        }
+        return removed;
     }
 }

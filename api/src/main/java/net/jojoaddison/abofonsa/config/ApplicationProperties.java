@@ -8,11 +8,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * still read via {@code @Value} migrate in as their phases land.
  */
 @ConfigurationProperties(prefix = "abofonsa", ignoreUnknownFields = true)
-public record ApplicationProperties(Enquiry enquiry, Security security) {
+public record ApplicationProperties(Enquiry enquiry, Security security, Media media) {
 
     public ApplicationProperties {
         enquiry = enquiry == null ? new Enquiry(null, null, null, null) : enquiry;
         security = security == null ? new Security(null) : security;
+        media = media == null ? new Media(null) : media;
+    }
+
+    public record Media(String storagePath) {
+
+        public Media {
+            storagePath = storagePath == null || storagePath.isBlank() ? "./target/media-storage" : storagePath;
+        }
     }
 
     public record Security(Jwt jwt) {

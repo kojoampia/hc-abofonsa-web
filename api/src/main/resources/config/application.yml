@@ -41,3 +41,10 @@ abofonsa:
     min-dwell-ms: 3000 # submissions faster than this are treated as bot traffic (spec §7.7)
   admin:
     bootstrap-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  media:
+    # Binaries live on the filesystem behind nginx, not in MongoDB (spec §8.2/§14.2 #6).
+    storage-path: ${MEDIA_STORAGE_PATH:./target/media-storage}
+
+spring.servlet.multipart:
+  max-file-size: 8MB # spec §7.7 upload cap; also enforced in MediaService by byte count
+  max-request-size: 9MB

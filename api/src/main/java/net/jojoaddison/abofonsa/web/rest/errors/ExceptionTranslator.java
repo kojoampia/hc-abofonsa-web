@@ -25,6 +25,26 @@ public class ExceptionTranslator {
     private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
     private static final String BASE = "https://www.abofonsa.com/problems/";
 
+    @ExceptionHandler(ConflictException.class)
+    ProblemDetail onConflict(ConflictException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        problem.setType(URI.create(BASE + "conflict"));
+        problem.setTitle("Conflict");
+        problem.setDetail(ex.getMessage());
+        ex.properties().forEach(problem::setProperty);
+        return problem;
+    }
+
+    @ExceptionHandler(UnprocessableContentException.class)
+    ProblemDetail onUnprocessable(UnprocessableContentException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        problem.setType(URI.create(BASE + "english-incomplete"));
+        problem.setTitle("English content incomplete");
+        problem.setDetail(ex.getMessage());
+        problem.setProperty("fields", ex.fields());
+        return problem;
+    }
+
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     ProblemDetail onAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
         // Without this handler the generic Exception handler below would swallow method-security
