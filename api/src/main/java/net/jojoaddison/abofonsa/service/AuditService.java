@@ -25,8 +25,19 @@ public class AuditService {
             String entityType,
             String entityId,
             Map<String, Object> detail) {
+        return record(actorId, actorName, action, entityType, entityId, detail, null);
+    }
+
+    public AuditLog record(
+            String actorId,
+            String actorName,
+            AuditAction action,
+            String entityType,
+            String entityId,
+            Map<String, Object> detail,
+            String ipHash) {
         var entry = new AuditLog(
-                null, 1, Instant.now(), actorId, actorName, action, entityType, entityId, null, detail, null, null);
+                null, 1, Instant.now(), actorId, actorName, action, entityType, entityId, null, detail, ipHash, null);
         return auditLogRepository.save(entry);
     }
 }

@@ -1,28 +1,66 @@
 package net.jojoaddison.abofonsa.config;
 
+import net.jojoaddison.abofonsa.security.MustChangePasswordFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 /**
- * Public content/i18n/locales/health and enquiry submission are unauthenticated; everything under
- * {@code /api/v1/admin/**} requires authentication (spec §7.7). No JWT decoder is configured yet
- * (Phase 5 builds admin login/JWT issuance) — until then, {@code authenticated()} routes correctly
- * reject every request with 401, since there is no mechanism to authenticate at all. That is the
- * desired behaviour, not a gap: admin endpoints stay inert rather than open.
+ * The spec §7.7 security posture with JWT wiring per hc-admin-gw's shape: public content/i18n/
+ * locales/health and enquiry submission open; {@code /api/v1/admin/**} JWT-authenticated with the
+ * role hierarchy ADMIN > PUBLISHER > EDITOR > VIEWER (spec §9.1's cumulative permissions) and
+ * method-level {@code @PreAuthorize} rules on the resources.
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfiguration {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12); // spec §7.7
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        var provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return new ProviderManager(provider);
+    }
+
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy("""
+                ROLE_ADMIN > ROLE_PUBLISHER
+                ROLE_PUBLISHER > ROLE_EDITOR
+                ROLE_EDITOR > ROLE_VIEWER
+                """);
+    }
+
+    @Bean
+    SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            MustChangePasswordFilter mustChangePasswordFilter)
+            throws Exception {
         return http.csrf(CsrfConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
@@ -41,6 +79,9 @@ public class SecurityConfiguration {
                         .authenticated()
                         .anyRequest()
                         .denyAll())
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                .addFilterAfter(mustChangePasswordFilter, BasicAuthenticationFilter.class)
                 .headers(headers -> headers.contentSecurityPolicy(
                                 csp -> csp.policyDirectives(SecurityHeaders.CONTENT_SECURITY_POLICY))
                         .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true))

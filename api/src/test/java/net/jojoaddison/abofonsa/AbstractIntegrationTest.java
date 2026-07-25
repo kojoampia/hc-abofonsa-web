@@ -1,9 +1,20 @@
 package net.jojoaddison.abofonsa;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import net.jojoaddison.abofonsa.domain.AdminUser;
+import net.jojoaddison.abofonsa.domain.enumeration.AdminRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -56,10 +67,60 @@ public abstract class AbstractIntegrationTest {
      */
     protected RestTestClient restClient;
 
+    @Autowired
+    protected MongoTemplate mongoTemplate;
+
+    /** BCrypt cost 4 for test fixtures — strength 12 (the production setting, exercised through
+     * the real login path) would make every user-creating test take ~a second of hashing. The
+     * login path verifies with whatever cost the stored hash declares, so this stays realistic. */
+    private static final BCryptPasswordEncoder TEST_ENCODER = new BCryptPasswordEncoder(4);
+
     @BeforeEach
     void initRestClient() {
         restClient = RestTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
+    }
+
+    /** Creates (or replaces) an active admin user with {@code mustChangePassword=false}. */
+    protected void givenUser(String username, String rawPassword, AdminRole... roles) {
+        mongoTemplate.remove(Query.query(Criteria.where("username").is(username)), AdminUser.class);
+        mongoTemplate.insert(new AdminUser(
+                null,
+                1,
+                username,
+                username + "@abofonsa.com",
+                username,
+                TEST_ENCODER.encode(rawPassword),
+                List.of(roles),
+                List.of(),
+                true,
+                0,
+                null,
+                null,
+                false,
+                Instant.now(),
+                "test"));
+    }
+
+    /** Logs in over real HTTP and returns the token response body (accessToken/refreshToken/...). */
+    @SuppressWarnings("unchecked")
+    protected Map<String, Object> login(String username, String password) {
+        return restClient
+                .post()
+                .uri("/api/v1/admin/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("username", username, "password", password))
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    protected String accessTokenFor(String username, String password, AdminRole... roles) {
+        givenUser(username, password, roles);
+        return (String) login(username, password).get("accessToken");
     }
 }

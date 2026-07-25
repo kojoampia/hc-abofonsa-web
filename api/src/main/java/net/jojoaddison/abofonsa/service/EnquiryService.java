@@ -1,14 +1,10 @@
 package net.jojoaddison.abofonsa.service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import net.jojoaddison.abofonsa.config.ApplicationProperties;
@@ -17,6 +13,7 @@ import net.jojoaddison.abofonsa.domain.Enquiry;
 import net.jojoaddison.abofonsa.domain.enumeration.AuditAction;
 import net.jojoaddison.abofonsa.domain.enumeration.EnquiryStatus;
 import net.jojoaddison.abofonsa.repository.EnquiryRepository;
+import net.jojoaddison.abofonsa.security.IpHasher;
 import net.jojoaddison.abofonsa.service.dto.EnquiryDTO;
 import net.jojoaddison.abofonsa.service.dto.EnquiryReceiptDTO;
 import net.jojoaddison.abofonsa.service.dto.EnquiryRequestDTO;
@@ -53,24 +50,27 @@ public class EnquiryService {
     private final AuditService auditService;
     private final MongoTemplate mongoTemplate;
     private final ApplicationProperties properties;
+    private final IpHasher ipHasher;
 
     public EnquiryService(
             EnquiryRepository enquiryRepository,
             EnquiryMapper enquiryMapper,
             AuditService auditService,
             MongoTemplate mongoTemplate,
-            ApplicationProperties properties) {
+            ApplicationProperties properties,
+            IpHasher ipHasher) {
         this.enquiryRepository = enquiryRepository;
         this.enquiryMapper = enquiryMapper;
         this.auditService = auditService;
         this.mongoTemplate = mongoTemplate;
         this.properties = properties;
+        this.ipHasher = ipHasher;
     }
 
     public EnquiryReceiptDTO submit(EnquiryRequestDTO request, String clientIp, String userAgent) {
         rejectSpam(request);
 
-        var ipHash = hashIp(clientIp);
+        var ipHash = ipHasher.hash(clientIp);
         enforceRateLimit(ipHash);
 
         var now = Instant.now();
@@ -181,15 +181,9 @@ public class EnquiryService {
         }
     }
 
-    /** Salted SHA-256, {@code sha256:} prefixed (spec §8.2) — the raw IP is never persisted. */
+    /** Delegates to the shared {@link IpHasher} — kept as a seam for tests. */
     String hashIp(String clientIp) {
-        try {
-            var digest = MessageDigest.getInstance("SHA-256");
-            var salted = properties.enquiry().ipSalt() + ":" + clientIp;
-            return "sha256:" + HexFormat.of().formatHex(digest.digest(salted.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 unavailable", e);
-        }
+        return ipHasher.hash(clientIp);
     }
 
     /** {@code ENQ-YYYY-NNNNNN}, sequential per year via an atomic counter (spec §7.4). */

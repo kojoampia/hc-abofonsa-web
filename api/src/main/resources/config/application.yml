@@ -27,9 +27,9 @@ abofonsa:
   security:
     jwt:
       issuer: https://www.abofonsa.com
-      # Must be >= 256 bits; no insecure default in prod — see application-docker.yml (Phase 17)
-      # and infra/prod-server/.env (Phase 20). This dev-only default is fine for local compose.
-      signing-key: ${JWT_SIGNING_KEY:dev-only-signing-key-must-be-at-least-32-bytes-long-000000}
+      # HS512 (hc-admin-gw convention) needs >= 64 bytes of key material; no insecure default in
+      # prod — see infra/prod-server/.env (Phase 20). This dev-only default is fine for local use.
+      signing-key: ${JWT_SIGNING_KEY:dev-only-signing-key-for-hs512-must-be-at-least-64-bytes-long-0000000000000000}
       access-token-ttl: PT30M
       refresh-token-ttl: P14D
   enquiry:

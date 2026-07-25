@@ -27,6 +27,9 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
+    private java.util.List<Changelog> changelogs;
+
+    @Autowired
     private CareServiceRepository serviceRepository;
 
     @Autowired
@@ -46,7 +49,9 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void allChangelogsRanExactlyOnce() {
-        assertThat(mongoTemplate.findAll(MigrationRecord.class)).hasSize(9);
+        // One MigrationRecord per registered Changelog bean - stays correct as later phases add
+        // V0NN changelogs without editing this test.
+        assertThat(mongoTemplate.findAll(MigrationRecord.class)).hasSize(changelogs.size());
     }
 
     @Test

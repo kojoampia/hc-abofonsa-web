@@ -25,6 +25,28 @@ public class ExceptionTranslator {
     private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
     private static final String BASE = "https://www.abofonsa.com/problems/";
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    ProblemDetail onAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        // Without this handler the generic Exception handler below would swallow method-security
+        // denials into a 500; the correct answer for an authenticated-but-unauthorized caller is
+        // 403 (spec §9.1 role matrix).
+        var problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setType(URI.create(BASE + "forbidden"));
+        problem.setTitle("Insufficient permissions");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ProblemDetail onInvalidCredentials(InvalidCredentialsException ex) {
+        // One generic 401 for every auth failure - wrong password, unknown user, locked account,
+        // bad refresh token - so nothing can be enumerated. The internal reason is only logged.
+        log.info("Authentication rejected: {}", ex.getMessage());
+        var problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setType(URI.create(BASE + "invalid-credentials"));
+        problem.setTitle("Invalid credentials");
+        return problem;
+    }
+
     @ExceptionHandler(TooManyRequestsException.class)
     ProblemDetail onRateLimit(TooManyRequestsException ex) {
         var problem = ProblemDetail.forStatus(HttpStatus.TOO_MANY_REQUESTS);

@@ -14,4 +14,9 @@ public interface AuditLogRepository extends MongoRepository<AuditLog, String> {
     List<AuditLog> findByEntityTypeAndEntityIdOrderByAtDesc(String entityType, String entityId);
 
     List<AuditLog> findByActionOrderByAtDesc(AuditAction action);
+
+    /** Backs the per-IP login lockout window (spec §7.7). */
+    long countByActionAndIpHashAndAtAfter(AuditAction action, String ipHash, java.time.Instant after);
+
+    Page<AuditLog> findByActorIdOrderByAtDesc(String actorId, Pageable pageable);
 }
