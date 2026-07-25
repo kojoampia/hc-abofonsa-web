@@ -14,6 +14,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * RFC 9457 problem responses (spec §7.6). Internal errors return a generic problem document with
@@ -45,6 +46,21 @@ public class ApiExceptionHandler {
         problem.setType(URI.create(BASE + "not-found"));
         problem.setTitle("Content not found");
         problem.setDetail(ex.getMessage());
+        return problem;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ProblemDetail onTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        // Locale conversion failures (WebConfig's LocaleCodeConverter) surface here, not as a
+        // bare UnsupportedLocaleException - Spring wraps @RequestParam/@PathVariable conversion
+        // failures before they reach exception handling.
+        if (ex.getCause() instanceof UnsupportedLocaleException unsupportedLocale) {
+            return onLocale(unsupportedLocale);
+        }
+        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setType(URI.create(BASE + "invalid-argument"));
+        problem.setTitle("Invalid argument");
+        problem.setDetail("'%s' is not a valid value for parameter '%s'".formatted(ex.getValue(), ex.getName()));
         return problem;
     }
 
