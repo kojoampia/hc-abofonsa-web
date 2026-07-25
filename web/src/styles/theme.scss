@@ -1,0 +1,33 @@
+// Material 3 theme (spec §5.2). The tonal palettes are generated from the two brand hexes -
+// navy #0D3058 (primary) and gold #C59437 (tertiary) - by `ng generate
+// @angular/material:theme-color` and committed as _theme-colors.scss; hand-written system-token
+// overrides below are limited to the handful of values the generator cannot express.
+@use '@angular/material' as mat;
+@use './theme-colors' as brand-palette;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme((
+    color: (
+      primary: brand-palette.$primary-palette,
+      tertiary: brand-palette.$tertiary-palette,
+    ),
+    typography: (
+      plain-family: (system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif),
+      brand-family: (system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif),
+    ),
+    density: 0,
+  ));
+
+  // Brand overrides applied on top of the generated M3 system tokens (spec §5.2).
+  --mat-sys-primary: #0d3058;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #e8edf4;
+  --mat-sys-on-primary-container: #0a2544;
+  --mat-sys-tertiary: #c59437;
+  --mat-sys-on-tertiary: #ffffff;
+  --mat-sys-surface: #ffffff;
+  --mat-sys-surface-container: #f6f7f9;
+  --mat-sys-outline-variant: #e2e5ea;
+}

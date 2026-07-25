@@ -1,0 +1,18 @@
+/* Tailwind theme tokens derived from Material's system tokens (spec §5.3 Problem 3): Material is
+ * the single source of truth; `bg-brand-navy` and a Material button resolve to the same navy, and
+ * changing the theme changes both. Never hard-code a brand hex in a component template. */
+@theme {
+  --color-brand-navy: var(--mat-sys-primary);
+  --color-brand-gold: var(--mat-sys-tertiary);
+  --color-brand-surface: var(--mat-sys-surface);
+  --color-brand-line: var(--mat-sys-outline-variant);
+  --color-brand-body: #4a5462;
+  --color-brand-muted: #6b7480;
+  --color-brand-cream: #faf7f0;
+  --color-brand-ok: #2e9e63;
+
+  --font-serif: Georgia, 'Times New Roman', serif;
+
+  --radius-card: 10px;
+  --shadow-card: 0 2px 4px rgb(16 32 54 / 0.05), 0 8px 20px rgb(16 32 54 / 0.07);
+}

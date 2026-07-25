@@ -1,0 +1,60 @@
+/* Tailwind 4 alongside Material - the spec §5.3 integration contract, verbatim:
+ *
+ * Problem 1: Tailwind Preflight resets Material component styling. Fix: import Tailwind's layers
+ * individually and omit Preflight; add back only the resets the marketing pages need, scoped.
+ *
+ * The explicit layer order puts Material's component CSS between Tailwind's theme and its
+ * utilities, so `mt-4` still overrides a Material margin but Material internals are never
+ * clobbered by resets.
+ *
+ * Problem 2: content scanning pulls in the whole workspace. Fix: explicit @source directives.
+ *
+ * Problem 3 (token drift) is solved in ./styles/brand.css.
+ */
+@layer tailwind-theme, material, tailwind-utilities;
+
+@import 'tailwindcss/theme.css' layer(tailwind-theme);
+@import 'tailwindcss/utilities.css' layer(tailwind-utilities);
+/* Preflight is deliberately NOT imported - see spec §5.3 Problem 1. */
+
+@source './app/**/*.{html,ts}';
+@source './styles/**/*.css';
+@source not '../node_modules';
+
+@import './styles/brand.css';
+
+/* Minimal, scoped replacement for the parts of Preflight we do want. */
+:where(.prose-reset) h1,
+:where(.prose-reset) h2,
+:where(.prose-reset) h3,
+:where(.prose-reset) h4,
+:where(.prose-reset) p,
+:where(.prose-reset) ul,
+:where(.prose-reset) ol,
+:where(.prose-reset) figure,
+:where(.prose-reset) blockquote {
+  margin: 0;
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-brand-body, #4a5462);
+  background: var(--mat-sys-surface, #fff);
+}
