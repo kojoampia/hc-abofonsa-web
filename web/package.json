@@ -7,7 +7,9 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:abofonsa-web": "node dist/abofonsa-web/server/server.mjs"
+    "serve:ssr:abofonsa-web": "node dist/abofonsa-web/server/server.mjs",
+    "check-i18n": "node scripts/check-i18n.mjs",
+    "lint": "ng lint"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
