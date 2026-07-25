@@ -20,7 +20,7 @@ docker compose up -d mongo   # MongoDB 8.3 single-node replica set (host port 27
 
 | Module | Command | Status |
 |---|---|---|
-| Backend | `cd api && ./mvnw verify` | Working since Phase 1 (task 10): tests + JaCoCo (70% floor, raised to 80% in Phase 8) + Spotless. Requires `JAVA_HOME` pointed at a JDK 25 install if your default `java` is a different version. |
+| Backend | `cd api && ./mvnw verify` | **The single backend "everything green" command** (plan task 58): unit + Testcontainers integration tests, JaCoCo 80% line-coverage gate, Spotless formatting. Requires Docker running and `JAVA_HOME` pointed at a JDK 25 install if your default `java` differs. From a fresh clone: `docker compose up -d mongo` is *not* needed — tests provision their own MongoDB via Testcontainers. |
 | Frontend unit | `cd web && npm test -- --coverage` | Added in plan.md Phase 15 (task 91) |
 | Frontend lint | `cd web && npm run lint` | Added in plan.md Phase 9 |
 | i18n key-parity check | `node web/scripts/check-i18n.mjs` | Added in plan.md Phase 13 (task 82) |

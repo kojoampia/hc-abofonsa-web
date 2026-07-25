@@ -2,6 +2,7 @@ package net.jojoaddison.abofonsa.service.mapper;
 
 import net.jojoaddison.abofonsa.domain.CareService;
 import net.jojoaddison.abofonsa.domain.Faq;
+import net.jojoaddison.abofonsa.domain.LocalizedText;
 import net.jojoaddison.abofonsa.domain.Plan;
 import net.jojoaddison.abofonsa.domain.Section;
 import net.jojoaddison.abofonsa.domain.SiteSettings;
@@ -34,6 +35,12 @@ public class ContentMapper {
 
     private final PriceFormatter priceFormatter;
 
+    /** CMS-created documents may omit any optional localised field entirely - a null field
+     * renders as empty text, never an NPE taking down the whole public payload. */
+    private static String resolve(LocalizedText text, Locale locale) {
+        return text == null ? "" : text.resolve(locale);
+    }
+
     public ContentMapper(PriceFormatter priceFormatter) {
         this.priceFormatter = priceFormatter;
     }
@@ -42,18 +49,21 @@ public class ContentMapper {
         return new CareServiceDTO(
                 doc.id(),
                 doc.slug(),
-                doc.name().resolve(locale),
-                doc.blurb().resolve(locale),
-                doc.points().stream().map(p -> p.resolve(locale)).toList(),
-                doc.availableOn().resolve(locale),
+                resolve(doc.name(), locale),
+                resolve(doc.blurb(), locale),
+                doc.points() == null
+                        ? java.util.List.of()
+                        : doc.points().stream().map(p -> resolve(p, locale)).toList(),
+                resolve(doc.availableOn(), locale),
                 null,
                 doc.displayOrder());
     }
 
     public PlanDTO toView(Plan doc, Locale locale) {
-        var features = doc.features().stream()
-                .map(f -> new PlanFeatureDTO(f.label().resolve(locale), f.included(), f.emphasised()))
-                .toList();
+        var features = (doc.features() == null ? java.util.List.<Plan.PlanFeature>of() : doc.features())
+                .stream()
+                        .map(f -> new PlanFeatureDTO(resolve(f.label(), locale), f.included(), f.emphasised()))
+                        .toList();
         var comparison = new PlanComparisonDTO(
                 doc.comparison().visitsPerWeek().resolve(locale),
                 doc.comparison().medicalSupport().resolve(locale),
@@ -64,11 +74,11 @@ public class ContentMapper {
         return new PlanDTO(
                 doc.id(),
                 doc.code(),
-                doc.name().resolve(locale),
-                doc.forWho().resolve(locale),
+                resolve(doc.name(), locale),
+                resolve(doc.forWho(), locale),
                 priceFormatter.format(doc.price().amount(), locale),
                 doc.price().currency(),
-                doc.priceNote().resolve(locale),
+                resolve(doc.priceNote(), locale),
                 doc.featured(),
                 features,
                 comparison,
@@ -78,17 +88,17 @@ public class ContentMapper {
     public TestimonialDTO toView(Testimonial doc, Locale locale) {
         return new TestimonialDTO(
                 doc.id(),
-                doc.quote().resolve(locale),
+                resolve(doc.quote(), locale),
                 doc.personName(),
-                doc.personRole().resolve(locale),
-                doc.planLabel().resolve(locale),
+                resolve(doc.personRole(), locale),
+                resolve(doc.planLabel(), locale),
                 doc.rating(),
                 null,
                 doc.displayOrder());
     }
 
     public FaqDTO toView(Faq doc, Locale locale) {
-        return new FaqDTO(doc.id(), doc.question().resolve(locale), doc.answer().resolve(locale), doc.displayOrder());
+        return new FaqDTO(doc.id(), resolve(doc.question(), locale), resolve(doc.answer(), locale), doc.displayOrder());
     }
 
     public SectionDTO toView(Section doc, Locale locale) {
@@ -96,16 +106,13 @@ public class ContentMapper {
                 ? java.util.List.<SectionItemDTO>of()
                 : doc.items().stream()
                         .map(i -> new SectionItemDTO(
-                                i.key(),
-                                i.icon(),
-                                i.title().resolve(locale),
-                                i.body().resolve(locale)))
+                                i.key(), i.icon(), resolve(i.title(), locale), resolve(i.body(), locale)))
                         .toList();
         return new SectionDTO(
-                doc.eyebrow().resolve(locale),
-                doc.heading().resolve(locale),
-                doc.subheading().resolve(locale),
-                doc.body().resolve(locale),
+                resolve(doc.eyebrow(), locale),
+                resolve(doc.heading(), locale),
+                resolve(doc.subheading(), locale),
+                resolve(doc.body(), locale),
                 items,
                 null);
     }
@@ -118,12 +125,12 @@ public class ContentMapper {
                 doc.address().country());
         return new SiteSettingsDTO(
                 doc.organisationName(),
-                doc.tagline().resolve(locale),
+                resolve(doc.tagline(), locale),
                 doc.phones(),
                 doc.whatsapp(),
                 doc.email(),
                 address,
-                doc.coordinationHours().resolve(locale),
-                doc.onCallHours().resolve(locale));
+                resolve(doc.coordinationHours(), locale),
+                resolve(doc.onCallHours(), locale));
     }
 }
