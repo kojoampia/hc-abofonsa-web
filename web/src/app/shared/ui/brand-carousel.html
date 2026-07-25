@@ -1,0 +1,70 @@
+<!-- APG carousel pattern (spec §6.2): a labelled group with roledescription, labelled controls,
+     and off-screen slides hidden from AT and the tab order. -->
+<section
+  role="group"
+  aria-roledescription="carousel"
+  [attr.aria-label]="label()"
+  class="relative overflow-hidden"
+  (mouseenter)="pause()"
+  (mouseleave)="resume()"
+  (focusin)="pause()"
+  (focusout)="resume()"
+  (keydown)="onKeydown($event)"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+>
+  <div
+    class="flex"
+    [class.transition-transform]="!reducedMotion()"
+    [class.duration-500]="!reducedMotion()"
+    [style.transform]="offset()"
+    data-testid="carousel-track"
+  >
+    @for (item of items(); track $index) {
+      <div
+        class="w-full shrink-0"
+        role="tabpanel"
+        [attr.aria-hidden]="$index !== index() ? 'true' : null"
+        [attr.inert]="$index !== index() ? '' : null"
+        [attr.aria-label]="$index + 1 + ' / ' + count()"
+      >
+        <ng-container *ngTemplateOutlet="slide(); context: { $implicit: item, index: $index }" />
+      </div>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="carousel-arrow absolute left-2 top-1/2 -translate-y-1/2 min-w-11 min-h-11 rounded-full bg-brand-surface shadow-card"
+    [attr.aria-label]="'a11y.carouselPrev' | transloco"
+    (click)="prev()"
+  >
+    ‹
+  </button>
+  <button
+    type="button"
+    class="carousel-arrow absolute right-2 top-1/2 -translate-y-1/2 min-w-11 min-h-11 rounded-full bg-brand-surface shadow-card"
+    [attr.aria-label]="'a11y.carouselNext' | transloco"
+    (click)="next()"
+  >
+    ›
+  </button>
+
+  <div class="flex justify-center gap-2 mt-4" role="tablist">
+    @for (item of items(); track $index) {
+      <button
+        type="button"
+        class="carousel-dot min-w-11 min-h-11 inline-flex items-center justify-center"
+        [attr.aria-current]="$index === index() ? 'true' : null"
+        [attr.aria-label]="('a11y.chooseSlide' | transloco) + ' ' + ($index + 1)"
+        (click)="goTo($index)"
+      >
+        <span
+          class="block w-2.5 h-2.5 rounded-full"
+          [class.bg-brand-gold]="$index === index()"
+          [class.bg-brand-line]="$index !== index()"
+        ></span>
+      </button>
+    }
+  </div>
+</section>
