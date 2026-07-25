@@ -1,0 +1,134 @@
+{
+  "a11y": {
+    "carouselNext": "Next slide",
+    "carouselPrev": "Previous slide",
+    "carouselRegion": "{{ name }} carousel",
+    "chooseSlide": "Go to slide {{ number }}",
+    "closeMenu": "Close menu",
+    "logoAlt": "Abofonsa BridgeCare logo",
+    "mainNav": "Primary navigation",
+    "openMenu": "Open menu",
+    "ratingStars": "Rated {{ rating }} out of 5",
+    "skipToContent": "Skip to main content",
+    "slidePosition": "Slide {{ current }} of {{ total }}"
+  },
+  "common": {
+    "callUs": "Call us",
+    "cancel": "Cancel",
+    "close": "Close",
+    "howItWorks": "How it works",
+    "learnMore": "Learn more",
+    "loading": "Loading",
+    "next": "Next",
+    "previous": "Previous",
+    "readMore": "Read more",
+    "requestConsultation": "Request a consultation",
+    "viewPlans": "View plans and pricing"
+  },
+  "demo": {
+    "banner": "Demonstration website. Content is illustrative and no information is submitted or stored.",
+    "bannerLead": "Demonstration website."
+  },
+  "error": {
+    "loadFailed": "We could not load this content. Please try again.",
+    "notFoundBody": "The page you are looking for does not exist or has been moved.",
+    "notFoundTitle": "Page not found",
+    "retry": "Try again",
+    "returnHome": "Return to the home page"
+  },
+  "faq": {
+    "collapse": "Collapse answer",
+    "expand": "Expand answer",
+    "resultCount": "{count, plural, =0 {No questions match} one {# question} other {# questions}}"
+  },
+  "footer": {
+    "companyHeading": "Company",
+    "contactHeading": "Contact",
+    "productBy": "A product by {{ company }} — Information Systems Consulting",
+    "rights": "© {{ year }} Abofonsa BridgeCare. All rights reserved.",
+    "servicesHeading": "Services"
+  },
+  "form": {
+    "confirmationBody": "Thank you, {{ name }}. A nurse will call you back within one working day.",
+    "confirmationTitle": "Request received",
+    "demoNotice": "This is a demonstration form. Nothing is transmitted, stored or shared, and no account is created.",
+    "email": "Email address",
+    "emailInvalid": "Please enter a valid email address",
+    "emailOptional": "Email address (optional)",
+    "heading": "Request a consultation",
+    "intro": "Tell us a little about the situation and a nurse will call you back.",
+    "message": "How can we help?",
+    "messagePlaceholder": "Conditions, current arrangements, and what you need most.",
+    "name": "Full name",
+    "namePlaceholder": "Your name",
+    "phone": "Telephone",
+    "phoneInvalid": "Please enter a valid telephone number",
+    "phonePlaceholder": "+233 …",
+    "plan": "Plan of interest",
+    "planOptions": {
+      "melon": "MELON Plan",
+      "pawpaw": "PAWPAW Plan",
+      "pear": "PEAR Plan",
+      "unsure": "Not sure yet — please advise"
+    },
+    "relation": "Care is for",
+    "relationOptions": {
+      "myself": "Myself",
+      "other": "Another relative",
+      "parent": "A parent or grandparent",
+      "referral": "A patient I am referring",
+      "spouse": "My spouse"
+    },
+    "required": "This field is required",
+    "submit": "Submit request",
+    "submitting": "Sending…"
+  },
+  "lang": {
+    "de": "Deutsch",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "switchLanguage": "Change language"
+  },
+  "meta": {
+    "currencyCode": "GHS",
+    "dir": "ltr",
+    "languageName": "English",
+    "locale": "en-GH"
+  },
+  "nav": {
+    "approach": "Our approach",
+    "contact": "Contact",
+    "cta": "Request a consultation",
+    "faq": "FAQ",
+    "how": "How it works",
+    "pricing": "Plans and pricing",
+    "services": "Services",
+    "testimonials": "Testimonials"
+  },
+  "pricing": {
+    "comparisonCaption": "Full feature comparison across all three plans.",
+    "enquireAbout": "Enquire about {{ plan }}",
+    "featureColumn": "Feature inclusion",
+    "included": "Included",
+    "mostChosen": "Most chosen",
+    "notIncluded": "Not included",
+    "perMonth": "/ month",
+    "priceFootnote": "Prices are base monthly subscriptions in Ghana Cedis and exclude prescribed medication, consumables and specialist equipment hire."
+  },
+  "services": {
+    "availableOn": "Available on:",
+    "slideCount": "{count, plural, one {# service} other {# services}}",
+    "slideLabel": "Service {{ index }} / {{ total }}"
+  },
+  "testimonials": {
+    "planLabel": "{{ plan }}",
+    "ratingLabel": "Rating"
+  },
+  "topbar": {
+    "emailLabel": "Email",
+    "hoursLabel": "Care delivered 365 days a year",
+    "officeLabel": "Office",
+    "phoneLabel": "Telephone"
+  }
+}

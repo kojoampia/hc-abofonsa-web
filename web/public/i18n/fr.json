@@ -1,0 +1,134 @@
+{
+  "a11y": {
+    "carouselNext": "Diapositive suivante",
+    "carouselPrev": "Diapositive précédente",
+    "carouselRegion": "Carrousel : {{ name }}",
+    "chooseSlide": "Aller à la diapositive {{ number }}",
+    "closeMenu": "Fermer le menu",
+    "logoAlt": "Logo Abofonsa BridgeCare",
+    "mainNav": "Navigation principale",
+    "openMenu": "Ouvrir le menu",
+    "ratingStars": "Noté {{ rating }} sur 5",
+    "skipToContent": "Aller au contenu principal",
+    "slidePosition": "Diapositive {{ current }} sur {{ total }}"
+  },
+  "common": {
+    "callUs": "Appelez-nous",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "howItWorks": "Comment ça marche",
+    "learnMore": "En savoir plus",
+    "loading": "Chargement",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "readMore": "Lire la suite",
+    "requestConsultation": "Demander une consultation",
+    "viewPlans": "Voir les forfaits et tarifs"
+  },
+  "demo": {
+    "banner": "Site de démonstration. Le contenu est fourni à titre indicatif et aucune information n'est transmise ni enregistrée.",
+    "bannerLead": "Site de démonstration."
+  },
+  "error": {
+    "loadFailed": "Nous n'avons pas pu charger ce contenu. Veuillez réessayer.",
+    "notFoundBody": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "notFoundTitle": "Page introuvable",
+    "retry": "Réessayer",
+    "returnHome": "Revenir à l'accueil"
+  },
+  "faq": {
+    "collapse": "Masquer la réponse",
+    "expand": "Afficher la réponse",
+    "resultCount": "{count, plural, =0 {Aucune question ne correspond} one {# question} other {# questions}}"
+  },
+  "footer": {
+    "companyHeading": "Entreprise",
+    "contactHeading": "Contact",
+    "productBy": "Un produit de {{ company }} — conseil en systèmes d'information",
+    "rights": "© {{ year }} Abofonsa BridgeCare. Tous droits réservés.",
+    "servicesHeading": "Services"
+  },
+  "form": {
+    "confirmationBody": "Merci, {{ name }}. Un infirmier ou une infirmière vous rappellera sous un jour ouvré.",
+    "confirmationTitle": "Demande reçue",
+    "demoNotice": "Ce formulaire est une démonstration. Aucune donnée n'est transmise, enregistrée ni partagée, et aucun compte n'est créé.",
+    "email": "Adresse e-mail",
+    "emailInvalid": "Veuillez saisir une adresse e-mail valide",
+    "emailOptional": "Adresse e-mail (facultatif)",
+    "heading": "Demander une consultation",
+    "intro": "Décrivez-nous brièvement la situation et un infirmier ou une infirmière vous rappellera.",
+    "message": "Comment pouvons-nous vous aider ?",
+    "messagePlaceholder": "Pathologies, dispositions actuelles et besoins prioritaires.",
+    "name": "Nom complet",
+    "namePlaceholder": "Votre nom",
+    "phone": "Téléphone",
+    "phoneInvalid": "Veuillez saisir un numéro de téléphone valide",
+    "phonePlaceholder": "+233 …",
+    "plan": "Forfait souhaité",
+    "planOptions": {
+      "melon": "Forfait MELON",
+      "pawpaw": "Forfait PAWPAW",
+      "pear": "Forfait PEAR",
+      "unsure": "Je ne sais pas encore — merci de me conseiller"
+    },
+    "relation": "Les soins sont destinés à",
+    "relationOptions": {
+      "myself": "Moi-même",
+      "other": "Un autre proche",
+      "parent": "Un parent ou grand-parent",
+      "referral": "Un patient que j'oriente",
+      "spouse": "Mon conjoint ou ma conjointe"
+    },
+    "required": "Ce champ est obligatoire",
+    "submit": "Envoyer la demande",
+    "submitting": "Envoi en cours…"
+  },
+  "lang": {
+    "de": "Deutsch",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "switchLanguage": "Changer de langue"
+  },
+  "meta": {
+    "currencyCode": "GHS",
+    "dir": "ltr",
+    "languageName": "Français",
+    "locale": "fr-FR"
+  },
+  "nav": {
+    "approach": "Notre approche",
+    "contact": "Contact",
+    "cta": "Demander une consultation",
+    "faq": "Questions fréquentes",
+    "how": "Comment ça marche",
+    "pricing": "Forfaits et tarifs",
+    "services": "Services",
+    "testimonials": "Témoignages"
+  },
+  "pricing": {
+    "comparisonCaption": "Comparatif complet des prestations des trois forfaits.",
+    "enquireAbout": "Se renseigner sur le forfait {{ plan }}",
+    "featureColumn": "Prestations incluses",
+    "included": "Inclus",
+    "mostChosen": "Le plus choisi",
+    "notIncluded": "Non inclus",
+    "perMonth": "/ mois",
+    "priceFootnote": "Les tarifs correspondent à l'abonnement mensuel de base en cédis ghanéens et n'incluent pas les médicaments prescrits, les consommables ni la location de matériel spécialisé."
+  },
+  "services": {
+    "availableOn": "Disponible avec :",
+    "slideCount": "{count, plural, one {# service} other {# services}}",
+    "slideLabel": "Service {{ index }} / {{ total }}"
+  },
+  "testimonials": {
+    "planLabel": "{{ plan }}",
+    "ratingLabel": "Évaluation"
+  },
+  "topbar": {
+    "emailLabel": "E-mail",
+    "hoursLabel": "Des soins assurés 365 jours par an",
+    "officeLabel": "Bureau",
+    "phoneLabel": "Téléphone"
+  }
+}

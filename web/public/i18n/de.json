@@ -1,0 +1,134 @@
+{
+  "a11y": {
+    "carouselNext": "Nächste Folie",
+    "carouselPrev": "Vorherige Folie",
+    "carouselRegion": "Karussell: {{ name }}",
+    "chooseSlide": "Zu Folie {{ number }} wechseln",
+    "closeMenu": "Menü schließen",
+    "logoAlt": "Logo von Abofonsa BridgeCare",
+    "mainNav": "Hauptnavigation",
+    "openMenu": "Menü öffnen",
+    "ratingStars": "Bewertet mit {{ rating }} von 5",
+    "skipToContent": "Zum Hauptinhalt springen",
+    "slidePosition": "Folie {{ current }} von {{ total }}"
+  },
+  "common": {
+    "callUs": "Rufen Sie uns an",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "howItWorks": "So funktioniert es",
+    "learnMore": "Mehr erfahren",
+    "loading": "Wird geladen",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "readMore": "Weiterlesen",
+    "requestConsultation": "Beratung anfragen",
+    "viewPlans": "Tarife und Preise ansehen"
+  },
+  "demo": {
+    "banner": "Demonstrationswebsite. Die Inhalte dienen der Veranschaulichung; es werden keine Daten übermittelt oder gespeichert.",
+    "bannerLead": "Demonstrationswebsite."
+  },
+  "error": {
+    "loadFailed": "Dieser Inhalt konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "notFoundBody": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "notFoundTitle": "Seite nicht gefunden",
+    "retry": "Erneut versuchen",
+    "returnHome": "Zurück zur Startseite"
+  },
+  "faq": {
+    "collapse": "Antwort einklappen",
+    "expand": "Antwort anzeigen",
+    "resultCount": "{count, plural, =0 {Keine Frage gefunden} one {# Frage} other {# Fragen}}"
+  },
+  "footer": {
+    "companyHeading": "Unternehmen",
+    "contactHeading": "Kontakt",
+    "productBy": "Ein Produkt von {{ company }} — Beratung für Informationssysteme",
+    "rights": "© {{ year }} Abofonsa BridgeCare. Alle Rechte vorbehalten.",
+    "servicesHeading": "Leistungen"
+  },
+  "form": {
+    "confirmationBody": "Vielen Dank, {{ name }}. Eine Pflegefachkraft ruft Sie innerhalb eines Werktages zurück.",
+    "confirmationTitle": "Anfrage eingegangen",
+    "demoNotice": "Dieses Formular dient nur zur Demonstration. Es werden keine Daten übermittelt, gespeichert oder weitergegeben, und es wird kein Konto angelegt.",
+    "email": "E-Mail-Adresse",
+    "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "emailOptional": "E-Mail-Adresse (optional)",
+    "heading": "Beratung anfragen",
+    "intro": "Schildern Sie uns kurz die Situation — eine Pflegefachkraft ruft Sie zurück.",
+    "message": "Wie können wir helfen?",
+    "messagePlaceholder": "Erkrankungen, bestehende Versorgung und was am dringendsten benötigt wird.",
+    "name": "Vollständiger Name",
+    "namePlaceholder": "Ihr Name",
+    "phone": "Telefon",
+    "phoneInvalid": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "phonePlaceholder": "+233 …",
+    "plan": "Gewünschter Tarif",
+    "planOptions": {
+      "melon": "MELON-Tarif",
+      "pawpaw": "PAWPAW-Tarif",
+      "pear": "PEAR-Tarif",
+      "unsure": "Noch unklar — bitte beraten Sie mich"
+    },
+    "relation": "Die Betreuung ist für",
+    "relationOptions": {
+      "myself": "Mich selbst",
+      "other": "Eine andere angehörige Person",
+      "parent": "Einen Elternteil oder Großelternteil",
+      "referral": "Eine von mir überwiesene Person",
+      "spouse": "Meinen Ehepartner oder meine Ehepartnerin"
+    },
+    "required": "Dieses Feld ist erforderlich",
+    "submit": "Anfrage senden",
+    "submitting": "Wird gesendet…"
+  },
+  "lang": {
+    "de": "Deutsch",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "switchLanguage": "Sprache wechseln"
+  },
+  "meta": {
+    "currencyCode": "GHS",
+    "dir": "ltr",
+    "languageName": "Deutsch",
+    "locale": "de-DE"
+  },
+  "nav": {
+    "approach": "Unser Ansatz",
+    "contact": "Kontakt",
+    "cta": "Beratung anfragen",
+    "faq": "Häufige Fragen",
+    "how": "So funktioniert es",
+    "pricing": "Tarife und Preise",
+    "services": "Leistungen",
+    "testimonials": "Erfahrungsberichte"
+  },
+  "pricing": {
+    "comparisonCaption": "Vollständiger Leistungsvergleich der drei Tarife.",
+    "enquireAbout": "Zum {{ plan }}-Tarif beraten lassen",
+    "featureColumn": "Enthaltene Leistungen",
+    "included": "Enthalten",
+    "mostChosen": "Am häufigsten gewählt",
+    "notIncluded": "Nicht enthalten",
+    "perMonth": "/ Monat",
+    "priceFootnote": "Die Preise verstehen sich als monatliche Grundgebühr in ghanaischen Cedi und enthalten weder verschreibungspflichtige Medikamente noch Verbrauchsmaterial oder die Miete von Spezialgeräten."
+  },
+  "services": {
+    "availableOn": "Verfügbar in:",
+    "slideCount": "{count, plural, one {# Leistung} other {# Leistungen}}",
+    "slideLabel": "Leistung {{ index }} / {{ total }}"
+  },
+  "testimonials": {
+    "planLabel": "{{ plan }}",
+    "ratingLabel": "Bewertung"
+  },
+  "topbar": {
+    "emailLabel": "E-Mail",
+    "hoursLabel": "Betreuung an 365 Tagen im Jahr",
+    "officeLabel": "Büro",
+    "phoneLabel": "Telefon"
+  }
+}

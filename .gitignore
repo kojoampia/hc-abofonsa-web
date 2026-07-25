@@ -1,0 +1,30 @@
+# Java / Maven
+api/target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular
+web/node_modules/
+web/dist/
+web/.angular/
+web/coverage/
+web/e2e/test-results/
+web/e2e/playwright-report/
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+.DS_Store
+
+# Docker
+infra/prod-server/.env
+infra/prod-server/backups/
+*.env
+!*.env.example
+
+# Logs
+*.log

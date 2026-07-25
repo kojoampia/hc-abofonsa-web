@@ -1,0 +1,34 @@
+# CI pipeline skeleton (plan.md Phase 0 task 4). Stage names mirror spec §12.2; job bodies are
+# filled in as the corresponding phase lands the tooling they depend on (plan.md Phase 18).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (mvn verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder — filled in by plan.md Phase 18 task 106
+        run: echo "backend CI not wired yet"
+
+  frontend:
+    name: Frontend (lint, test, i18n check, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder — filled in by plan.md Phase 18 task 107
+        run: echo "frontend CI not wired yet"
+
+  e2e:
+    name: E2E (Playwright against docker compose)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder — filled in by plan.md Phase 18 task 108
+        run: echo "e2e CI not wired yet"
