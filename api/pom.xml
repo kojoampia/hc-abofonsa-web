@@ -104,6 +104,32 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
+      <!-- The shipped UI translation bundles live in web/public/i18n (spec §10.7 - versioned
+           with the frontend, served statically). The i18n coverage report (§9.4 T-7) needs their
+           key set server-side, so they are copied onto the classpath at build time rather than
+           duplicated. If web/ is absent (e.g. a standalone api Docker build), the copy is a no-op
+           and I18nService degrades to an empty default key set. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-i18n-defaults</id>
+            <phase>generate-resources</phase>
+            <goals><goal>copy-resources</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/i18n</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/../web/public/i18n</directory>
+                  <includes><include>*.json</include></includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>

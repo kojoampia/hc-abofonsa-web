@@ -1,0 +1,5 @@
+{
+  "a11y": { "skip": "Saltar al contenido principal" },
+  "form": { "submit": "Enviar solicitud" },
+  "nav": { "home": "Inicio", "pricing": "Planes y precios" }
+}

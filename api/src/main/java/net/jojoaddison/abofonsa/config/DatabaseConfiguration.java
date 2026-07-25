@@ -39,6 +39,18 @@ public class DatabaseConfiguration {
                 new DocumentToLocalizedTextConverter()));
     }
 
+    /**
+     * UI-string override keys are dot-delimited ({@code nav.pricing}, spec §10.2) and stored as
+     * map keys ({@code uiTranslationOverrides.entries}, §8.2). Spring Data refuses dots in map
+     * keys unless a replacement is configured; U+FF0E (fullwidth full stop) round-trips
+     * transparently — API consumers always see real dots.
+     */
+    @Bean
+    org.springframework.beans.factory.SmartInitializingSingleton mapKeyDotReplacementConfigurer(
+            org.springframework.data.mongodb.core.convert.MappingMongoConverter converter) {
+        return () -> converter.setMapKeyDotReplacement("．");
+    }
+
     @WritingConverter
     static final class LocaleToStringConverter implements Converter<Locale, String> {
         @Override
