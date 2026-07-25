@@ -67,8 +67,16 @@ abofonsa-bridgecare/
 ├── web/                                # Angular 22 (SSR)
 │   ├── public/i18n/{en,es,fr,de}.json  # ← renamed from the repo-root i18n-*.json files
 │   └── src/app/{core,shared,public,admin}/
-├── api/                                # Spring Boot 4.1 / Java 25
-│   └── src/main/java/net/jojoaddison/abofonsa/{config,common,content,i18n,media,enquiry,identity,audit}/
+├── api/                                # Spring Boot 4.1 / Java 25 — JHipster package convention
+│   │                                   #   (matches hc-admin/hc-admin-ms; auth shape follows hc-admin-gw)
+│   └── src/main/java/net/jojoaddison/abofonsa/
+│       ├── domain/ (+ enumeration/)    # entities, plain names (CareService, Plan, Faq, ...)
+│       ├── repository/                 # Spring Data repositories
+│       ├── service/ (+ dto/, mapper/)  # services, *DTO records, hand-written mappers
+│       ├── web/rest/ (+ errors/)       # *Resource controllers, ExceptionTranslator
+│       ├── security/                   # auth utilities (Phase 5)
+│       └── config/ (+ dbmigrations/)   # *Configuration classes, ordered Mongo changelogs
+│       # resources: application*.yml live under src/main/resources/config/
 └── infra/prod-server/                  # versioned copy of what's deployed on webserver (Phase 20)
     ├── compose.yml / infra.sh / start / backup.sh / nginx-abofonsa.conf
 ```

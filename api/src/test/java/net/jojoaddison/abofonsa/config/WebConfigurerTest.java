@@ -1,0 +1,23 @@
+package net.jojoaddison.abofonsa.config;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import net.jojoaddison.abofonsa.domain.enumeration.Locale;
+import net.jojoaddison.abofonsa.web.rest.errors.UnsupportedLocaleException;
+import org.junit.jupiter.api.Test;
+
+class WebConfigurerTest {
+
+    private final WebConfigurer.LocaleCodeConverter converter = new WebConfigurer.LocaleCodeConverter();
+
+    @Test
+    void convertsLowercaseCodeToLocale() {
+        assertThat(converter.convert("fr")).isEqualTo(Locale.FR);
+    }
+
+    @Test
+    void rejectsUnsupportedCodeWithUnsupportedLocaleException() {
+        assertThatThrownBy(() -> converter.convert("it")).isInstanceOf(UnsupportedLocaleException.class);
+    }
+}

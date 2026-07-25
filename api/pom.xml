@@ -127,12 +127,11 @@
                 <rule>
                   <element>BUNDLE</element>
                   <excludes>
-                    <!-- DTOs/records, the application entrypoint, and config classes carry no
-                         branching logic worth gating on - counting them dilutes the signal from
-                         the packages that actually matter (content, enquiry, identity, audit). -->
-                    <exclude>net.jojoaddison.abofonsa.AbofonsaApplication</exclude>
-                    <exclude>net.jojoaddison.abofonsa.*.dto.*</exclude>
-                    <exclude>net.jojoaddison.abofonsa.*.*View</exclude>
+                    <!-- DTOs/records and the application entrypoint carry no branching logic
+                         worth gating on - counting them dilutes the signal from the packages
+                         that actually matter (service, web.rest, domain). -->
+                    <exclude>net.jojoaddison.abofonsa.AbofonsaApp</exclude>
+                    <exclude>net.jojoaddison.abofonsa.service.dto.*</exclude>
                   </excludes>
                   <limits>
                     <limit>

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx ng test *)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint *)",
+      "Bash(npx tsc *)",
+      "Bash(npx playwright test *)",
+      "Bash(./mvnw test)",
+      "Bash(./mvnw test *)",
+      "Bash(npm view *)",
+      "Bash(npx prettier --check *)",
+      "Bash(npx jest *)",
+      "Bash(unzip -l *)",
+      "Bash(./mvnw dependency:tree *)",
+      "Bash(./mvnw verify)",
+      "Bash(npx eslint *)",
+      "Bash(mvn test)",
+      "Bash(mvn test *)",
+      "Bash(javap *)",
+      "Bash(mvn verify)",
+      "Bash(mvn dependency:tree *)",
+      "mcp__claude-in-chrome__read_console_messages",
+      "mcp__claude-in-chrome__tabs_context_mcp"
+    ]
+  }
+}
