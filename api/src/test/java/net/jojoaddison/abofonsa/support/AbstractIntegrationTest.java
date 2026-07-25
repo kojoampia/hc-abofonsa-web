@@ -10,8 +10,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 /**
@@ -19,23 +17,25 @@ import org.testcontainers.utility.DockerImageName;
  * MongoDB 8.3 replica-set container is started per JVM and reused across all subclasses — plan.md
  * task 11's verification is that two independent test classes extending this run together in one
  * {@code mvn verify} without port conflicts, which a static, once-started container guarantees.
+ *
+ * <p>Deliberately <b>not</b> annotated {@code @Testcontainers}/{@code @Container}: that JUnit5
+ * extension stops a container after the last test method of the {@code ExtensionContext} it was
+ * registered against — which, for a static field declared on this shared base class, is each
+ * individual subclass, not the JVM. In a multi-class run that stops the container after the
+ * first test class finishes and every subsequent class fails with connection-refused. Managing
+ * the lifecycle by hand (start once, never stop — Testcontainers' Ryuk reaper cleans up on JVM
+ * exit) avoids that.
  */
-@Testcontainers
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
-    @Container
     static final MongoDBContainer MONGO =
             new MongoDBContainer(DockerImageName.parse("mongo:8.3")).withCommand("--replSet", "rs0", "--bind_ip_all");
 
     static {
         MONGO.start();
-        // MongoDBContainer's replica-set init happens on first client connection to a
-        // `mongodb://` URI it constructs itself once withSharding()/replSet command line args are
-        // set; Testcontainers' MongoDBContainer handles rs.initiate() automatically when the
-        // container command includes --replSet, via its own startup wait strategy.
     }
 
     @DynamicPropertySource
