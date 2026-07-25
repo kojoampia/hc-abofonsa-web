@@ -51,6 +51,8 @@
   "form": {
     "confirmationBody": "Thank you, {{ name }}. A nurse will call you back within one working day.",
     "confirmationTitle": "Request received",
+    "consent": "I agree that Abofonsa BridgeCare may use these details to respond to my enquiry.",
+    "consentRequired": "Your consent is required to send the request",
     "demoNotice": "This is a demonstration form. Nothing is transmitted, stored or shared, and no account is created.",
     "email": "Email address",
     "emailInvalid": "Please enter a valid email address",
@@ -114,7 +116,16 @@
     "mostChosen": "Most chosen",
     "notIncluded": "Not included",
     "perMonth": "/ month",
-    "priceFootnote": "Prices are base monthly subscriptions in Ghana Cedis and exclude prescribed medication, consumables and specialist equipment hire."
+    "priceFootnote": "Prices are base monthly subscriptions in Ghana Cedis and exclude prescribed medication, consumables and specialist equipment hire.",
+    "rows": {
+      "auxiliary": "Auxiliary services",
+      "basePrice": "Base price",
+      "careManager": "Care manager",
+      "medical": "Medical support",
+      "reporting": "Visit reporting",
+      "telemetry": "Telemetry monitoring",
+      "visits": "Visits per week"
+    }
   },
   "services": {
     "availableOn": "Available on:",

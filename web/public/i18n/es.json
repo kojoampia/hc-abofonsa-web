@@ -51,6 +51,8 @@
   "form": {
     "confirmationBody": "Gracias, {{ name }}. Un profesional de enfermería le llamará en un plazo de un día laborable.",
     "confirmationTitle": "Solicitud recibida",
+    "consent": "Acepto que Abofonsa BridgeCare utilice estos datos para responder a mi consulta.",
+    "consentRequired": "Se requiere su consentimiento para enviar la solicitud",
     "demoNotice": "Este formulario es una demostración. No se transmite, almacena ni comparte ningún dato, y no se crea ninguna cuenta.",
     "email": "Correo electrónico",
     "emailInvalid": "Introduzca una dirección de correo electrónico válida",
@@ -114,7 +116,16 @@
     "mostChosen": "El más elegido",
     "notIncluded": "No incluido",
     "perMonth": "/ mes",
-    "priceFootnote": "Los precios corresponden a la cuota mensual base en cedis ghaneses y no incluyen los medicamentos recetados, el material fungible ni el alquiler de equipos especializados."
+    "priceFootnote": "Los precios corresponden a la cuota mensual base en cedis ghaneses y no incluyen los medicamentos recetados, el material fungible ni el alquiler de equipos especializados.",
+    "rows": {
+      "auxiliary": "Servicios auxiliares",
+      "basePrice": "Precio base",
+      "careManager": "Gestor de cuidados",
+      "medical": "Apoyo médico",
+      "reporting": "Informes de visita",
+      "telemetry": "Monitoreo por telemetría",
+      "visits": "Visitas por semana"
+    }
   },
   "services": {
     "availableOn": "Disponible en:",

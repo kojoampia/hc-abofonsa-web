@@ -51,6 +51,8 @@
   "form": {
     "confirmationBody": "Vielen Dank, {{ name }}. Eine Pflegefachkraft ruft Sie innerhalb eines Werktages zurück.",
     "confirmationTitle": "Anfrage eingegangen",
+    "consent": "Ich stimme zu, dass Abofonsa BridgeCare diese Angaben zur Beantwortung meiner Anfrage verwendet.",
+    "consentRequired": "Ihre Zustimmung ist erforderlich, um die Anfrage zu senden",
     "demoNotice": "Dieses Formular dient nur zur Demonstration. Es werden keine Daten übermittelt, gespeichert oder weitergegeben, und es wird kein Konto angelegt.",
     "email": "E-Mail-Adresse",
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
@@ -114,7 +116,16 @@
     "mostChosen": "Am häufigsten gewählt",
     "notIncluded": "Nicht enthalten",
     "perMonth": "/ Monat",
-    "priceFootnote": "Die Preise verstehen sich als monatliche Grundgebühr in ghanaischen Cedi und enthalten weder verschreibungspflichtige Medikamente noch Verbrauchsmaterial oder die Miete von Spezialgeräten."
+    "priceFootnote": "Die Preise verstehen sich als monatliche Grundgebühr in ghanaischen Cedi und enthalten weder verschreibungspflichtige Medikamente noch Verbrauchsmaterial oder die Miete von Spezialgeräten.",
+    "rows": {
+      "auxiliary": "Nebenleistungen",
+      "basePrice": "Grundpreis",
+      "careManager": "Pflegekoordinator",
+      "medical": "Medizinische Unterstützung",
+      "reporting": "Besuchsberichte",
+      "telemetry": "Telemetrie-Überwachung",
+      "visits": "Besuche pro Woche"
+    }
   },
   "services": {
     "availableOn": "Verfügbar in:",
