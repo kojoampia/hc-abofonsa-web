@@ -45,8 +45,8 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
     private SiteSettingsRepository siteSettingsRepository;
 
     @Test
-    void allEightChangelogsRanExactlyOnce() {
-        assertThat(mongoTemplate.findAll(MigrationRecord.class)).hasSize(8);
+    void allChangelogsRanExactlyOnce() {
+        assertThat(mongoTemplate.findAll(MigrationRecord.class)).hasSize(9);
     }
 
     @Test

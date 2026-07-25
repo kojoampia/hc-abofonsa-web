@@ -25,6 +25,26 @@ public class ExceptionTranslator {
     private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
     private static final String BASE = "https://www.abofonsa.com/problems/";
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    ProblemDetail onRateLimit(TooManyRequestsException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.TOO_MANY_REQUESTS);
+        problem.setType(URI.create(BASE + "rate-limit"));
+        problem.setTitle("Too many requests");
+        problem.setDetail("Please try again later.");
+        return problem;
+    }
+
+    @ExceptionHandler(SpamRejectedException.class)
+    ProblemDetail onSpamRejected(SpamRejectedException ex) {
+        // Deliberately generic - never reveal which anti-abuse rule fired (spec §7.7). The
+        // internal reason is logged without any submission content.
+        log.info("Enquiry submission rejected: {}", ex.getMessage());
+        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setType(URI.create(BASE + "rejected"));
+        problem.setTitle("Submission rejected");
+        return problem;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail onValidation(MethodArgumentNotValidException ex) {
         var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);

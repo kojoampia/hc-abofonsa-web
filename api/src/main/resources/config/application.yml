@@ -34,5 +34,10 @@ abofonsa:
       refresh-token-ttl: P14D
   enquiry:
     rate-limit.per-hour-per-ip: 5
+    # Salts the SHA-256 of the sender's IP before storage (spec §8.2/§13.3 — raw IPs are never
+    # persisted). Override in production; the default is fine for dev only.
+    ip-salt: ${ENQUIRY_IP_SALT:dev-only-ip-salt}
+    retention-months: 24 # spec §13.3; confirm-or-change checkpoint in plan.md Phase 21
+    min-dwell-ms: 3000 # submissions faster than this are treated as bot traffic (spec §7.7)
   admin:
     bootstrap-password: ${BOOTSTRAP_ADMIN_PASSWORD:}

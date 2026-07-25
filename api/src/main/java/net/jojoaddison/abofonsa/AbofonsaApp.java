@@ -1,11 +1,14 @@
 package net.jojoaddison.abofonsa;
 
+import net.jojoaddison.abofonsa.config.ApplicationProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 
 @SpringBootApplication
 @EnableCaching
+@EnableConfigurationProperties(ApplicationProperties.class)
 public class AbofonsaApp {
 
     public static void main(String[] args) {
