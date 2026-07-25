@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.0</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>net.jojoaddison</groupId>
+  <artifactId>abofonsa-bridgecare-api</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <name>abofonsa-bridgecare-api</name>
+  <description>Abofonsa BridgeCare Health Connect — public content API and CMS backend</description>
+
+  <properties>
+    <java.version>25</java.version>
+    <maven.compiler.release>25</maven.compiler.release>
+    <jacoco.line.coverage.minimum>0.70</jacoco.line.coverage.minimum>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-mongodb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+    <!-- Issues admin JWTs (the oauth2-resource-server starter above only verifies them). -->
+    <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>nimbus-jose-jwt</artifactId>
+      <version>10.0.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-mongodb</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>2.0.5</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.13</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals><goal>prepare-agent</goal></goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals><goal>report</goal></goals>
+          </execution>
+          <execution>
+            <id>check</id>
+            <phase>verify</phase>
+            <goals><goal>check</goal></goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <excludes>
+                    <!-- DTOs/records, the application entrypoint, and config classes carry no
+                         branching logic worth gating on - counting them dilutes the signal from
+                         the packages that actually matter (content, enquiry, identity, audit). -->
+                    <exclude>net.jojoaddison.abofonsa.AbofonsaApplication</exclude>
+                    <exclude>net.jojoaddison.abofonsa.*.dto.*</exclude>
+                    <exclude>net.jojoaddison.abofonsa.*.*View</exclude>
+                  </excludes>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>${jacoco.line.coverage.minimum}</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <java>
+            <palantirJavaFormat/>
+            <removeUnusedImports/>
+            <importOrder/>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <phase>verify</phase>
+            <goals><goal>check</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

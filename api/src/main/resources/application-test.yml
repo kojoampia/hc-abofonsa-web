@@ -1,0 +1,6 @@
+# Activated by @ActiveProfiles("test") in Testcontainers-backed integration tests. The Mongo URI
+# itself is overridden per-test via @DynamicPropertySource against the Testcontainers instance;
+# this profile only turns off things that don't make sense in a test run.
+abofonsa:
+  admin:
+    bootstrap-password: test-bootstrap-password-00

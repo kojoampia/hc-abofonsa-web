@@ -1,0 +1,38 @@
+spring:
+  application.name: abofonsa-bridgecare-api
+  threads.virtual.enabled: true # Java 25 virtual threads for request handling — see spec §7.2
+  # Boot 4.1 split Mongo config: connection properties (uri/host/port/credentials) moved to the
+  # new top-level `spring.mongodb.*` namespace; `spring.data.mongodb.*` now only carries Spring
+  # Data-specific behaviour (auto-index-creation, field naming, GridFS). The spec (written against
+  # the Boot 3.x property layout) has both under `spring.data.mongodb.*` — corrected here to match
+  # what 4.1.0 actually reads.
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27018/abofonsa}
+  data.mongodb:
+    auto-index-creation: false # indexes are created by the migration runner, not at runtime
+  jackson:
+    default-property-inclusion: non_null
+    deserialization.fail-on-unknown-properties: true
+
+management:
+  endpoints.web.exposure.include: health,info,metrics,prometheus
+  endpoint.health.probes.enabled: true
+  health.readiness-state.enabled: true
+  health.liveness-state.enabled: true
+
+abofonsa:
+  locales.supported: en,es,fr,de
+  locales.default: en
+  cache.published-content-ttl: PT10M
+  security:
+    jwt:
+      issuer: https://www.abofonsa.com
+      # Must be >= 256 bits; no insecure default in prod — see application-docker.yml (Phase 17)
+      # and infra/prod-server/.env (Phase 20). This dev-only default is fine for local compose.
+      signing-key: ${JWT_SIGNING_KEY:dev-only-signing-key-must-be-at-least-32-bytes-long-000000}
+      access-token-ttl: PT30M
+      refresh-token-ttl: P14D
+  enquiry:
+    rate-limit.per-hour-per-ip: 5
+  admin:
+    bootstrap-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
