@@ -36,6 +36,9 @@ describe('BrandCarousel (spec §6.1 C-1..C-9)', () => {
         media: query,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
+        // CDK's BreakpointObserver still calls the deprecated pair - see src/test-setup.ts.
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
       })),
     );
     await TestBed.configureTestingModule({

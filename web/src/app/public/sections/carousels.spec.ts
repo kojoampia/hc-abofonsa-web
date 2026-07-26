@@ -13,6 +13,8 @@ describe('content carousels (spec §6 #7/#14)', () => {
         media: query,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
       })),
     );
   });
