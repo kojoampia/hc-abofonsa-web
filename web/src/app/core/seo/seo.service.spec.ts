@@ -55,10 +55,17 @@ describe('SeoService (spec §6.3)', () => {
     expect(alternates.sort()).toEqual(['de', 'en', 'es', 'fr', 'x-default'].sort());
   });
 
-  it('canonical points at the locale-prefixed URL', () => {
+  it('canonical points at the locale-prefixed URL on the origin actually serving the page', () => {
+    // Derived from the document's own location rather than a hard-coded constant: a canonical that
+    // names a different origin tells search engines to index somewhere this page is not.
     expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      'https://www.abofonsa.com/es',
+      `${location.origin}/es`,
     );
+  });
+
+  it('marks the page noindex unless the deployment opted in', () => {
+    // SITE_INDEXABLE defaults to false, so an unconfigured deployment excludes itself.
+    expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex,nofollow');
   });
 
   it('injects valid JSON-LD including MedicalBusiness, Offer with GHS, and FAQPage', () => {
@@ -74,7 +81,7 @@ describe('SeoService (spec §6.3)', () => {
     service.apply('en', content);
     expect(document.head.querySelectorAll('link[rel="canonical"]').length).toBe(1);
     expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(
-      'https://www.abofonsa.com/',
+      `${location.origin}/`,
     );
   });
 });

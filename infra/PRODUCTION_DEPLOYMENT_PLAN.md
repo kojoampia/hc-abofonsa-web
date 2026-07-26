@@ -26,15 +26,26 @@ even if this plan has been approved as a whole.
 | 4 | `infra.sh`, `start`, `backup.sh` | done — written; `backup.sh` not yet run against a live volume |
 | 5 | `nginx-abofonsa.conf` | done — `nginx -t` passes |
 | 6 | Ship to the server and start the stack | **not run** — needs server access |
-| 7 | nginx + certbot | **not run** — needs DNS confirmed first (see below) |
+| 7 | nginx + certbot | **not run** — needs DNS for web.abofonsa.com pointing here |
 | 8 | Backup cron + first restore test | **not run** — needs step 6 |
 
-### Confirm before step 7
+### Domain
 
-`www.abofonsa.com` is taken from the spec's §8.2 example data. It was **never independently
-confirmed**. Issuing a certificate is rate-limited by Let's Encrypt (5 duplicate certificates per
-week) and publishes the hostname to public Certificate Transparency logs, so getting it wrong is
-awkward to undo. Confirm the domain before running certbot, not after.
+The target is **`web.abofonsa.com`**, confirmed for a production review. Only that host is served:
+the apex `abofonsa.com` is deliberately not claimed, because it is a separate hostname that may
+already serve something else, and a server block here would take it over for anything resolving to
+this host. If the apex should point here too, add it to both `server_name` and the certbot command
+as an explicit decision.
+
+Issuing a certificate is rate-limited by Let's Encrypt (5 duplicate certificates per week) and
+publishes the hostname to public Certificate Transparency logs, so confirm DNS resolves before
+running certbot, not after.
+
+### This is a review deployment
+
+`SITE_INDEXABLE` defaults to `false`, so the site serves `noindex` and a disallow-all `robots.txt`.
+That is correct for a review. Flip it to `true` only when this host is the announced public site —
+see GO-LIVE-CHECKLIST.md.
 
 ---
 
@@ -99,7 +110,7 @@ sudo nginx -t && sudo systemctl reload nginx
 Then, **only once the domain is confirmed and DNS resolves to this host**:
 
 ```bash
-sudo certbot --nginx -d www.abofonsa.com -d abofonsa.com
+sudo certbot --nginx -d web.abofonsa.com
 ```
 
 Certbot rewrites the conf in place, adding the TLS block and the HTTP→HTTPS redirect. Do not
@@ -108,10 +119,10 @@ hand-write that block; certbot's own rewrite is what keeps automatic renewal wor
 Verify:
 
 ```bash
-curl -sI https://www.abofonsa.com/ | head -1
-curl -s  https://www.abofonsa.com/api/v1/content/site?locale=en | head -c 200
-curl -sI http://www.abofonsa.com/ | head -2        # 301 to https
-curl -sI https://abofonsa.com/ | head -2           # 301 to www
+curl -sI https://web.abofonsa.com/ | head -1
+curl -s  https://web.abofonsa.com/api/v1/content/site?locale=en | head -c 200
+curl -sI http://web.abofonsa.com/ | head -2        # 301 to https
+curl -s  https://web.abofonsa.com/robots.txt       # Disallow: /  while under review
 ```
 
 ## 5. Backups

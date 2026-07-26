@@ -25,8 +25,8 @@
 # These run from outside the host on purpose. A check that shares fate with what it is checking
 # reports "all healthy" precisely when the machine is unreachable.
 - targets:
-    - https://www.abofonsa.com/
-    - https://www.abofonsa.com/api/v1/health
+    - https://web.abofonsa.com/
+    - https://web.abofonsa.com/api/v1/health
   labels:
     service: abofonsa
     env: production

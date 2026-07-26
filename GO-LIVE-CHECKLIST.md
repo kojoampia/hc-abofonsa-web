@@ -11,21 +11,24 @@ the answer differs from the default.
 
 ## Blocking — confirm before the site is publicly reachable
 
-### 1. Domain
+### 1. Domain and indexing
 
-- [ ] **`www.abofonsa.com` is the intended domain.**
+- [x] **Domain confirmed: `web.abofonsa.com`**, for a production review.
+- [ ] **Decide whether the apex `abofonsa.com` should also point here.** It is deliberately not
+      claimed today — a server block for it would take it over for anything resolving to this host.
+- [ ] **`SITE_INDEXABLE` is still `false` while this is a review**, and flipped to `true` only when
+      this host is the announced public site.
 
-Taken from the spec's §8.2 example data; never independently confirmed. It is baked into more than
-DNS: `ALLOWED_HOSTS` (Angular SSR rejects any other Host outright), the nginx vhost, the hreflang
-alternates, the RFC 9457 problem-type URIs, and the blackbox uptime targets.
+Canonical and hreflang URLs are derived from the request, so they follow whatever host serves the
+page and cannot point at the wrong origin. Indexing is the part that needs a decision: while
+`SITE_INDEXABLE=false` the site serves `noindex` plus a disallow-all `robots.txt`.
 
-Confirm **before** running certbot. Let's Encrypt rate-limits duplicate certificates to five per
-week, and issuance publishes the hostname to public Certificate Transparency logs — a wrong guess
-is awkward to walk back.
+The default is off on purpose. A launch that forgets to opt in is simply not indexed for a few days
+and is fixed by one variable; a review host that forgets to opt out gets crawled on a public domain,
+competes with the real site, and is slow and only partly reversible to remove from an index.
 
-*Where:* `infra/prod-server/.env.example` (`ALLOWED_HOSTS`),
-`infra/prod-server/nginx-abofonsa.conf`, `infra/observability/blackbox-targets.yml`,
-`api/.../config/application.yml` (`abofonsa.security.jwt.issuer`).
+*Where:* `SITE_INDEXABLE` in the server's `.env` (`infra/prod-server/.env.example`);
+`infra/prod-server/nginx-abofonsa.conf` for the served hostnames.
 
 ### 2. Testimonial consent
 
@@ -53,7 +56,7 @@ rather than trusting the flag — this is one `curl` and it is the most visible 
 it is wrong.
 
 ```bash
-curl -s https://www.abofonsa.com/ | grep -i "demonstration" && echo "STILL PRESENT" || echo "clear"
+curl -s https://web.abofonsa.com/ | grep -i "demonstration" && echo "STILL PRESENT" || echo "clear"
 ```
 
 *Where:* `web/src/environments/environment.ts`.
@@ -69,7 +72,7 @@ actually happened — the gate proves the mechanism exists, not that anyone used
 After rotating, the value in the server's `.env` is stale. Leave it (it is inert) or blank it; do
 not reuse it anywhere.
 
-*Where:* `https://www.abofonsa.com/admin` at first login.
+*Where:* `https://web.abofonsa.com/admin` at first login.
 
 ---
 

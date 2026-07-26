@@ -147,7 +147,7 @@ groups:
       # that must not depend on the application's own metrics pipeline — if the API is down, it is
       # not scraping, and an absent series is not an alert.
       - alert: AbofonsaSiteDown
-        expr: probe_success{job="blackbox", instance=~"https://www\\.abofonsa\\.com/.*"} == 0
+        expr: probe_success{job="blackbox", instance=~"https://web\\.abofonsa\\.com/.*"} == 0
         for: 2m
         labels:
           severity: critical

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploys this repo to production (webserver -> https://www.abofonsa.com) and verifies the result.
+# Deploys this repo to production (webserver -> https://web.abofonsa.com) and verifies the result.
 # Run it by hand from a clean checkout of the commit you want live:
 #
 #   ./deploy.sh                 # build+push images, ship config, restart, verify
@@ -31,7 +31,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 SSH_HOST="${SSH_HOST:-webserver}"                                # ~/.ssh/config alias
 REMOTE_DIR="${REMOTE_DIR:-~/webroot/01-healthconnect/abofonsa}"  # expanded remotely, not here
 REGISTRY="${REGISTRY:-ghcr.io/jojoaddison}"
-PUBLIC_URL="${PUBLIC_URL:-https://www.abofonsa.com}"
+PUBLIC_URL="${PUBLIC_URL:-https://web.abofonsa.com}"
 FRONTEND_PORT="${FRONTEND_PORT:-8082}"   # loopback-only port the host nginx proxies to
 API_CONTAINER="hc_abofonsa_api"
 WEB_CONTAINER="hc_abofonsa_web"
@@ -68,9 +68,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Domain for the nginx site and certbot, derived from PUBLIC_URL (https://host -> host).
+# Only this one host is served: the apex (abofonsa.com) is deliberately not claimed, because it is
+# a separate hostname that may already serve something else. See infra/prod-server/nginx-abofonsa.conf.
 PUBLIC_HOST="${PUBLIC_URL#https://}"; PUBLIC_HOST="${PUBLIC_HOST#http://}"; PUBLIC_HOST="${PUBLIC_HOST%%/*}"
-# The apex, for the redirect server block and the certificate's second SAN.
-APEX_HOST="${PUBLIC_HOST#www.}"
 
 TAG="${TAG:-$(git rev-parse --short HEAD)}"
 
@@ -175,7 +175,7 @@ if $BOOTSTRAP; then
   echo "    - compose.yml, start, infra.sh, backup.sh from infra/prod-server/"
   echo "    - .env with freshly generated JWT_SIGNING_KEY, BOOTSTRAP_ADMIN_PASSWORD, ENQUIRY_IP_SALT"
   $WITH_NGINX && echo "    - /etc/nginx/sites-available/$NGINX_CONF for $PUBLIC_HOST (after the stack is healthy)"
-  $WITH_TLS   && echo "    - a Let's Encrypt certificate for $PUBLIC_HOST + $APEX_HOST (after nginx)"
+  $WITH_TLS   && echo "    - a Let's Encrypt certificate for $PUBLIC_HOST (after nginx)"
   echo "  It will NOT touch any other app on this server."
   confirm "Proceed with bootstrap?"
 
@@ -224,7 +224,7 @@ if $BOOTSTRAP; then
   ssh "$SSH_HOST" \
     "ENV_PATH=$REMOTE_DIR/.env \
      REGISTRY='$REGISTRY' TAG='$TAG' FRONTEND_PORT='$FRONTEND_PORT' \
-     ALLOWED='$PUBLIC_HOST,$APEX_HOST' STAMP='$(date -u +%Y-%m-%dT%H:%M:%SZ)' \
+     ALLOWED='$PUBLIC_HOST' STAMP='$(date -u +%Y-%m-%dT%H:%M:%SZ)' \
      bash -s" <<'REMOTE_SCRIPT'
 set -euo pipefail
 umask 077
@@ -484,18 +484,16 @@ if $BOOTSTRAP && $WITH_NGINX; then
   fi
 
   if $WITH_TLS; then
-    step "Obtaining a TLS certificate for $PUBLIC_HOST and $APEX_HOST"
+    step "Obtaining a TLS certificate for $PUBLIC_HOST"
 
     if remote "test -d /etc/letsencrypt/live/$PUBLIC_HOST"; then
       ok "certificate for $PUBLIC_HOST already exists - skipping certbot"
     else
-      echo "  Runs: certbot --nginx -d $PUBLIC_HOST -d $APEX_HOST"
+      echo "  Runs: certbot --nginx -d $PUBLIC_HOST"
       echo "  This rewrites the site config in place with an SSL block + HTTP->HTTPS redirect."
       echo ""
       echo "  ${BOLD}Before you say yes:${RESET}"
-      echo "    - ${YELLOW}$PUBLIC_HOST has never been independently confirmed as the intended domain.${RESET}"
-      echo "      It comes from the technical specification's example data. See GO-LIVE-CHECKLIST.md."
-      echo "    - Both names must already resolve to this server, or the challenge fails."
+      echo "    - $PUBLIC_HOST must already resolve to this server, or the challenge fails."
       echo "    - Let's Encrypt rate-limits duplicate certs (5/week per domain), and issuance"
       echo "      publishes the hostname to public Certificate Transparency logs. A wrong answer"
       echo "      here is not freely retryable and not quietly undoable."
@@ -503,7 +501,7 @@ if $BOOTSTRAP && $WITH_NGINX; then
       # irreversible action against a real certificate authority and a real public log.
       read -r -p "  ${BOLD}Run certbot for $PUBLIC_HOST now?${RESET} [y/N] " reply
       if [[ "$reply" =~ ^[Yy]$ ]]; then
-        remote "sudo certbot --nginx -d $PUBLIC_HOST -d $APEX_HOST --non-interactive --agree-tos --register-unsafely-without-email --redirect" \
+        remote "sudo certbot --nginx -d $PUBLIC_HOST --non-interactive --agree-tos --register-unsafely-without-email --redirect" \
           && ok "certificate issued and nginx reconfigured for HTTPS" \
           || die "certbot failed. The HTTP-only site is still serving; fix DNS and re-run certbot by hand."
       else
@@ -565,6 +563,23 @@ if ! $SKIP_PUBLIC; then
     ok "responses carry X-Request-Id"
   else
     note_warning "no X-Request-Id header - correlation ids are not reaching clients"
+  fi
+
+  # Indexability is reported, never asserted: both answers are legitimate, and which one is correct
+  # depends on whether this deployment is the announced site or a review of it. Getting it wrong is
+  # silent and slow to undo in one direction, so it is stated plainly on every deploy.
+  ROBOTS_TXT="$(curl -s --max-time 20 "$PUBLIC_URL/robots.txt" || true)"
+  ROBOTS_META="$(curl -s --max-time 25 "$PUBLIC_URL/" | grep -o '<meta name="robots"[^>]*>' | head -1 || true)"
+  if grep -q 'Disallow: /$' <<<"$ROBOTS_TXT"; then
+    ok "search engines are excluded (robots.txt disallows all)"
+    grep -q 'noindex' <<<"$ROBOTS_META" \
+      || note_warning "robots.txt disallows all but the page meta says '${ROBOTS_META:-<absent>}' - these disagree"
+    echo "      To make this deployment indexable: set SITE_INDEXABLE=true in $REMOTE_DIR/.env and redeploy."
+  else
+    ok "search engines are allowed (robots.txt: ${ROBOTS_TXT//$'\n'/ })"
+    grep -q 'noindex' <<<"$ROBOTS_META" \
+      && note_warning "robots.txt allows crawling but the page still says noindex - these disagree"
+    warn "this deployment is indexable - correct only if $PUBLIC_HOST is the announced public site"
   fi
 
   # The CMS must never be indexable, and must not be server-rendered into a login redirect.

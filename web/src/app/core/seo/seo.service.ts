@@ -1,9 +1,16 @@
-import { DOCUMENT, Injectable, inject } from '@angular/core';
+import { DOCUMENT, Injectable, PLATFORM_ID, REQUEST, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { SiteContent } from '../api/site-content.model';
 import { Locale, SUPPORTED_LOCALES, DEFAULT_LOCALE } from '../i18n/locales';
+import { SITE_INDEXABLE } from './indexable';
 
-const SITE_ORIGIN = 'https://www.abofonsa.com';
+/**
+ * Last-resort origin, used only if neither the request nor the browser can supply one. A canonical
+ * URL is a claim about where the page really lives, so this must never be a guess in practice —
+ * see {@link SeoService.origin}.
+ */
+const FALLBACK_ORIGIN = 'https://web.abofonsa.com';
 
 /**
  * Per-locale SEO head management (spec §6.3): title, description, canonical, hreflang alternates
@@ -16,6 +23,28 @@ export class SeoService {
   private readonly document = inject(DOCUMENT);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly request = inject(REQUEST, { optional: true });
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly indexable = inject(SITE_INDEXABLE);
+
+  /**
+   * The origin this page is actually being served from, taken from the request on the server and
+   * from the browser's own location on the client.
+   *
+   * It used to be a hard-coded constant, which is a quiet trap: the moment the site is served from
+   * anywhere other than that constant — a review deployment, a staging host, a renamed domain —
+   * every canonical and hreflang link points somewhere else. Search engines treat that as an
+   * instruction to index the *other* origin, so the deployment you are looking at disappears from
+   * results in favour of one that may not exist. Deriving it means it cannot be wrong, and no
+   * environment variable has to be remembered.
+   */
+  private origin(): string {
+    if (this.isBrowser) {
+      return this.document.location.origin;
+    }
+    const url = this.request?.url;
+    return url ? new URL(url).origin : FALLBACK_ORIGIN;
+  }
 
   apply(locale: Locale, content: SiteContent): void {
     const settings = content.siteSettings;
@@ -30,12 +59,27 @@ export class SeoService {
     this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
     this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
 
+    this.setRobots();
     this.setCanonicalAndAlternates(locale);
     this.setJsonLd(content);
   }
 
+  /**
+   * Emits `noindex` unless this deployment has explicitly opted in. Written on every page so a
+   * review or staging host cannot leak a single indexable route, and paired with the `robots.txt`
+   * the SSR server serves — a meta tag alone is ignored by crawlers that never fetch the page, and
+   * robots.txt alone does not prevent a URL appearing in results if it is linked from elsewhere.
+   */
+  private setRobots(): void {
+    this.meta.updateTag({
+      name: 'robots',
+      content: this.indexable ? 'index,follow' : 'noindex,nofollow',
+    });
+  }
+
   private urlFor(locale: Locale): string {
-    return locale === DEFAULT_LOCALE ? `${SITE_ORIGIN}/` : `${SITE_ORIGIN}/${locale}`;
+    const origin = this.origin();
+    return locale === DEFAULT_LOCALE ? `${origin}/` : `${origin}/${locale}`;
   }
 
   private setCanonicalAndAlternates(locale: Locale): void {

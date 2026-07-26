@@ -55,6 +55,23 @@ for (const path of ['/api', '/media']) {
 }
 
 /**
+ * robots.txt, generated rather than shipped as a static file, because its content depends on the
+ * deployment rather than on the build: the same image serves a review host and the real site.
+ *
+ * Defaults to disallowing everything. See core/seo/indexable.ts for why that direction — briefly,
+ * a launch that forgets to opt in is invisible for a few days, whereas a review host that forgets
+ * to opt out ends up in the index competing with the real site, which is slow and only partly
+ * reversible. `/admin` stays disallowed either way; the CMS is staff-only and has nothing to gain
+ * from being crawled.
+ */
+app.get('/robots.txt', (_req, res) => {
+  const indexable = process.env['SITE_INDEXABLE'] === 'true';
+  res.type('text/plain').send(
+    indexable ? 'User-agent: *\nDisallow: /admin\n' : 'User-agent: *\nDisallow: /\n',
+  );
+});
+
+/**
  * Serve static files from /browser.
  */
 app.use(

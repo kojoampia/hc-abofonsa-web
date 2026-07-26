@@ -109,7 +109,10 @@ services:
       API_URL: http://api:8080
       # Angular 22's SSR rejects any Host it was not told to expect (its SSRF defence). These are
       # the names this site is legitimately served under; nginx forwards the real one.
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-www.abofonsa.com,abofonsa.com}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-web.abofonsa.com}
+      # Search-engine indexing is opt-in. Unset or anything but "true" serves
+      # noindex + a disallow-all robots.txt — see web/src/app/core/seo/indexable.ts.
+      SITE_INDEXABLE: ${SITE_INDEXABLE:-false}
       PORT: "4000"
     ports:
       # Loopback only — host nginx (Certbot-managed TLS) is the sole thing on a public interface,
