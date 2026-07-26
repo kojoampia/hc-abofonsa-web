@@ -619,6 +619,13 @@ documented *default*; confirm before removing the "placeholder" framing in produ
 
 ---
 
+## Related plans
+
+- **[`careers-plan.md`](careers-plan.md)** — bringing healthcare professionals to the platform.
+  Covers the "come with us" stage on this site only; the onboarding itself lives in
+  `hc-professional` (`professional.abofonsa.com`). Continues the task numbering from this plan at
+  128. Blocked on an enrolment-policy decision owned by that repo.
+
 ## Open items (revisit later, not blocking this plan)
 
 - Annual penetration testing before any expansion into patient-facing functionality (spec §13.2) —
