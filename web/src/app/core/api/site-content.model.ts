@@ -1,6 +1,13 @@
 /** Typed mirror of the flat, locale-resolved payloads the API serves (backend service/dto/*DTO).
  * No LocalizedText crosses this boundary — resolution happened server-side (spec §7.4). */
 
+export interface MediaVariantRef {
+  label: string;
+  width: number;
+  url: string;
+  contentType: string;
+}
+
 export interface MediaRef {
   id: string;
   url: string;
@@ -8,6 +15,7 @@ export interface MediaRef {
   width: number;
   height: number;
   blurHash: string;
+  variants: MediaVariantRef[];
 }
 
 export interface SectionItem {

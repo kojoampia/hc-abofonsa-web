@@ -5,7 +5,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
-import { AdminApi, AdminContentType, ContentRevisionEntry } from '../core/admin-api';
+import { AdminApi, AdminContentType, ContentRevisionEntry, MediaEntry } from '../core/admin-api';
 import { EDITOR_CONFIG, FieldDef, deepGet, deepSet } from '../core/editor-config';
 import { problemDetailOf, ProblemInfo } from '../core/problem-detail';
 import { UnsavedChangesAware } from '../core/admin-guards';
@@ -156,6 +156,33 @@ type Localized = Record<string, string>;
                 </div>
                 <button mat-stroked-button type="button" (click)="addLocalizedListEntry(field)">+ Add</button>
               }
+              @case ('media') {
+                <!-- Stores the asset id; the public payload resolves it to a URL, alt text and the
+                     rendition widths. A thumbnail is shown because an id tells an editor nothing
+                     about whether they picked the right photograph. -->
+                <div class="flex items-center gap-3">
+                  @if (selectedMedia(field); as asset) {
+                    <img [src]="asset.url" [alt]="asset.alt['en'] ?? asset.filename"
+                      class="w-24 h-16 object-cover rounded border border-brand-line" />
+                  } @else {
+                    <div class="w-24 h-16 rounded border border-dashed border-brand-line grid place-items-center text-xs text-brand-muted">
+                      None
+                    </div>
+                  }
+                  <select [id]="field.key" [ngModel]="textValue(field)" [name]="field.key"
+                    (ngModelChange)="setText(field, $event)" [attr.data-testid]="'media-' + field.key">
+                    <option value="">— none —</option>
+                    @for (asset of mediaLibrary(); track asset.id) {
+                      <option [value]="asset.id">{{ asset.filename }} ({{ asset.width }}×{{ asset.height }})</option>
+                    }
+                  </select>
+                </div>
+                @if (!selectedMedia(field) && textValue(field)) {
+                  <p class="text-xs text-red-700" data-testid="media-missing">
+                    This document references an asset that no longer exists; the site renders a placeholder.
+                  </p>
+                }
+              }
               @case ('section-items') {
                 <div cdkDropList (cdkDropListDropped)="reorderList(field, $event)" class="grid gap-3">
                   @for (item of itemList(field); track $index) {
@@ -246,6 +273,7 @@ export class ContentEditorPage implements UnsavedChangesAware {
   protected readonly conflict = signal<ProblemInfo | null>(null);
   protected readonly publishProblem = signal<ProblemInfo | null>(null);
   protected readonly revisions = signal<ContentRevisionEntry[]>([]);
+  protected readonly mediaLibrary = signal<MediaEntry[]>([]);
 
   protected readonly fields = computed<FieldDef[]>(() => EDITOR_CONFIG[this.type()]);
   protected readonly documentSnapshot = computed<Record<string, unknown>>(() => {
@@ -258,6 +286,25 @@ export class ContentEditorPage implements UnsavedChangesAware {
     this.type.set((params.get('type') ?? 'services') as AdminContentType);
     this.id.set(params.get('id') ?? 'new');
     void this.load();
+    void this.loadMediaLibrary();
+  }
+
+  /** Populates the `media` field pickers. Failure is non-fatal — an editor should still be able to
+   * fix a typo in the text of a page when the media endpoint is unhappy. */
+  private async loadMediaLibrary(): Promise<void> {
+    if (!this.fields().some((field) => field.kind === 'media')) {
+      return;
+    }
+    try {
+      this.mediaLibrary.set(await firstValueFrom(this.api.media()));
+    } catch {
+      this.mediaLibrary.set([]);
+    }
+  }
+
+  protected selectedMedia(field: FieldDef): MediaEntry | null {
+    const id = this.textValue(field);
+    return this.mediaLibrary().find((asset) => asset.id === id) ?? null;
   }
 
   private async load(): Promise<void> {

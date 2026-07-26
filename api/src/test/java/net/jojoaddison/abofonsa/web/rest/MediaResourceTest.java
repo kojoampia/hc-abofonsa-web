@@ -132,6 +132,90 @@ class MediaResourceTest extends AbstractIntegrationTest {
                 .isBadRequest();
     }
 
+    /**
+     * The join that did not exist until Phase 19: a photograph attached in the CMS has to appear in
+     * the payload the public site renders from. ContentMapper hard-coded every image to {@code null}
+     * from Phase 6 onward, so uploads worked, the media library worked, the templates were ready —
+     * and no visitor could ever see a picture. Nothing caught it because every test asserted on
+     * either the upload response or the text of the page.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void anAttachedImageReachesThePublicPayloadWithItsRenditionWidths() throws Exception {
+        var asset = upload(jpegBytes(1600, 1000), "service-photo.jpg");
+
+        var service = (Map<String, Object>) restClient
+                .post()
+                .uri("/api/v1/admin/content/services")
+                .header("Authorization", "Bearer " + editorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "slug",
+                        "public-image-test",
+                        "name",
+                        Map.of("en", "Public image test"),
+                        "imageId",
+                        asset.get("id"),
+                        "displayOrder",
+                        96))
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+
+        restClient
+                .post()
+                .uri("/api/v1/admin/content/services/" + service.get("id") + "/publish")
+                .header("Authorization", "Bearer " + publisherToken)
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+
+        var site = (Map<String, Object>) restClient
+                .get()
+                .uri("/api/v1/content/site?locale=en")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+
+        var published = ((java.util.List<Map<String, Object>>) site.get("services"))
+                .stream()
+                        .filter(entry -> "public-image-test".equals(entry.get("slug")))
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("the published service is missing from the payload"));
+
+        var image = (Map<String, Object>) published.get("image");
+        assertThat(image).as("an attached image must reach the public payload").isNotNull();
+        assertThat((String) image.get("url")).startsWith("/media/");
+        assertThat((String) image.get("blurHash")).isNotBlank();
+
+        // The widths are what make a responsive srcset possible at all (spec §13.1).
+        var variants = (java.util.List<Map<String, Object>>) image.get("variants");
+        assertThat(variants).hasSize(3);
+        assertThat(variants).allSatisfy(variant -> {
+            assertThat((String) variant.get("url")).startsWith("/media/");
+            assertThat((Number) variant.get("width")).isNotNull();
+            assertThat((String) variant.get("contentType")).isEqualTo("image/jpeg");
+        });
+        assertThat(variants).anyMatch(variant -> ((Number) variant.get("width")).intValue() == 320);
+
+        // Archive it again. Integration tests share one MongoDB across the whole run, so a
+        // *published* fixture is visible to every later test — leaving this one behind broke the
+        // "all six seeded services" assertions in ContentResourceTest.
+        restClient
+                .delete()
+                .uri("/api/v1/admin/content/services/" + service.get("id"))
+                .header("Authorization", "Bearer " + publisherToken)
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+    }
+
     @Test
     void deletingAnOrphanWorksButAReferencedAssetIsRefused() throws Exception {
         var orphan = upload(jpegBytes(400, 300), "orphan.jpg");

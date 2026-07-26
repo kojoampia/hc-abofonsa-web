@@ -3,10 +3,10 @@ package net.jojoaddison.abofonsa.web.rest.errors;
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
+import net.jojoaddison.abofonsa.config.CorrelationIdFilter;
 import net.jojoaddison.abofonsa.domain.enumeration.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -135,10 +135,12 @@ public class ExceptionTranslator {
 
     @ExceptionHandler(Exception.class)
     ProblemDetail onUnexpected(Exception ex) {
-        var correlationId = UUID.randomUUID().toString();
-        MDC.put("correlationId", correlationId);
-        log.error("Unhandled exception, correlationId={}", correlationId, ex);
-        MDC.remove("correlationId");
+        // The id the request already carries — the same one in every log line for this request and
+        // in its X-Request-Id response header. Minting a fresh one here (as this did) produced an
+        // id that appeared in exactly one log line and correlated with nothing.
+        var correlationId =
+                CorrelationIdFilter.CORRELATION_ID.orElse(UUID.randomUUID().toString());
+        log.error("Unhandled exception", ex);
 
         var problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         problem.setType(URI.create(BASE + "internal-error"));

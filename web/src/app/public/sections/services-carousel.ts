@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { BrandCarousel } from '../../shared/ui/brand-carousel';
 import { SiteContentStore } from '../../core/api/site-content.store';
+import { ResponsiveImage } from '../../shared/ui/responsive-image';
 
 /** Spec §6 #7 — the six service slides in the shared BrandCarousel. */
 @Component({
   selector: 'abc-services-carousel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BrandCarousel, TranslocoPipe],
+  imports: [BrandCarousel, TranslocoPipe, ResponsiveImage],
   template: `
     <section id="services" class="py-16 bg-brand-cream" aria-labelledby="services-heading">
       <div class="max-w-6xl mx-auto px-4">
@@ -19,7 +20,8 @@ import { SiteContentStore } from '../../core/api/site-content.store';
             <article class="grid lg:grid-cols-2 bg-brand-surface rounded-card shadow-card overflow-hidden">
               <div class="bg-brand-line min-h-56 lg:min-h-96 relative">
                 @if (service.image; as image) {
-                  <img [src]="image.url" [alt]="image.alt" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />
+                  <abc-responsive-image [media]="image" sizes="(min-width: 1024px) 50vw, 100vw"
+                    imgClass="absolute inset-0 w-full h-full object-cover" />
                 }
               </div>
               <div class="p-8 lg:p-11 flex flex-col justify-center prose-reset gap-4">

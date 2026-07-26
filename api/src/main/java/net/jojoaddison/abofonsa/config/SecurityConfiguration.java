@@ -70,6 +70,15 @@ public class SecurityConfiguration {
                                 "/api/v1/locales",
                                 "/api/v1/health",
                                 "/actuator/health/**",
+                                // Scrape endpoints. Authenticating these would mean giving
+                                // Prometheus a CMS credential, which is worse than the exposure:
+                                // the API port is never published to the internet (the SSR
+                                // container proxies only /api and /media, and production binds
+                                // the web container to loopback), so /actuator is reachable only
+                                // from the compose/monitoring networks. Everything else under
+                                // /actuator stays behind authentication.
+                                "/actuator/prometheus",
+                                "/actuator/info",
                                 // Uploaded images are public site content — they are referenced by
                                 // published pages and must load for anonymous visitors. Without
                                 // this they fell through to anyRequest().denyAll() and every image

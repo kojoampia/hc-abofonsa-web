@@ -1,0 +1,172 @@
+# Prometheus alerting rules for Abofonsa BridgeCare (plan task 113, spec §13.5).
+#
+# Version-controlled deliberately: a threshold that lives only in a Grafana UI drifts, cannot be
+# reviewed, and is lost when the dashboard is rebuilt. Load it into the shared Prometheus that
+# already scrapes this host by adding the file to `rule_files:` in prometheus.yml.
+#
+# Every rule states in its annotations what the responder should actually do — an alert that says
+# only "p95 latency high" costs the on-call person the ten minutes this file could have saved.
+groups:
+  - name: abofonsa-api
+    interval: 30s
+    rules:
+      # Spec §13.5: 5xx rate > 1% over 5 minutes.
+      - alert: AbofonsaApiErrorRateHigh
+        expr: |
+          sum(rate(http_server_requests_seconds_count{application="abofonsa-bridgecare-api",status=~"5.."}[5m]))
+            /
+          sum(rate(http_server_requests_seconds_count{application="abofonsa-bridgecare-api"}[5m]))
+            > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: abofonsa-api
+        annotations:
+          summary: "Abofonsa API is returning 5xx for {{ $value | humanizePercentage }} of requests"
+          description: >-
+            Sustained above 1% for five minutes. Every 5xx response carries a correlationId in its
+            problem document and in the matching log line — pick one from the logs and search on it
+            to get the full request. Check MongoDB reachability first; it is the only external
+            dependency the API has.
+          runbook: infra/observability/alert-rules.yml
+
+      # Spec §13.5: p95 latency > 500 ms. Computed from the histogram buckets enabled in
+      # application.yml — percentiles cannot be averaged, so they must be derived here.
+      - alert: AbofonsaApiLatencyP95High
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(http_server_requests_seconds_bucket{application="abofonsa-bridgecare-api"}[5m]))
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: abofonsa-api
+        annotations:
+          summary: "Abofonsa API p95 latency is {{ $value | humanizeDuration }}"
+          description: >-
+            The public content endpoint is cached (10 min TTL) and should sit far below this; a
+            sustained rise usually means the cache is being evicted constantly by publishing, or
+            MongoDB is slow. Compare cache_gets_total{result="miss"} against "hit" before assuming
+            a database problem.
+
+      # Spec §13.5: failed logins > 20/minute — credential stuffing against the CMS.
+      - alert: AbofonsaFailedLoginsSpike
+        expr: |
+          sum(rate(http_server_requests_seconds_count{
+            application="abofonsa-bridgecare-api", uri="/api/v1/admin/auth/login", status="401"
+          }[1m])) * 60 > 20
+        for: 2m
+        labels:
+          severity: warning
+          service: abofonsa-api
+        annotations:
+          summary: "More than 20 failed CMS logins per minute"
+          description: >-
+            Accounts lock themselves after repeated failures, so this is not by itself a breach.
+            Confirm whether it is one source (block it at nginx) or many (leave the lockout to do
+            its job), and check the audit log for any successful login among the failures.
+
+      # A cache that stops serving hits turns every page view into a database read. Not in the
+      # spec's alert list, but it is the leading indicator for the latency alert above.
+      - alert: AbofonsaContentCacheHitRatioLow
+        expr: |
+          sum(rate(cache_gets_total{application="abofonsa-bridgecare-api", result="hit"}[15m]))
+            /
+          clamp_min(sum(rate(cache_gets_total{application="abofonsa-bridgecare-api"}[15m])), 0.001)
+            < 0.5
+        for: 15m
+        labels:
+          severity: info
+          service: abofonsa-api
+        annotations:
+          summary: "Published-content cache hit ratio below 50%"
+          description: >-
+            Expected to sit near 1.0 outside editing sessions. Sustained low values mean something
+            is evicting on every request — check for a publish loop or an unintended @CacheEvict.
+
+      - alert: AbofonsaMongoConnectionsSaturated
+        expr: |
+          mongodb_driver_pool_checkedout{application="abofonsa-bridgecare-api"}
+            /
+          clamp_min(mongodb_driver_pool_size{application="abofonsa-bridgecare-api"}, 1)
+            > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: abofonsa-api
+        annotations:
+          summary: "MongoDB connection pool over 90% checked out"
+          description: >-
+            Requests are about to start queueing for a connection. With virtual threads the API
+            will happily create more waiters than the pool can serve, so this saturates before
+            latency visibly moves.
+
+      - alert: AbofonsaJvmMemoryPressure
+        expr: |
+          sum by (instance) (jvm_memory_used_bytes{application="abofonsa-bridgecare-api", area="heap"})
+            /
+          sum by (instance) (jvm_memory_max_bytes{application="abofonsa-bridgecare-api", area="heap"})
+            > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          service: abofonsa-api
+        annotations:
+          summary: "Heap above 90% for ten minutes"
+          description: >-
+            Image processing (MediaService re-encodes uploads in memory) is the usual cause of a
+            spike; a sustained plateau is more likely a leak. The container is capped at 75% of its
+            memory limit via MaxRAMPercentage.
+
+  - name: abofonsa-mongo
+    interval: 30s
+    rules:
+      # Spec §13.5: replica lag > 10 s. Single-node in this deployment, so this fires only if a
+      # secondary is ever added — kept because that is exactly when nobody remembers to add it.
+      - alert: AbofonsaMongoReplicaLagHigh
+        expr: |
+          max(mongodb_mongod_replset_member_optime_date{state="SECONDARY"})
+            -
+          max(mongodb_mongod_replset_member_optime_date{state="PRIMARY"})
+            > 10
+        for: 5m
+        labels:
+          severity: critical
+          service: abofonsa-mongo
+        annotations:
+          summary: "MongoDB secondary is more than 10s behind the primary"
+          description: >-
+            Publishing uses multi-document transactions; sustained lag risks a failover losing an
+            acknowledged write. Requires the mongodb-exporter to be scraping this instance.
+
+  - name: abofonsa-availability
+    interval: 30s
+    rules:
+      # Spec §13.5's external check, expressed against the blackbox exporter. This is the one alert
+      # that must not depend on the application's own metrics pipeline — if the API is down, it is
+      # not scraping, and an absent series is not an alert.
+      - alert: AbofonsaSiteDown
+        expr: probe_success{job="blackbox", instance=~"https://www\\.abofonsa\\.com/.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: abofonsa
+        annotations:
+          summary: "{{ $labels.instance }} has been unreachable for two minutes"
+          description: >-
+            Checked every minute against both the rendered home page and /api/v1/health (see
+            blackbox-targets.yml). If only the home page is failing, the SSR container is the
+            suspect; if only the API, look at MongoDB.
+
+      - alert: AbofonsaTlsCertificateExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox"} - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+          service: abofonsa
+        annotations:
+          summary: "TLS certificate for {{ $labels.instance }} expires in {{ $value | printf \"%.0f\" }} days"
+          description: >-
+            certbot renews automatically from root's crontab. Fewer than 14 days left means the
+            renewal has been failing silently — run `certbot renew --dry-run` on the host.

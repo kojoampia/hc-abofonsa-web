@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SiteContentStore } from '../../core/api/site-content.store';
+import { ResponsiveImage } from '../../shared/ui/responsive-image';
 
 /** Spec §6 #5 — the LCP element (§13.1): the hero image is eager with fetchpriority=high;
  * everything below the fold lazy-loads. */
 @Component({
   selector: 'abc-hero-section',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, ResponsiveImage],
   template: `
     @if (hero(); as hero) {
       <section class="bg-brand-navy text-white" aria-labelledby="hero-heading">
@@ -33,13 +34,15 @@ import { SiteContentStore } from '../../core/api/site-content.store';
           </div>
           <div class="relative hidden lg:block">
             @if (hero.image; as image) {
-              <img
-                [src]="image.url"
-                [alt]="image.alt"
-                [width]="image.width"
-                [height]="image.height"
-                fetchpriority="high"
-                class="rounded-card shadow-card w-full h-auto"
+              <!-- The LCP element on every page: the only image marked priority, so the browser
+                   fetches it eagerly instead of deferring it behind lazy-loaded ones. Rendered
+                   only at lg and above (the wrapper is hidden below it), hence the fixed slot
+                   width rather than a viewport-relative one. -->
+              <abc-responsive-image
+                [media]="image"
+                [priority]="true"
+                sizes="(min-width: 1024px) 590px, 0px"
+                imgClass="rounded-card shadow-card w-full h-auto"
               />
             } @else {
               <div class="rounded-card shadow-card bg-white/10 aspect-[1180/760]" aria-hidden="true"></div>

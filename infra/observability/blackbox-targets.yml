@@ -1,0 +1,32 @@
+# External uptime checks (plan task 113, spec §13.5: "every minute, against /api/v1/health and the
+# rendered home page").
+#
+# Two targets, not one, because they fail independently and the distinction is the first thing a
+# responder needs: the API can be healthy while SSR is down, and the home page can render from cache
+# while the API is refusing writes.
+#
+# Add to the shared Prometheus:
+#
+#   scrape_configs:
+#     - job_name: blackbox
+#       scrape_interval: 60s
+#       metrics_path: /probe
+#       params: { module: [http_2xx] }
+#       file_sd_configs:
+#         - files: [/etc/prometheus/targets/abofonsa-blackbox.yml]
+#       relabel_configs:
+#         - source_labels: [__address__]
+#           target_label: __param_target
+#         - source_labels: [__param_target]
+#           target_label: instance
+#         - target_label: __address__
+#           replacement: blackbox-exporter:9115
+#
+# These run from outside the host on purpose. A check that shares fate with what it is checking
+# reports "all healthy" precisely when the machine is unreachable.
+- targets:
+    - https://www.abofonsa.com/
+    - https://www.abofonsa.com/api/v1/health
+  labels:
+    service: abofonsa
+    env: production

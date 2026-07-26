@@ -10,7 +10,9 @@ export type FieldKind =
   | 'string-list'
   | 'localized-list'
   | 'section-items'
-  | 'plan-features';
+  | 'plan-features'
+  /** Picks an asset from the media library and stores its id. */
+  | 'media';
 
 export interface FieldDef {
   /** Document key, or a dot path for nested values (price.amount, consent.obtained). */
@@ -31,6 +33,7 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
     { key: 'blurb', label: 'Blurb', kind: 'localized-area' },
     { key: 'points', label: 'Bullet points', kind: 'localized-list' },
     { key: 'availableOn', label: 'Available on', kind: 'localized' },
+    { key: 'imageId', label: 'Image', kind: 'media' },
     { key: 'displayOrder', label: 'Display order', kind: 'number' },
   ],
   plans: [
@@ -48,6 +51,7 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
     { key: 'personRole', label: 'Role line', kind: 'localized' },
     { key: 'planLabel', label: 'Plan badge', kind: 'localized' },
     { key: 'rating', label: 'Rating (1-5)', kind: 'number' },
+    { key: 'portraitId', label: 'Portrait', kind: 'media' },
     { key: 'consent.obtained', label: 'Consent recorded (required to publish)', kind: 'boolean' },
     { key: 'consent.evidenceRef', label: 'Consent evidence reference', kind: 'text' },
   ],
@@ -64,6 +68,7 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
     { key: 'subheading', label: 'Subheading', kind: 'localized' },
     { key: 'body', label: 'Body', kind: 'localized-area' },
     { key: 'items', label: 'Items', kind: 'section-items' },
+    { key: 'imageId', label: 'Image', kind: 'media' },
   ],
   settings: [
     { key: 'organisationName', label: 'Organisation name', kind: 'text' },

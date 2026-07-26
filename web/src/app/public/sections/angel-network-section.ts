@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { SiteContentStore } from '../../core/api/site-content.store';
+import { ResponsiveImage } from '../../shared/ui/responsive-image';
 
 /** Spec §6 #11 — the Angel network split section. */
 @Component({
   selector: 'abc-angel-network-section',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ResponsiveImage],
   template: `
     @if (angel(); as angel) {
       <section class="py-16 bg-brand-cream" aria-labelledby="angel-heading">
@@ -23,7 +25,8 @@ import { SiteContentStore } from '../../core/api/site-content.store';
           </div>
           <div class="rounded-card bg-brand-line aspect-[4/3] relative overflow-hidden">
             @if (angel.image; as image) {
-              <img [src]="image.url" [alt]="image.alt" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />
+              <abc-responsive-image [media]="image" sizes="(min-width: 1024px) 50vw, 100vw"
+                    imgClass="absolute inset-0 w-full h-full object-cover" />
             }
           </div>
         </div>

@@ -8,10 +8,12 @@ import net.jojoaddison.abofonsa.domain.Section;
 import net.jojoaddison.abofonsa.domain.SiteSettings;
 import net.jojoaddison.abofonsa.domain.Testimonial;
 import net.jojoaddison.abofonsa.domain.enumeration.Locale;
+import net.jojoaddison.abofonsa.repository.MediaRepository;
 import net.jojoaddison.abofonsa.service.PriceFormatter;
 import net.jojoaddison.abofonsa.service.dto.AddressDTO;
 import net.jojoaddison.abofonsa.service.dto.CareServiceDTO;
 import net.jojoaddison.abofonsa.service.dto.FaqDTO;
+import net.jojoaddison.abofonsa.service.dto.MediaDTO;
 import net.jojoaddison.abofonsa.service.dto.PlanComparisonDTO;
 import net.jojoaddison.abofonsa.service.dto.PlanDTO;
 import net.jojoaddison.abofonsa.service.dto.PlanFeatureDTO;
@@ -26,14 +28,17 @@ import org.springframework.stereotype.Component;
  * (spec §7.1) — no reflection-based mapping framework, so a field rename fails at compile time
  * rather than silently dropping data at runtime.
  *
- * <p>{@code image}/{@code portrait} fields resolve to {@code null} until Phase 6 wires the media
- * library; the view record shapes are already final so that phase adds behaviour, not schema
- * changes.
+ * <p>{@code image}/{@code portrait} fields resolve their stored media id against the media library
+ * (see {@link #toMedia}), carrying the rendition widths the public site needs for {@code srcset}.
+ * These were hard-coded to {@code null} through Phases 6-18: the library could accept uploads and
+ * the templates could render images, but nothing joined the two, so no photograph could ever reach
+ * a visitor.
  */
 @Component
 public class ContentMapper {
 
     private final PriceFormatter priceFormatter;
+    private final MediaRepository mediaRepository;
 
     /** CMS-created documents may omit any optional localised field entirely - a null field
      * renders as empty text, never an NPE taking down the whole public payload. */
@@ -41,8 +46,58 @@ public class ContentMapper {
         return text == null ? "" : text.resolve(locale);
     }
 
-    public ContentMapper(PriceFormatter priceFormatter) {
+    public ContentMapper(PriceFormatter priceFormatter, MediaRepository mediaRepository) {
         this.priceFormatter = priceFormatter;
+        this.mediaRepository = mediaRepository;
+    }
+
+    /**
+     * Resolves a stored media id into the flat reference the public payload carries.
+     *
+     * <p>A dangling id yields {@code null} rather than an error: media can be deleted while a
+     * document still names it, and a missing photograph must never take down the page it was
+     * decorating. The templates already render a placeholder for a null image.
+     *
+     * <p>Alt text is localised — the whole point of storing it per locale in the media library —
+     * and falls back through {@link LocalizedText#resolve} like every other translated field.
+     */
+    private MediaDTO toMedia(String mediaId, Locale locale) {
+        if (mediaId == null || mediaId.isBlank()) {
+            return null;
+        }
+        return mediaRepository
+                .findById(mediaId)
+                .map(media -> new MediaDTO(
+                        media.id(),
+                        "/" + media.storageKey(),
+                        resolve(media.alt(), locale),
+                        media.width(),
+                        media.height(),
+                        media.blurHash(),
+                        media.variants().stream()
+                                .map(variant -> new MediaDTO.VariantDTO(
+                                        variant.label(),
+                                        variant.width(),
+                                        "/" + variant.storageKey(),
+                                        contentTypeOf(variant.storageKey())))
+                                .toList()))
+                .orElse(null);
+    }
+
+    /** The stored key's extension is the authority on a rendition's format — the variants are
+     * re-encoded on upload, so the original upload's content type may not describe them. */
+    private static String contentTypeOf(String storageKey) {
+        var lower = storageKey.toLowerCase(java.util.Locale.ROOT);
+        if (lower.endsWith(".png")) {
+            return "image/png";
+        }
+        if (lower.endsWith(".avif")) {
+            return "image/avif";
+        }
+        if (lower.endsWith(".webp")) {
+            return "image/webp";
+        }
+        return "image/jpeg";
     }
 
     public CareServiceDTO toView(CareService doc, Locale locale) {
@@ -55,7 +110,7 @@ public class ContentMapper {
                         ? java.util.List.of()
                         : doc.points().stream().map(p -> resolve(p, locale)).toList(),
                 resolve(doc.availableOn(), locale),
-                null,
+                toMedia(doc.imageId(), locale),
                 doc.displayOrder());
     }
 
@@ -93,7 +148,7 @@ public class ContentMapper {
                 resolve(doc.personRole(), locale),
                 resolve(doc.planLabel(), locale),
                 doc.rating(),
-                null,
+                toMedia(doc.portraitId(), locale),
                 doc.displayOrder());
     }
 
@@ -114,7 +169,7 @@ public class ContentMapper {
                 resolve(doc.subheading(), locale),
                 resolve(doc.body(), locale),
                 items,
-                null);
+                toMedia(doc.imageId(), locale));
     }
 
     public SiteSettingsDTO toView(SiteSettings doc, Locale locale) {

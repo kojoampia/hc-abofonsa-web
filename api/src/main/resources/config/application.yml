@@ -19,6 +19,12 @@ management:
   endpoint.health.probes.enabled: true
   health.readiness-state.enabled: true
   health.liveness-state.enabled: true
+  metrics.tags.application: ${spring.application.name} # every series is attributable to this service
+  metrics.distribution:
+    # Percentiles must be computed from histogram buckets server-side, not pre-aggregated per
+    # instance — averaging percentiles across instances is meaningless, and §13.5 alerts on p95.
+    percentiles-histogram.http.server.requests: true
+    slo.http.server.requests: 50ms,100ms,200ms,500ms,1s,2s
 
 abofonsa:
   locales.supported: en,es,fr,de
@@ -48,3 +54,22 @@ abofonsa:
 spring.servlet.multipart:
   max-file-size: 8MB # spec §7.7 upload cap; also enforced in MediaService by byte count
   max-request-size: 9MB
+
+---
+# Production profile. Kept in this file rather than a separate one so a reader sees in one place
+# what differs on the server — it is deliberately very little.
+spring.config.activate.on-profile: prod
+
+# One JSON object per line, so the log shipper needs no multi-line regex and every MDC entry
+# (notably correlationId, set by CorrelationIdFilter) becomes a queryable field. Boot's built-in
+# structured logging is used rather than logstash-logback-encoder: same output, no dependency.
+# Left off outside prod because human-readable console output is worth more while developing.
+logging:
+  structured.format.console: ecs
+  level:
+    root: INFO
+    net.jojoaddison.abofonsa: INFO
+    # Request/response bodies would carry enquiry contents — names, phone numbers, health
+    # context. Spec §10.6: personal data never reaches a log line.
+    org.springframework.web: WARN
+    org.mongodb.driver: WARN

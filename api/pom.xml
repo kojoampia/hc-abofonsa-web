@@ -55,6 +55,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+
+    <!-- Actuator exposes a /actuator/prometheus endpoint only when a Prometheus registry is on the
+         classpath; without this the endpoint listed in application.yml simply 404s (spec §13.5). -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
