@@ -78,6 +78,40 @@ class MediaResourceTest extends AbstractIntegrationTest {
         assertThat((String) media.get("filename")).doesNotContain(" ");
     }
 
+    /**
+     * The URL an upload reports must actually serve the bytes, to an anonymous visitor. Both halves
+     * of that were broken and neither was visible from the API alone: the mapper prefixed
+     * {@code /media/} onto a storage key that already began with it, and {@code /media/**} was never
+     * permitted, so it fell through to {@code denyAll()}. Published pages reference these URLs, so
+     * the failure mode was every image on the public site 401ing.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void theReportedUrlServesTheImageToAnAnonymousVisitor() throws Exception {
+        var media = upload(jpegBytes(800, 600), "public-image.jpg");
+
+        var url = (String) media.get("url");
+        assertThat(url).startsWith("/media/").doesNotContain("/media/media/");
+
+        restClient
+                .get()
+                .uri(url)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectHeader()
+                .contentType(MediaType.IMAGE_JPEG);
+
+        for (var variant : (java.util.List<Map<String, Object>>) media.get("variants")) {
+            restClient
+                    .get()
+                    .uri((String) variant.get("url"))
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
+        }
+    }
+
     @Test
     void nonImageUploadIsRejected() {
         var parts = new LinkedMultiValueMap<String, Object>();

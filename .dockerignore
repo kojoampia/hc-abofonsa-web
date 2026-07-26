@@ -1,0 +1,25 @@
+# Build context for api/Dockerfile, whose context is the repository root (it needs both api/ and
+# web/public/i18n). Everything the API image does not consume is excluded — without this the
+# context includes web/node_modules and .git, which is hundreds of megabytes sent to the daemon on
+# every build.
+.git
+.github
+
+# Frontend build inputs and outputs; only web/public/i18n is copied into the API image.
+web/node_modules
+web/dist
+web/.angular
+web/coverage
+web/e2e
+web/playwright.config.ts
+
+# Backend build outputs — the image builds these itself, and a host-built target/ would otherwise
+# shadow it and can carry a different JDK's class files.
+api/target
+
+# Local tooling and docs that never affect an image.
+**/*.md
+!api/src/**/*.md
+.idea
+.vscode
+*.log

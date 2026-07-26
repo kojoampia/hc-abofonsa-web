@@ -63,6 +63,16 @@ services:
       - "8080:8080"
     volumes:
       - media-data:/app/media-storage
+    # Task 103/104 hardening: the image already runs as a non-root user, and neither service needs
+    # to write outside its declared mounts or gain privileges. tmpfs covers the one path the JVM
+    # genuinely needs to write to (temp files, hsperfdata) under a read-only root filesystem.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   web:
     build:
@@ -79,6 +89,13 @@ services:
       API_URL: http://api:8080
     ports:
       - "4000:4000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   mongo-data:

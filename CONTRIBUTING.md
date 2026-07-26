@@ -12,7 +12,22 @@
 
 ```bash
 docker compose up -d mongo   # MongoDB 8.3 single-node replica set (host port 27018)
+docker compose up -d --build # the whole stack: mongo + api (:8080) + web (:4000)
 ```
+
+The full stack is what the Playwright suite runs against. The `web` container serves the Angular
+SSR app on port 4000 **and proxies `/api` and `/media` to the API**, so everything is reachable
+from one origin at <http://localhost:4000> — the same shape nginx presents in production, which
+means relative URLs work identically in `ng serve`, compose, and on the server.
+
+Both application containers run as a non-root user with a read-only root filesystem, all
+capabilities dropped, and `no-new-privileges`. `api` writes only to the `media-data` volume and a
+tmpfs `/tmp`; if you add a code path that writes elsewhere on disk, it will fail here before it
+fails in production.
+
+If a build fails with `Temporary failure in name resolution` while fetching Maven or npm packages,
+that is BuildKit DNS, not this project — both build stanzas already set `network: host` as the
+workaround (the same one `hc-crowdfund-app`'s `deploy.sh` documents).
 
 ## Test commands
 
@@ -50,6 +65,15 @@ fresh:
 - **Testcontainers 2.x, not 1.x** — the `junit-jupiter`/`mongodb` artifacts were renamed to
   `testcontainers-junit-jupiter`/`testcontainers-mongodb`; 1.21.x's bundled docker-java also
   couldn't negotiate this host's Docker API version.
+- **The `web` container is a Node server on port 4000, not nginx on port 80** (plan task 104 says
+  "Node runtime behind nginx ... port 80"). SSR *is* the Node process; putting nginx inside the
+  same image would only proxy localhost to itself. nginx still fronts the stack — as the host's
+  existing reverse proxy (Phase 20), terminating TLS and forwarding to this port, which is where it
+  already lives for every other site on that server.
+- **The API image builds from the repository root**, not from `api/`, because the i18n coverage
+  report (§9.4 T-7) needs `web/public/i18n` on the classpath. Build it as
+  `docker build -f api/Dockerfile .`; `docker build api/` will not work. The `abofonsa.i18n.dir`
+  Maven property makes the location overridable, and the copy no-ops in an api-only checkout.
 
 ## Branch protection
 

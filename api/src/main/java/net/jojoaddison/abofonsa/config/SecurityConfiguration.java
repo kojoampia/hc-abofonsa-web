@@ -69,7 +69,12 @@ public class SecurityConfiguration {
                                 "/api/v1/i18n/**",
                                 "/api/v1/locales",
                                 "/api/v1/health",
-                                "/actuator/health/**")
+                                "/actuator/health/**",
+                                // Uploaded images are public site content — they are referenced by
+                                // published pages and must load for anonymous visitors. Without
+                                // this they fell through to anyRequest().denyAll() and every image
+                                // on the site answered 401.
+                                "/media/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/enquiries")
                         .permitAll()
