@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Suppressions for the OWASP dependency-check scan (plan task 106).
+
+  Every entry here is a claim that a finding does not apply, and each one states the evidence for
+  that claim. A suppression without a reason is indistinguishable from hiding a vulnerability, so
+  none is added without one, and none is open-ended: each is pinned to a specific CVE against a
+  specific artifact, so a *different* CVE against the same jar still fails the build.
+
+  Re-check these whenever a dependency's major version moves — the version-range arguments below
+  stop holding the moment the version changes.
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+    <!--
+      dependency-check reads Spring Boot's `spring-boot-mongodb` / `spring-boot-data-mongodb`
+      modules (version 4.1.0, matching the Boot release train) and generates the CPE
+      `cpe:2.3:a:mongodb:mongodb:4.1.0` — i.e. it concludes these Java libraries *are* MongoDB
+      Server 4.1.0. They are not; they are Spring's auto-configuration modules. The three CVEs
+      below are all MongoDB Server defects (mongod-side aggregation and command handling) with no
+      code path in a client library at all.
+
+      Note for whoever reads this next: these being false positives *for the Java dependency* says
+      nothing about the MongoDB server this application talks to. That runs as a container image
+      and is out of this scan's scope entirely — see GO-LIVE-CHECKLIST.md, which tracks keeping the
+      mongo image patched separately.
+    -->
+    <suppress>
+        <notes>MongoDB Server CVE matched to a Spring Boot module via a spurious mongodb:mongodb CPE.</notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-(starter-|data-)?mongodb@.*$</packageUrl>
+        <cve>CVE-2021-32036</cve>
+    </suppress>
+    <suppress>
+        <notes>MongoDB Server CVE (CISA KEV, server-side) matched to a Spring Boot module via a spurious CPE.</notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-(starter-|data-)?mongodb@.*$</packageUrl>
+        <cve>CVE-2025-14847</cve>
+    </suppress>
+    <suppress>
+        <notes>
+            MongoDB Server CVE: $_internalApplyOplogUpdate is an aggregation stage executed by
+            mongod. Matched to a Spring Boot module via a spurious CPE.
+        </notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-(starter-|data-)?mongodb@.*$</packageUrl>
+        <cve>CVE-2026-9753</cve>
+    </suppress>
+
+    <!--
+      CVE-2026-41717 is a real Spring Data MongoDB vulnerability — SpEL injection through a @Query
+      method using a capture-all placeholder — but it does not apply here, for two independent
+      reasons:
+
+        1. Affected versions are 5.0.0-5.0.5 and 4.5.0-4.5.x. This project resolves
+           spring-data-mongodb 5.1.0, outside both ranges. The scanner matched it only because the
+           spurious CPE above carries the Boot module version (4.1.0), not the real library version.
+        2. The vulnerable construct is absent: there is not a single @Query annotation in this
+           codebase. Repositories are derived-query or MongoTemplate-based throughout.
+
+      The second reason is the durable one; the first stops holding if the version ever moves
+      backwards.
+    -->
+    <suppress>
+        <notes>Spring Data MongoDB SpEL injection via @Query: resolved version 5.1.0 is outside the affected range, and no @Query exists in this codebase.</notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-(starter-|data-)?mongodb@.*$</packageUrl>
+        <cve>CVE-2026-41717</cve>
+    </suppress>
+
+    <!--
+      Same shape of mistake, different product: `micrometer-registry-prometheus` is matched to
+      `cpe:2.3:a:prometheus:prometheus`, as though the Micrometer client library were the Prometheus
+      server. CVE-2026-42154 is a memory-exhaustion flaw in the server's remote-read endpoint
+      (/api/v1/read) when decoding snappy-compressed bodies. This library has no such endpoint — it
+      only formats metrics for a scraper to read.
+
+      As above: the Prometheus *server* on the monitoring host is a separate thing, not covered by
+      this scan, and does need to be on 3.5.3 / 3.11.3 or later.
+    -->
+    <suppress>
+        <notes>Prometheus server remote-read CVE matched to the Micrometer client registry via a spurious prometheus:prometheus CPE.</notes>
+        <packageUrl regex="true">^pkg:maven/io\.micrometer/micrometer-registry-prometheus@.*$</packageUrl>
+        <cve>CVE-2026-42154</cve>
+    </suppress>
+
+</suppressions>

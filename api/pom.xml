@@ -24,6 +24,13 @@
     <!-- Where the shipped UI bundles live relative to this module. Overridden in the Docker
          build, whose context root is the repository root. -->
     <abofonsa.i18n.dir>${project.basedir}/../web/public/i18n</abofonsa.i18n.dir>
+    <!-- Ahead of what Boot 4.1.0 pins (11.0.22). The OWASP scan found five CVEs against that
+         version, four of them rated 9.1 — CVE-2026-53434 (CRL handling on FFM connectors),
+         CVE-2026-55276 and CVE-2026-53404 (effective web.xml logging omits security constraints),
+         CVE-2026-59083 (URL hex-encoding) and CVE-2026-59084 (EncryptInterceptor configuration).
+         Apache fixed the last of them in 11.0.24. Remove this override once the Boot parent
+         catches up; leaving a manual pin behind is how a dependency silently goes backwards. -->
+    <tomcat.version>11.0.24</tomcat.version>
   </properties>
 
   <dependencies>
@@ -230,9 +237,21 @@
               <!-- Spec's threshold: anything High or worse fails the build. -->
               <failBuildOnCVSS>7</failBuildOnCVSS>
               <nvdApiKey>${nvd.api.key}</nvdApiKey>
+              <!-- Each entry names one CVE against one artifact and states why it does not
+                   apply; see the file for the evidence. -->
+              <suppressionFiles>
+                <suppressionFile>${project.basedir}/dependency-check-suppressions.xml</suppressionFile>
+              </suppressionFiles>
               <!-- Test-scope CVEs cannot reach production and would otherwise block releases on
                    findings in Testcontainers' transitive tree. -->
               <skipTestScope>true</skipTestScope>
+              <!-- Sonatype's OSS Index now rejects anonymous callers with a 401, which
+                   dependency-check surfaces as a fatal analysis exception — so the build's outcome
+                   would depend on a third party's rate limiter rather than on this project's
+                   dependencies. NVD remains the data source and is the one the CVSS >= 7 gate
+                   reads. Re-enable with <ossindexAnalyzerUsername>/<ossindexAnalyzerPassword> if
+                   a Sonatype account is ever provisioned; it adds coverage NVD lacks. -->
+              <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
               <formats>
                 <format>HTML</format>
                 <format>SARIF</format>
