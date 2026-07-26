@@ -198,5 +198,30 @@ a restore.
   single-core host — the healthcheck allows 120 s before reporting unhealthy.
 - **The API publishes no port.** It is reachable only through the web container's `/api` proxy and,
   on the monitoring network, for scraping. That is deliberate: `/actuator` must not be public.
+- **`BOOTSTRAP_ADMIN_PASSWORD` is only meaningful at seed time**, and this catches people out.
+  `V008_seed_admin_user` hashes it into the admin record on first boot and is then recorded in
+  `schemaMigrations`, so it never runs again. Changing the value in `.env` afterwards does nothing;
+  a container started later can carry a valid-looking value that has no relationship to the stored
+  hash. Only the BCrypt hash is ever persisted, so a lost bootstrap password is lost for good.
+
+  If nobody can sign in, reset the account rather than hunting for the old value. This **deletes**
+  the unusable admin so the seeder recreates it from the current `.env`:
+
+  ```bash
+  ssh webserver "docker exec hc_abofonsa_mongo mongosh abofonsa --quiet --eval '
+    db.adminUsers.deleteMany({username: \"admin\"});
+    db.schemaMigrations.deleteOne({_id: \"V008_seed_admin_user\"});'"
+  ssh webserver 'cd ~/webroot/01-healthconnect/abofonsa && docker compose --env-file .env -f compose.yml restart api'
+  ```
+
+  The recreated account keeps `mustChangePassword=true`, so first login still has to rotate it.
+  Other admin users are untouched. `./deploy.sh --recover` now probes this and says so explicitly
+  rather than handing over a password that cannot work.
+
+- **A container name with underscores makes Tomcat answer 400.** `hc_abofonsa_api` is not a legal
+  hostname, so `curl http://hc_abofonsa_api:8080/...` from inside the network is rejected before
+  Spring sees it, with an HTML error page rather than our problem document. Address the API by its
+  compose service alias — `http://api:8080` — when testing from another container.
+
 - **Rotate `BOOTSTRAP_ADMIN_PASSWORD` at first login.** The account is created with
   `mustChangePassword=true`, so the CMS forces it — the go-live checklist confirms it was done.

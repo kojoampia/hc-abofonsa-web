@@ -264,6 +264,51 @@ REMOTE_SCRIPT
     && ok "compose.yml + .env resolve cleanly" \
     || die "the recovered files do not resolve - inspect $REMOTE_DIR/.env by hand"
 
+  # JWT_SIGNING_KEY and ENQUIRY_IP_SALT are recovered soundly, because the live container is
+  # *using* them right now - its copy is the truth by definition.
+  #
+  # BOOTSTRAP_ADMIN_PASSWORD is different in kind, and assuming otherwise is a trap this script
+  # walked into once. It matters only at seed time: V008 hashes it into the admin record on first
+  # boot and is then recorded in `schemaMigrations`, never to run again. A container started later
+  # can therefore carry a perfectly valid-looking value that has nothing to do with the stored
+  # hash - which is exactly what happens when a failed deploy recreates the stack with a freshly
+  # generated .env. Recovering that value silently would hand over a password that cannot work.
+  #
+  # So it is tested, on the server, against the running API. Addressed by the compose service
+  # alias rather than the container name: `hc_abofonsa_api` contains underscores, which are illegal
+  # in a hostname, and Tomcat rejects the request with a bare 400 before Spring ever sees it.
+  step "Checking the recovered admin password actually works"
+  RECOVERED_LOGIN_CODE="$(remote "cd $REMOTE_DIR && python3 -c \"
+import json,re,pathlib
+env=dict(re.match(r'^([A-Z_]+)=(.*)\$', l).groups() for l in pathlib.Path('.env').read_text().splitlines() if re.match(r'^[A-Z_]+=', l))
+pathlib.Path('/tmp/.abofonsa-login-probe.json').write_text(json.dumps({'username':'admin','password':env['BOOTSTRAP_ADMIN_PASSWORD']}))
+\" && docker run --rm --network $APP_NETWORK -v /tmp/.abofonsa-login-probe.json:/p.json:ro curlimages/curl:latest \
+       -s -o /dev/null -w '%{http_code}' -X POST http://api:8080/api/v1/admin/auth/login \
+       -H 'Content-Type: application/json' --data-binary @/p.json; rm -f /tmp/.abofonsa-login-probe.json" || echo "000")"
+
+  case "$RECOVERED_LOGIN_CODE" in
+    200) ok "BOOTSTRAP_ADMIN_PASSWORD authenticates - CMS access is intact" ;;
+    401)
+      note_warning "the recovered BOOTSTRAP_ADMIN_PASSWORD does NOT authenticate"
+      echo "      This value is not the one the admin account was seeded with, so nobody can sign"
+      echo "      in to the CMS. It is not recoverable: only its BCrypt hash was ever stored, and"
+      echo "      V008_seed_admin_user is already recorded in schemaMigrations, so it will not"
+      echo "      re-run on its own."
+      echo ""
+      echo "      To reset the account to the password now in .env - this DELETES the unusable"
+      echo "      admin user and lets the seeder recreate it, so run it deliberately:"
+      echo ""
+      echo "        ssh $SSH_HOST \"docker exec $MONGO_CONTAINER mongosh abofonsa --quiet --eval '"
+      echo "          db.adminUsers.deleteMany({username: \\\"admin\\\"});"
+      echo "          db.schemaMigrations.deleteOne({_id: \\\"V008_seed_admin_user\\\"});'\""
+      echo "        ssh $SSH_HOST 'cd $REMOTE_DIR && docker compose --env-file .env -f compose.yml restart api'"
+      echo ""
+      echo "      The recreated account keeps mustChangePassword=true, so the first login must"
+      echo "      still rotate it. Any other admin users are untouched."
+      ;;
+    *) note_warning "could not verify BOOTSTRAP_ADMIN_PASSWORD (login probe returned $RECOVERED_LOGIN_CODE)" ;;
+  esac
+
   PREVIOUS_TAG="$(in_dir "grep -E '^TAG=' .env | cut -d= -f2" || true)"
   echo "  recovered tag: ${BOLD}${PREVIOUS_TAG}${RESET}"
   TAG="$PREVIOUS_TAG"

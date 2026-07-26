@@ -11,7 +11,7 @@ name: hc-abofonsa
 services:
   mongo:
     image: mongo:8.3
-    container_name: hc_abofonsa_mongo
+    container_name: abofonsa-mongodb
     restart: unless-stopped
     # A replica set even with one member: publishing content uses multi-document transactions, and
     # MongoDB only offers those on a replica set. `mongo-init` below performs the one-time
@@ -32,7 +32,7 @@ services:
 
   mongo-init:
     image: mongo:8.3
-    container_name: hc_abofonsa_mongo_init
+    container_name: abofonsa-mongodb-init
     depends_on:
       mongo:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
 
   api:
     image: ${REGISTRY:-docker.jojoaddison.net}/abofonsa-api:${TAG:-latest}
-    container_name: hc_abofonsa_api
+    container_name: abofonsa-api
     restart: unless-stopped
     depends_on:
       mongo-init:
@@ -97,7 +97,7 @@ services:
 
   web:
     image: ${REGISTRY:-docker.jojoaddison.net}/abofonsa-web:${TAG:-latest}
-    container_name: hc_abofonsa_web
+    container_name: abofonsa-web
     restart: unless-stopped
     depends_on:
       api:
