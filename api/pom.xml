@@ -199,4 +199,47 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- Dependency vulnerability scan (plan task 106). Kept in a profile, not the default build:
+         it downloads and updates a multi-hundred-megabyte NVD mirror, which is right for CI and
+         wrong for `./mvnw verify` on a laptop. Run it with `./mvnw verify -Psecurity`.
+
+         The NVD API has required a key since late 2023 - without one the update is rate-limited to
+         the point of timing out. CI passes it as NVD_API_KEY; locally the property is simply empty
+         and the plugin falls back to the (slow) unauthenticated path. -->
+    <profile>
+      <id>security</id>
+      <properties>
+        <nvd.api.key/>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.owasp</groupId>
+            <artifactId>dependency-check-maven</artifactId>
+            <version>12.1.0</version>
+            <configuration>
+              <!-- Spec's threshold: anything High or worse fails the build. -->
+              <failBuildOnCVSS>7</failBuildOnCVSS>
+              <nvdApiKey>${nvd.api.key}</nvdApiKey>
+              <!-- Test-scope CVEs cannot reach production and would otherwise block releases on
+                   findings in Testcontainers' transitive tree. -->
+              <skipTestScope>true</skipTestScope>
+              <formats>
+                <format>HTML</format>
+                <format>SARIF</format>
+              </formats>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>verify</phase>
+                <goals><goal>check</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

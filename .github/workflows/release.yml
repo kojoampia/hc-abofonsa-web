@@ -1,0 +1,151 @@
+# Main-branch delivery pipeline (plan.md Phase 18 task 109, spec §12.2).
+#
+#   build-images → deploy-staging → smoke-test → [manual approval] → deploy-production
+#
+# The approval gate is a GitHub *environment* protection rule, not a step in this file: a job that
+# targets `environment: production` will not start until a required reviewer approves it, and that
+# rule lives in repo settings where a workflow edit cannot quietly remove it. Configuring it is a
+# one-time manual step — see CONTRIBUTING.md "Branch protection". Until it is configured, this
+# workflow builds and pushes images and stops before staging, because neither environment's
+# secrets exist yet.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  # Re-running a release for an already-merged commit should not require an empty push.
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false # never interrupt a deployment mid-flight
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}
+
+jobs:
+  build-images:
+    name: Build and push images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tagged with the commit SHA — the deploy step pins that exact digest, so what was tested is
+      # what runs. `latest` is a convenience for humans, never what production resolves.
+      - name: Build and push the API image
+        uses: docker/build-push-action@v6
+        with:
+          # Repository root: the API image needs web/public/i18n (see api/Dockerfile).
+          context: .
+          file: api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/abofonsa-api:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/abofonsa-api:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build and push the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/abofonsa-web:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/abofonsa-web:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: build-images
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          # IMAGE_TAG pins both services to this commit; `./start` is the same script the runbook
+          # uses by hand, so an automated deploy and a manual one cannot drift apart.
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.STAGING_PATH }}
+            export IMAGE_TAG=${{ needs.build-images.outputs.sha }}
+            docker compose pull
+            ./start
+
+  smoke-test:
+    name: Smoke test staging
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      # Deliberately not the full Playwright suite: this asks only "did this deployment come up and
+      # serve real content", which is what distinguishes a bad deploy from a bad commit. The suite
+      # already ran against this SHA in CI.
+      - name: The site renders and the API serves published content
+        run: |
+          set -euo pipefail
+          base="${{ vars.STAGING_URL }}"
+          for locale in en es fr de; do
+            path=$([ "$locale" = en ] && echo "/" || echo "/$locale")
+            code=$(curl -fsS -o /tmp/page.html -w '%{http_code}' "${base}${path}")
+            echo "GET ${path} -> ${code}"
+            grep -q "<html lang=\"${locale}\"" /tmp/page.html \
+              || { echo "::error::${path} did not render lang=${locale}"; exit 1; }
+          done
+          curl -fsS "${base}/api/v1/health" | grep -q '"status":"UP"' \
+            || { echo "::error::API health is not UP"; exit 1; }
+          curl -fsS "${base}/api/v1/content/site?locale=en" | grep -q '"siteSettings"' \
+            || { echo "::error::content API returned no site payload"; exit 1; }
+
+  deploy-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: [build-images, smoke-test]
+    # Blocks here until a required reviewer approves, per the `production` environment's protection
+    # rule. This is the gate spec §12.2 asks for.
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.PRODUCTION_PATH }}
+            export IMAGE_TAG=${{ needs.build-images.outputs.sha }}
+            docker compose pull
+            ./start
+
+      - name: Verify production is serving
+        run: |
+          set -euo pipefail
+          base="${{ vars.PRODUCTION_URL }}"
+          curl -fsS "${base}/api/v1/health" | grep -q '"status":"UP"'
+          curl -fsS -o /dev/null -w 'home %{http_code}\n' "${base}/"

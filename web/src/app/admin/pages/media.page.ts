@@ -81,7 +81,7 @@ export class MediaPage {
   protected readonly assets = computed(() => this.list.value() ?? []);
   protected readonly referencedBy = computed(
     () =>
-      (this.deleteProblem()?.raw['referencedBy'] as Array<{ entityType: string; entityId: string }> | undefined) ?? [],
+      (this.deleteProblem()?.raw['referencedBy'] as { entityType: string; entityId: string }[] | undefined) ?? [],
   );
 
   async upload(event: Event): Promise<void> {

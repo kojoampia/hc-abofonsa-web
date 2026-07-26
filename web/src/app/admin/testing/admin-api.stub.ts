@@ -52,7 +52,7 @@ export interface AdminApiStubOptions {
 /** A hand-rolled AdminApi double — records calls so tests can assert what the CMS actually
  * sent, not just what it rendered. */
 export class AdminApiStub implements Partial<AdminApi> {
-  readonly calls: Array<{ method: string; args: unknown[] }> = [];
+  readonly calls: { method: string; args: unknown[] }[] = [];
 
   constructor(private readonly options: AdminApiStubOptions = {}) {}
 

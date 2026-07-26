@@ -39,15 +39,15 @@ describe('ContentEditorPage field kinds', () => {
   }
 
   // The editor's field API is protected; tests reach it the same way the template does.
-  type EditorApi = {
+  interface EditorApi {
     activeLocale: { set: (l: string) => void };
     textValue: (f: { key: string }) => string;
     numberValue: (f: { key: string }) => number | null;
     boolValue: (f: { key: string }) => boolean;
     localizedValue: (f: { key: string }) => string;
     stringList: (f: { key: string }) => string[];
-    localizedList: (f: { key: string }) => Array<Record<string, string>>;
-    itemList: (f: { key: string }) => Array<Record<string, unknown>>;
+    localizedList: (f: { key: string }) => Record<string, string>[];
+    itemList: (f: { key: string }) => Record<string, unknown>[];
     setText: (f: { key: string; readonly?: boolean }, v: string) => void;
     setNumber: (f: { key: string }, v: number) => void;
     setBool: (f: { key: string }, v: boolean) => void;
@@ -63,7 +63,7 @@ describe('ContentEditorPage field kinds', () => {
     documentSnapshot: () => Record<string, unknown>;
     englishOf: (f: { key: string }) => string;
     save: () => Promise<boolean>;
-  };
+  }
   const api = (fixture: ComponentFixture<ContentEditorPage>) => fixture.componentInstance as unknown as EditorApi;
 
   it('plain text, number and boolean fields round-trip, including nested dot paths', async () => {

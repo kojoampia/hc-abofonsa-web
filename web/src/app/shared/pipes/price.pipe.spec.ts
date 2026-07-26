@@ -15,7 +15,7 @@ describe('PlanPricePipe (spec §10.5)', () => {
   });
 
   // The §10.5 table: amount pre-formatted per locale by the API; the symbol leads only in English.
-  const cases: Array<[Locale, string, string]> = [
+  const cases: [Locale, string, string][] = [
     ['en', '5,000', 'GH₵5,000'],
     ['es', '5.000', '5.000 GH₵'],
     ['fr', '5 000', '5 000 GH₵'],

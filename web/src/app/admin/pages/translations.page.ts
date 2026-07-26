@@ -125,7 +125,7 @@ export class TranslationsPage {
   protected readonly locale = signal<Locale>('es');
   protected readonly missingOnly = signal(false);
   protected readonly staged = signal(new Map<string, string>());
-  protected readonly importDiff = signal<Array<{ key: string; from: string; to: string }> | null>(null);
+  protected readonly importDiff = signal<{ key: string; from: string; to: string }[] | null>(null);
 
   private readonly english = rxResource({ stream: () => this.api.i18nOverrides('en') });
   private readonly current = rxResource({
@@ -219,7 +219,7 @@ export class TranslationsPage {
     this.importDiff.set(this.diffAgainstCurrent(imported));
   }
 
-  diffAgainstCurrent(imported: Record<string, string>): Array<{ key: string; from: string; to: string }> {
+  diffAgainstCurrent(imported: Record<string, string>): { key: string; from: string; to: string }[] {
     const known = new Map(this.rows().map((row) => [row.key, row.value]));
     return Object.entries(imported)
       .filter(([key]) => known.has(key))

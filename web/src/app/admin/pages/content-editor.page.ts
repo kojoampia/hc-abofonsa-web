@@ -338,8 +338,8 @@ export class ContentEditorPage implements UnsavedChangesAware {
     return (deepGet(this.documentSnapshot(), field.key) as Localized[]) ?? [];
   }
 
-  protected itemList(field: FieldDef): Array<Record<string, unknown>> {
-    return (deepGet(this.documentSnapshot(), field.key) as Array<Record<string, unknown>>) ?? [];
+  protected itemList(field: FieldDef): Record<string, unknown>[] {
+    return (deepGet(this.documentSnapshot(), field.key) as Record<string, unknown>[]) ?? [];
   }
 
   // --- mutations -------------------------------------------------------------------------

@@ -130,8 +130,8 @@ describe('BrandCarousel (spec §6.1 C-1..C-9)', () => {
     const region = fixture.nativeElement.querySelector('section[role="group"]') as HTMLElement;
     const touch = (type: string, clientX: number) => {
       const event = new Event(type, { bubbles: true }) as TouchEvent & {
-        touches: Array<{ clientX: number }>;
-        changedTouches: Array<{ clientX: number }>;
+        touches: { clientX: number }[];
+        changedTouches: { clientX: number }[];
       };
       Object.defineProperty(event, 'touches', { value: [{ clientX }] });
       Object.defineProperty(event, 'changedTouches', { value: [{ clientX }] });

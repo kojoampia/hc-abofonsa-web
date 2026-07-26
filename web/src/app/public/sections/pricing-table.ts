@@ -4,7 +4,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
 import { PlanPricePipe } from '../../shared/pipes/price.pipe';
 import { Plan, PlanComparison } from '../../core/api/site-content.model';
 
-const COMPARISON_ROWS: Array<{ key: keyof PlanComparison; labelKey: string }> = [
+const COMPARISON_ROWS: { key: keyof PlanComparison; labelKey: string }[] = [
   { key: 'visitsPerWeek', labelKey: 'pricing.rows.visits' },
   { key: 'medicalSupport', labelKey: 'pricing.rows.medical' },
   { key: 'auxiliary', labelKey: 'pricing.rows.auxiliary' },

@@ -37,9 +37,11 @@ workaround (the same one `hc-crowdfund-app`'s `deploy.sh` documents).
 |---|---|---|
 | Backend | `cd api && ./mvnw verify` | **The single backend "everything green" command** (plan task 58): unit + Testcontainers integration tests, JaCoCo 80% line-coverage gate, Spotless formatting. Requires Docker running and `JAVA_HOME` pointed at a JDK 25 install if your default `java` differs. From a fresh clone: `docker compose up -d mongo` is *not* needed — tests provision their own MongoDB via Testcontainers. |
 | Frontend unit | `cd web && npm test -- --coverage` | Added in plan.md Phase 15 (task 91) |
-| Frontend lint | `cd web && npm run lint` | Added in plan.md Phase 9 |
+| Frontend lint | `cd web && npm run lint` | angular-eslint. Added in plan.md Phase 18 (task 107) — the Phase 9 scaffold never actually wired a lint target, so this table previously promised a command that did not exist. Component/directive selectors are checked against the `abc` prefix, not the schematic default `app`. |
 | i18n key-parity check | `node web/scripts/check-i18n.mjs` | Added in plan.md Phase 13 (task 82) |
-| E2E (Playwright) | `cd web && npx playwright test` | Added in plan.md Phase 16 |
+| E2E (Playwright) | `cd web && npm run e2e` | Added in plan.md Phase 16. Needs the full stack up (`docker compose up -d --build --wait`). `npm run e2e:update-snapshots` regenerates visual baselines — review the image diff before committing one. |
+| Performance budget | `cd web && npm run build -- --stats-json && npm run check-bundle-size` | Added in plan.md Phase 18 (task 107). Fails over 220 kB gzipped initial JS, or if any CMS code reaches the initial bundle (spec §13.1). |
+| Dependency vulnerabilities | `cd api && ./mvnw verify -Psecurity` | Added in plan.md Phase 18 (task 106). Fails on CVSS >= 7. Behind a profile because it downloads the NVD database; set `-Dnvd.api.key=...` or expect it to be slow. |
 
 ## Toolchain deviations from the technical spec (found during implementation)
 
@@ -75,11 +77,32 @@ fresh:
   `docker build -f api/Dockerfile .`; `docker build api/` will not work. The `abofonsa.i18n.dir`
   Maven property makes the location overridable, and the copy no-ops in an api-only checkout.
 
-## Branch protection
+## Branch protection and release settings
 
-Once the CI jobs in plan.md Phase 18 (backend, frontend, e2e) are green on `main`, enable branch
-protection requiring all three to pass before merge. This is a GitHub repo-settings action, not
-something automatable from this codebase — a manual follow-up, not a CI task.
+These are GitHub repo-settings actions. They cannot be automated from this codebase, and that is
+deliberate for the approval gate — a protection rule that a workflow edit could remove is not a
+gate. Someone has to do these by hand, once.
+
+**Branch protection on `main`** — require these four checks to pass before merge:
+
+- `Backend (mvn verify)`
+- `Backend dependency vulnerabilities (CVSS >= 7 fails)`
+- `Frontend (lint, test, i18n, build, budget)`
+- `E2E (Playwright against docker compose)`
+
+**Environments** (Settings → Environments), which `.github/workflows/release.yml` targets:
+
+| Environment | Protection | Secrets | Variables |
+|---|---|---|---|
+| `staging` | none | `STAGING_HOST`, `STAGING_USER`, `STAGING_SSH_KEY`, `STAGING_PATH` | `STAGING_URL` |
+| `production` | **Required reviewers** — this is spec §12.2's manual approval gate | `PRODUCTION_HOST`, `PRODUCTION_USER`, `PRODUCTION_SSH_KEY`, `PRODUCTION_PATH` | `PRODUCTION_URL` |
+
+**Repository secret**: `NVD_API_KEY` — free from <https://nvd.nist.gov/developers/request-an-api-key>.
+Without it the dependency-check job still runs but is rate-limited to the point of timing out.
+
+Until the environments exist, `release.yml` builds and pushes images to GHCR and then stops: the
+deploy jobs have nothing to connect to. That is the intended state before Phase 20 provisions the
+server, not a misconfiguration.
 
 ## Production deployment
 

@@ -87,7 +87,7 @@ export class PreviewContentStore {
           priceCurrency: 'GHS',
           priceNote: resolve(document['priceNote']),
           featured: Boolean(document['featured']),
-          features: ((document['features'] as Array<Record<string, unknown>>) ?? []).map((feature) => ({
+          features: ((document['features'] as Record<string, unknown>[]) ?? []).map((feature) => ({
             label: resolve(feature['label']),
             included: Boolean(feature['included']),
             emphasised: Boolean(feature['emphasised']),
@@ -135,7 +135,7 @@ export class PreviewContentStore {
           heading: resolve(document['heading']),
           subheading: resolve(document['subheading']),
           body: resolve(document['body']),
-          items: ((document['items'] as Array<Record<string, unknown>>) ?? []).map((item) => ({
+          items: ((document['items'] as Record<string, unknown>[]) ?? []).map((item) => ({
             key: String(item['key'] ?? ''),
             icon: String(item['icon'] ?? ''),
             title: resolve(item['title']),

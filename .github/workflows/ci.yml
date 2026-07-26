@@ -1,5 +1,9 @@
-# CI pipeline skeleton (plan.md Phase 0 task 4). Stage names mirror spec §12.2; job bodies are
-# filled in as the corresponding phase lands the tooling they depend on (plan.md Phase 18).
+# CI pipeline (plan.md Phase 18, spec §12.2).
+#
+# Deliberately independent jobs so a failure names its own cause: `backend`, `dependency-check` and
+# `frontend` run in parallel on every push and PR, and `e2e` runs the real stack afterwards. That
+# isolation is the point of task 106-108's verification — breaking a backend rule must not turn the
+# frontend job red, or neither signal means anything.
 name: CI
 
 on:
@@ -7,22 +11,109 @@ on:
   push:
     branches: [main]
 
+# A second push to the same branch makes the first one's result irrelevant; don't pay for it.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "25"
+  NODE_VERSION: "24"
+
 jobs:
   backend:
     name: Backend (mvn verify)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder — filled in by plan.md Phase 18 task 106
-        run: echo "backend CI not wired yet"
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          cache-dependency-path: api/pom.xml
+
+      # Testcontainers needs a Docker daemon; ubuntu-latest ships one.
+      - name: Unit + integration tests, JaCoCo 80% gate, Spotless
+        working-directory: api
+        run: ./mvnw -B verify
+
+  dependency-check:
+    name: Backend dependency vulnerabilities (CVSS >= 7 fails)
+    runs-on: ubuntu-latest
+    # Separate from `backend` so a newly published CVE — which appears without a line of code
+    # changing — does not mask a genuine test failure, and vice versa.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          cache-dependency-path: api/pom.xml
+
+      # The NVD mirror is expensive to rebuild; cache it and refresh incrementally.
+      - name: Cache the NVD database
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: nvd-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: nvd-${{ runner.os }}-
+
+      - name: OWASP dependency-check
+        working-directory: api
+        run: ./mvnw -B verify -Psecurity -DskipTests -Dnvd.api.key="${{ secrets.NVD_API_KEY }}"
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: api/target/dependency-check-report.*
+          if-no-files-found: ignore
 
   frontend:
-    name: Frontend (lint, test, i18n check, build)
+    name: Frontend (lint, test, i18n, build, budget)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder — filled in by plan.md Phase 18 task 107
-        run: echo "frontend CI not wired yet"
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+
+      # angular.json's coverageThresholds fail this step below the gate.
+      - name: Unit tests with coverage
+        working-directory: web
+        run: npm test -- --watch=false
+
+      - name: i18n key parity across all four locales
+        working-directory: web
+        run: npm run check-i18n
+
+      - name: Production build
+        working-directory: web
+        run: npm run build -- --stats-json
+
+      # Spec §13.1: initial JS under 220 kB gzipped, and the CMS must stay out of it.
+      - name: Performance budget
+        working-directory: web
+        run: npm run check-bundle-size
 
   e2e:
     name: E2E (Playwright against docker compose)
@@ -30,5 +121,49 @@ jobs:
     needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder — filled in by plan.md Phase 18 task 108
-        run: echo "e2e CI not wired yet"
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright's browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and start the full stack
+        run: docker compose up -d --build --wait
+
+      # `--wait` already blocks on the healthchecks; this prints *why* a service never became
+      # healthy instead of leaving an opaque timeout.
+      - name: Stack status
+        if: always()
+        run: docker compose ps
+
+      - name: Run the suite
+        working-directory: web
+        run: npx playwright test
+
+      - name: Upload the report and any failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            web/e2e/playwright-report
+            web/e2e/test-results
+          if-no-files-found: ignore
+
+      - name: Container logs (on failure)
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

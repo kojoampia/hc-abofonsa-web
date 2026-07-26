@@ -57,7 +57,7 @@ export interface EnquiryEntry {
   sourcePage: string | null;
   status: 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CLOSED';
   assignedTo: string | null;
-  notes: Array<{ at: string; by: string; text: string }>;
+  notes: { at: string; by: string; text: string }[];
   createdAt: string;
 }
 
@@ -70,9 +70,9 @@ export interface MediaEntry {
   height: number;
   blurHash: string;
   url: string;
-  variants: Array<{ label: string; width: number; url: string; bytes: number }>;
+  variants: { label: string; width: number; url: string; bytes: number }[];
   alt: Record<string, string>;
-  referencedBy: Array<{ entityType: string; entityId: string }>;
+  referencedBy: { entityType: string; entityId: string }[];
   createdAt: string;
 }
 

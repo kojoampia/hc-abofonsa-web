@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
+
 import { AdminApi } from '../core/admin-api';
 import { AdminApiStub, contentEntry, problem } from '../testing/admin-api.stub';
 import { translocoTesting } from '../../testing/site-content.fixture';

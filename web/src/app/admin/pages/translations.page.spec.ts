@@ -43,7 +43,7 @@ describe('TranslationsPage', () => {
       saveStaged: () => Promise<void>;
       revert: (key: string) => Promise<void>;
       coverage: () => number;
-      diffAgainstCurrent: (imported: Record<string, string>) => Array<{ key: string; from: string; to: string }>;
+      diffAgainstCurrent: (imported: Record<string, string>) => { key: string; from: string; to: string }[];
       importDiff: { set: (value: unknown) => void; (): unknown };
       applyImport: () => Promise<void>;
     };
