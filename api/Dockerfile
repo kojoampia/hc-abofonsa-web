@@ -16,6 +16,12 @@ FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=build /src/target/*.jar app.jar
+
+# OpenTelemetry Java agent, pinned to the same release hc-crowdfund-app runs on this host — a
+# shared collector is easier to reason about when every service instruments identically. The agent
+# is inert unless JAVA_TOOL_OPTIONS names it, which only infra/prod-server/compose.yml does, so
+# local compose and CI are unaffected by its presence.
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.9.0/opentelemetry-javaagent.jar otel-javaagent.jar
 # Media binaries live on the filesystem behind nginx (spec §8.2/§14.2 #6); this is a volume mount
 # point in compose/production so uploads survive container replacement.
 RUN mkdir -p /app/media-storage && chown -R app:app /app

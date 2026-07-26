@@ -87,14 +87,15 @@ jobs:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
-          # IMAGE_TAG pins both services to this commit; `./start` is the same script the runbook
-          # uses by hand, so an automated deploy and a manual one cannot drift apart.
+          # The SHA is written into .env so `./start` — the same script the runbook uses by hand —
+          # pulls exactly the images CI tested. An automated deploy and a manual one cannot drift.
           script: |
             set -euo pipefail
             cd ${{ secrets.STAGING_PATH }}
-            export IMAGE_TAG=${{ needs.build-images.outputs.sha }}
-            docker compose pull
-            ./start
+            # `TAG` is what infra/prod-server/compose.yml reads for both image references.
+            export TAG=${{ needs.build-images.outputs.sha }}
+            sed -i "s/^TAG=.*/TAG=${{ needs.build-images.outputs.sha }}/" .env
+            ./start   # pulls with --env-file .env, then recreates
 
   smoke-test:
     name: Smoke test staging
@@ -139,9 +140,10 @@ jobs:
           script: |
             set -euo pipefail
             cd ${{ secrets.PRODUCTION_PATH }}
-            export IMAGE_TAG=${{ needs.build-images.outputs.sha }}
-            docker compose pull
-            ./start
+            # `TAG` is what infra/prod-server/compose.yml reads for both image references.
+            export TAG=${{ needs.build-images.outputs.sha }}
+            sed -i "s/^TAG=.*/TAG=${{ needs.build-images.outputs.sha }}/" .env
+            ./start   # pulls with --env-file .env, then recreates
 
       - name: Verify production is serving
         run: |

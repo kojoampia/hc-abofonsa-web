@@ -1,0 +1,13 @@
+#!/bin/bash
+# Pulls the images for the tag named in .env and (re)starts the stack.
+# `--remove-orphans` is safe because compose.yml pins `name: hc-abofonsa`, so it can only ever
+# touch this project's own containers.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+docker compose --env-file .env -f compose.yml pull
+docker compose --env-file .env -f compose.yml up -d --remove-orphans --force-recreate
+
+echo ""
+echo "start done. Waiting for health..."
+docker compose --env-file .env -f compose.yml ps

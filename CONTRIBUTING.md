@@ -106,6 +106,24 @@ server, not a misconfiguration.
 
 ## Production deployment
 
-See `plan.md` Phase 20 and (once added) `infra/prod-server/` for the runbook deploying to
-`webserver` (`~/webroot/01-healthconnect/abofonsa/`), following the same conventions as
-`../hc-crowdfund-app`.
+**[`infra/PRODUCTION_DEPLOYMENT_PLAN.md`](infra/PRODUCTION_DEPLOYMENT_PLAN.md)** is the runbook —
+first-time setup, secrets, TLS, backups, routine deploys and rollback. It deploys to `webserver` at
+`~/webroot/01-healthconnect/abofonsa/`, following the same conventions as `../hc-crowdfund-app`.
+
+The deployable files live in `infra/prod-server/` and are shipped **as-is**. A change made only on
+the server is lost at the next deploy and never reviewed, so edits belong here.
+
+| File | Purpose |
+|---|---|
+| `compose.yml` | The production stack: mongo (replica set), api, web. Loopback-only ports; host nginx owns TLS. |
+| `.env.example` | Template for the server's `.env`. Generate the three secrets **on the server**. |
+| `infra.sh` | One-time: creates the `abofonsanet` network. |
+| `start` | Pull the tagged images and recreate the stack. Used by hand and by the release workflow. |
+| `backup.sh` | Nightly `mongodump` **plus** the media volume — the two are useless apart. 14-day retention. |
+| `nginx-abofonsa.conf` | Host nginx vhost (pre-certbot bootstrap; certbot rewrites it in place). |
+
+Observability config that the shared monitoring stack consumes lives in `infra/observability/`:
+Prometheus alert rules for all four spec §13.5 thresholds, and the blackbox uptime targets.
+
+Routine releases are automated (`.github/workflows/release.yml`): merge to `main` → SHA-tagged
+images → staging → smoke test → manual approval → production.

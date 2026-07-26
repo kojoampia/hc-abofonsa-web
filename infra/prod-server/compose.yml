@@ -1,0 +1,134 @@
+# Deployed as ~/webroot/01-healthconnect/abofonsa/compose.yml on webserver, following that host's
+# per-app convention (see ../PRODUCTION_DEPLOYMENT_PLAN.md and the sibling hc-crowdfund-app): a
+# dedicated external network, loopback-only published ports because host nginx owns TLS and public
+# routing, and container names prefixed to match this app.
+#
+# `name:` is pinned explicitly so `docker compose up -d --remove-orphans` (see ./start) can only
+# ever affect this project's containers — relying on the directory-derived default once cost the
+# sibling app an unrelated container that happened to share the name.
+name: hc-abofonsa
+
+services:
+  mongo:
+    image: mongo:8.3
+    container_name: hc_abofonsa_mongo
+    restart: unless-stopped
+    # A replica set even with one member: publishing content uses multi-document transactions, and
+    # MongoDB only offers those on a replica set. `mongo-init` below performs the one-time
+    # rs.initiate(); this flag alone does not.
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    networks:
+      - abofonsanet
+    volumes:
+      - mongo-data:/data/db
+    # Deliberately publishes no port. Nothing outside this network has any business reaching the
+    # database, and the backup script reaches it with `docker exec`.
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  mongo-init:
+    image: mongo:8.3
+    container_name: hc_abofonsa_mongo_init
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - abofonsanet
+    restart: "no"
+    # Idempotent: rs.status() throws only when the set has never been initiated, so a restart of
+    # the stack re-runs this container and it exits immediately without touching the existing set.
+    entrypoint: >
+      mongosh --host mongo:27017 --quiet --eval
+      "try { rs.status(); print('replica set already initialized'); }
+       catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }); print('replica set initiated'); }"
+
+  api:
+    image: ${REGISTRY:-ghcr.io/jojoaddison}/abofonsa-api:${TAG:-latest}
+    container_name: hc_abofonsa_api
+    restart: unless-stopped
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    networks:
+      - abofonsanet
+      # External, shared with the rest of this server's apps (~/webroot/00-admin/monitoring) —
+      # lets the API reach the OTel collector and lets Prometheus scrape /actuator/prometheus.
+      - monitoring
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_URI: mongodb://mongo:27017/abofonsa?replicaSet=rs0
+      # Fail fast and loudly rather than booting with a dev default: HS512 needs >= 64 bytes,
+      # generate with `openssl rand -base64 64`.
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env (openssl rand -base64 64)}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD in .env}
+      # Salts the per-IP hash behind enquiry rate limiting. Changing it resets every counter, and
+      # a predictable value would let the stored hashes be reversed to visitor IPs.
+      ENQUIRY_IP_SALT: ${ENQUIRY_IP_SALT:?Set ENQUIRY_IP_SALT in .env (openssl rand -base64 32)}
+      MEDIA_STORAGE_PATH: /app/media-storage
+      # OpenTelemetry agent, baked into the image but inert until named here — so this is the only
+      # deployment that pays its startup cost.
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75 -XX:+UseZGC -javaagent:/app/otel-javaagent.jar"
+      OTEL_SERVICE_NAME: hc-abofonsa-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production
+    volumes:
+      # Uploaded images must outlive the container — this is the only durable state outside Mongo.
+      - media-data:/app/media-storage
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      # Wide, because the OTel agent's bytecode instrumentation adds real boot latency on this
+      # single-core host — the sibling app measured minutes, not seconds, under load.
+      start_period: 120s
+
+  web:
+    image: ${REGISTRY:-ghcr.io/jojoaddison}/abofonsa-web:${TAG:-latest}
+    container_name: hc_abofonsa_web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - abofonsanet
+    environment:
+      # SSR runs in Node, where fetch has no origin, so the API base must be absolute.
+      API_URL: http://api:8080
+      # Angular 22's SSR rejects any Host it was not told to expect (its SSRF defence). These are
+      # the names this site is legitimately served under; nginx forwards the real one.
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-www.abofonsa.com,abofonsa.com}
+      PORT: "4000"
+    ports:
+      # Loopback only — host nginx (Certbot-managed TLS) is the sole thing on a public interface,
+      # matching every other app on this server.
+      - "127.0.0.1:${FRONTEND_PORT:-8082}:4000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  abofonsanet:
+    external: true
+  monitoring:
+    external: true
+
+volumes:
+  mongo-data:
+  media-data:
