@@ -56,7 +56,9 @@ rather than trusting the flag — this is one `curl` and it is the most visible 
 it is wrong.
 
 ```bash
-curl -s https://web.abofonsa.com/ | grep -i "demonstration" && echo "STILL PRESENT" || echo "clear"
+# Captured first: piping a large response into grep can misreport under `set -o pipefail`.
+home="$(curl -s https://web.abofonsa.com/)"
+grep -qi "demonstration" <<<"$home" && echo "STILL PRESENT" || echo "clear"
 ```
 
 *Where:* `web/src/environments/environment.ts`.

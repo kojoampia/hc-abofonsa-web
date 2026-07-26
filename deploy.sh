@@ -8,6 +8,7 @@
 #   TAG=a1b2c3d ./deploy.sh --skip-build   # roll back to a previous image
 #   ./deploy.sh --yes           # non-interactive; skips the prompts (NOT the certbot one)
 #
+#   ./deploy.sh --recover       # stack is running but its compose.yml/.env went missing
 #   ./deploy.sh --bootstrap     # FIRST-TIME INSTALL on a server with nothing deployed
 #   ./deploy.sh --bootstrap --with-nginx        # ... and install the host nginx site
 #   ./deploy.sh --bootstrap --with-nginx --with-tls   # ... and run certbot for the domain
@@ -37,7 +38,7 @@ API_CONTAINER="hc_abofonsa_api"
 WEB_CONTAINER="hc_abofonsa_web"
 MONGO_CONTAINER="hc_abofonsa_mongo"
 APP_NETWORK="abofonsanet"
-NGINX_CONF="nginx-abofonsa.conf"
+NGINX_CONF="abofonsa.conf"
 
 # The OTel javaagent baked into the API image costs real boot time on this single-core host.
 # This is expected, not a hang - see infra/prod-server/compose.yml's healthcheck comment.
@@ -50,6 +51,7 @@ SKIP_BUILD=false
 VERIFY_ONLY=false
 ASSUME_YES=false
 BOOTSTRAP=false
+RECOVER=false
 WITH_NGINX=false
 WITH_TLS=false
 
@@ -59,6 +61,7 @@ while [[ $# -gt 0 ]]; do
     --verify-only) VERIFY_ONLY=true; SKIP_BUILD=true ;;
     --yes|-y)      ASSUME_YES=true ;;
     --bootstrap)   BOOTSTRAP=true ;;
+    --recover)     RECOVER=true; SKIP_BUILD=true ;;
     --with-nginx)  WITH_NGINX=true ;;
     --with-tls)    WITH_TLS=true; WITH_NGINX=true ;;
     -h|--help)     sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -121,6 +124,9 @@ ssh -n -o BatchMode=yes -o ConnectTimeout=10 "$SSH_HOST" true 2>/dev/null \
   || die "cannot ssh to '$SSH_HOST' non-interactively. Check ~/.ssh/config and your agent."
 ok "ssh to $SSH_HOST works"
 
+CONTAINERS_EXIST=false
+remote "docker inspect $API_CONTAINER >/dev/null 2>&1" && CONTAINERS_EXIST=true
+
 if remote "test -f $REMOTE_DIR/compose.yml && test -f $REMOTE_DIR/.env"; then
   ok "remote deployment directory looks initialized"
   if $BOOTSTRAP; then
@@ -132,6 +138,36 @@ if remote "test -f $REMOTE_DIR/compose.yml && test -f $REMOTE_DIR/.env"; then
         Drop --bootstrap to deploy to it normally. If you really want to start over, remove
         $REMOTE_DIR (and its Docker volumes) on the server first, deliberately."
   fi
+elif $CONTAINERS_EXIST && $RECOVER; then
+  warn "config files are missing but the stack is running - recovering them"
+elif $CONTAINERS_EXIST; then
+  # The dangerous case, and the reason --recover exists: the stack is running but its compose.yml
+  # and .env are gone. Bootstrapping over this looks like the obvious move and is destructive:
+  #
+  #   - It generates a new BOOTSTRAP_ADMIN_PASSWORD, but the admin user was already seeded and the
+  #     changelog runner records V008 as applied, so it will NOT be re-seeded. The new password
+  #     matches nothing, and the old one is gone with the .env - CMS access is lost permanently.
+  #   - It generates a new JWT_SIGNING_KEY and ENQUIRY_IP_SALT, invalidating every session and
+  #     silently resetting every rate-limit bucket.
+  #
+  # The secrets are still recoverable, because the running containers hold them in their
+  # environment. --recover reconstructs .env from there instead of inventing new values.
+  die "$REMOTE_DIR has no compose.yml/.env, but $API_CONTAINER is running.
+
+        The stack is orphaned: it is serving, but nothing on the server can manage it - no
+        compose file to act on, and the secrets exist only inside the running containers.
+
+        Do NOT bootstrap over this. Bootstrapping would generate a new BOOTSTRAP_ADMIN_PASSWORD
+        that cannot match the already-seeded admin user (the migration will not re-run), and the
+        real one would be gone for good.
+
+        Run:  ./deploy.sh --recover
+        which rebuilds .env from the running containers' own environment and ships the missing
+        files back, changing no secret and restarting nothing."
+elif $RECOVER; then
+  die "--recover expects a running stack whose config files are missing, but $API_CONTAINER
+        does not exist. There is nothing to recover secrets from; use --bootstrap for a fresh
+        install."
 else
   $BOOTSTRAP || die "$REMOTE_DIR is missing compose.yml and/or .env, so there is nothing to update.
         For a first-time install, re-run with --bootstrap (add --with-nginx --with-tls to also
@@ -160,6 +196,76 @@ fi
 # --verify-only inspects whatever is already live, so the local checkout's commit is irrelevant -
 # without this the image-tag check below would "fail" simply because you have newer local commits.
 if $VERIFY_ONLY && [[ -n "$PREVIOUS_TAG" ]]; then
+  TAG="$PREVIOUS_TAG"
+fi
+
+# --- 1a. Recover an orphaned deployment --------------------------------------------------------
+# Puts the missing files back without touching the running containers. The secrets come out of the
+# API container's own environment, so they stay identical to what the database was seeded with -
+# which is the whole point, since a regenerated BOOTSTRAP_ADMIN_PASSWORD would match nothing.
+
+if $RECOVER; then
+  step "Recovering $REMOTE_DIR from the running stack"
+  echo "  Rebuilds compose.yml, start, infra.sh, backup.sh and .env."
+  echo "  Secrets are read from $API_CONTAINER's environment on the server and never leave it."
+  echo "  Nothing is restarted and no secret changes."
+  confirm "Proceed with recovery?"
+
+  remote "mkdir -p $REMOTE_DIR/backups"
+  scp -q infra/prod-server/compose.yml infra/prod-server/start \
+         infra/prod-server/infra.sh infra/prod-server/backup.sh "$SSH_HOST:$REMOTE_DIR/"
+  remote "chmod +x $REMOTE_DIR/start $REMOTE_DIR/infra.sh $REMOTE_DIR/backup.sh"
+  ok "restored compose.yml, start, infra.sh, backup.sh"
+
+  # Entirely server-side: docker inspect feeds the values straight into .env, so no secret is
+  # printed here or crosses the wire. The running image tag is recovered the same way, so the
+  # rebuilt .env pins exactly what is live rather than guessing `latest`.
+  # shellcheck disable=SC2087  # the inner heredoc must expand remotely
+  ssh "$SSH_HOST" \
+    "ENV_PATH=$REMOTE_DIR/.env API_CONTAINER='$API_CONTAINER' WEB_CONTAINER='$WEB_CONTAINER' \
+     REGISTRY='$REGISTRY' FRONTEND_PORT='$FRONTEND_PORT' STAMP='$(date -u +%Y-%m-%dT%H:%M:%SZ)' \
+     bash -s" <<'REMOTE_SCRIPT'
+set -euo pipefail
+umask 077
+
+envof() { docker inspect "$1" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$2=" | cut -d= -f2-; }
+
+JWT="$(envof "$API_CONTAINER" JWT_SIGNING_KEY)"
+BOOTSTRAP_PW="$(envof "$API_CONTAINER" BOOTSTRAP_ADMIN_PASSWORD)"
+SALT="$(envof "$API_CONTAINER" ENQUIRY_IP_SALT)"
+ALLOWED="$(envof "$WEB_CONTAINER" ALLOWED_HOSTS)"
+INDEXABLE="$(envof "$WEB_CONTAINER" SITE_INDEXABLE)"
+LIVE_TAG="$(docker inspect "$API_CONTAINER" --format '{{.Config.Image}}' | sed 's/.*://')"
+
+for pair in "JWT_SIGNING_KEY:$JWT" "BOOTSTRAP_ADMIN_PASSWORD:$BOOTSTRAP_PW" "ENQUIRY_IP_SALT:$SALT"; do
+  [ -n "${pair#*:}" ] || { echo "could not recover ${pair%%:*} from the container" >&2; exit 1; }
+done
+
+cat > "$ENV_PATH" <<ENVEOF
+# Rebuilt by deploy.sh --recover on $STAMP from the running containers' environment.
+# Every secret below is the value the live stack is already using - not a regenerated one.
+REGISTRY=$REGISTRY
+TAG=$LIVE_TAG
+FRONTEND_PORT=$FRONTEND_PORT
+
+JWT_SIGNING_KEY=$JWT
+BOOTSTRAP_ADMIN_PASSWORD=$BOOTSTRAP_PW
+ENQUIRY_IP_SALT=$SALT
+
+ALLOWED_HOSTS=${ALLOWED:-web.abofonsa.com}
+SITE_INDEXABLE=${INDEXABLE:-false}
+ENVEOF
+chmod 600 "$ENV_PATH"
+echo "recovered TAG=$LIVE_TAG"
+REMOTE_SCRIPT
+  ok "rebuilt .env (mode 600) from the live containers - no secret changed"
+
+  in_dir "docker compose --env-file .env -f compose.yml config >/dev/null" \
+    && ok "compose.yml + .env resolve cleanly" \
+    || die "the recovered files do not resolve - inspect $REMOTE_DIR/.env by hand"
+
+  PREVIOUS_TAG="$(in_dir "grep -E '^TAG=' .env | cut -d= -f2" || true)"
+  echo "  recovered tag: ${BOLD}${PREVIOUS_TAG}${RESET}"
   TAG="$PREVIOUS_TAG"
 fi
 
@@ -270,7 +376,7 @@ fi
 # infra/prod-server/ is the source of truth and the server's copies are downstream of it. Drift
 # here is silent and expensive.
 
-if ! $VERIFY_ONLY && ! $BOOTSTRAP; then
+if ! $VERIFY_ONLY && ! $BOOTSTRAP && ! $RECOVER; then
   step "Checking the server's compose.yml against infra/prod-server/compose.yml"
 
   if in_dir "cat compose.yml" | diff -q - infra/prod-server/compose.yml >/dev/null 2>&1; then
@@ -302,7 +408,7 @@ fi
 # --- 4. Check the server's .env for required keys ----------------------------------------------
 # Reads key names only - values stay on the server and are never printed or copied here.
 
-if ! $VERIFY_ONLY; then
+if ! $VERIFY_ONLY && ! $RECOVER; then
   step "Checking the server's .env"
 
   REMOTE_ENV_KEYS="$(in_dir "grep -oE '^[A-Z_]+' .env" | sort)"
@@ -344,7 +450,7 @@ fi
 if $BOOTSTRAP; then
   : # bootstrap already wrote TAG into the .env it generated; re-sed'ing it would only leave a
     # backup file holding a second copy of the freshly generated secrets.
-elif ! $VERIFY_ONLY; then
+elif ! $VERIFY_ONLY && ! $RECOVER; then
   step "Setting TAG=$TAG in the server's .env"
 
   if [[ "$PREVIOUS_TAG" == "$TAG" ]]; then
@@ -357,7 +463,7 @@ fi
 
 # --- 6. Pull and restart -----------------------------------------------------------------------
 
-if ! $VERIFY_ONLY; then
+if ! $VERIFY_ONLY && ! $RECOVER; then
   step "Pulling images and recreating the stack"
   if $BOOTSTRAP; then
     echo "  First start: pulls MongoDB and the app images, initialises the replica set, and seeds"
@@ -441,10 +547,16 @@ echo "  api image: $RUNNING_IMAGE"
 step "Internal checks (on the server, bypassing nginx and TLS)"
 # Split from the public checks deliberately: if these pass but the public ones fail, the problem is
 # nginx/TLS/DNS, not the app.
+#
+# The Host header is not optional here. Angular's SSR engine rejects any Host outside ALLOWED_HOSTS
+# (its SSRF defence), so a bare `curl 127.0.0.1:8082/` sends `Host: 127.0.0.1:8082` and gets a flat
+# 400 from a perfectly healthy container. nginx sets `Host: $http_host` when it proxies, so these
+# checks send the same thing — otherwise they test the allowlist rather than the application, and
+# report a broken deployment when nothing is wrong.
 check_internal() {
   local path="$1" desc="$2"
   local code
-  code="$(remote "curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://127.0.0.1:$FRONTEND_PORT$path" || echo "000")"
+  code="$(remote "curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H 'Host: $PUBLIC_HOST' http://127.0.0.1:$FRONTEND_PORT$path" || echo "000")"
   if [[ "$code" == "200" ]]; then ok "$desc -> 200"; else fail "$desc -> $code"; return 1; fi
 }
 check_internal "/"                              "home page (SSR)"
@@ -540,9 +652,16 @@ if ! $SKIP_PUBLIC; then
 
   # Each locale is an independently routed, server-rendered page (spec §5.4). A wrong `lang` means
   # SSR silently fell back to English, which no status code would reveal.
+  #
+  # The body is captured first rather than piped into grep. Under `set -o pipefail`, `curl | grep -q`
+  # is actively wrong: grep exits the instant it matches, curl is left writing into a closed pipe and
+  # fails with exit 23, and pipefail reports the *successful* match as a failed pipeline. It only
+  # shows up on responses big enough that curl is still writing — which is why the tiny header checks
+  # below always passed while this 240 kB page always "failed".
   for locale in en es fr de; do
     path=$([[ "$locale" == "en" ]] && echo "/" || echo "/$locale")
-    if curl -s --max-time 25 "$PUBLIC_URL$path" | grep -q "<html lang=\"$locale\""; then
+    page_html="$(curl -s --max-time 25 "$PUBLIC_URL$path" || true)"
+    if grep -q "<html lang=\"$locale\"" <<<"$page_html"; then
       ok "$path renders lang=\"$locale\""
     else
       fail "$path did not render lang=\"$locale\" - SSR locale resolution is broken"
@@ -551,7 +670,7 @@ if ! $SKIP_PUBLIC; then
   done
 
   # Publishing must be visible immediately, so the HTML must never be served stale from a cache.
-  CACHE_HEADER="$(curl -sI --max-time 20 "$PUBLIC_URL/" | grep -i '^cache-control:' | tr -d '\r' || true)"
+  CACHE_HEADER="$(grep -i '^cache-control:' <<<"$(curl -sI --max-time 20 "$PUBLIC_URL/" || true)" | tr -d '\r' || true)"
   if grep -qi 'no-cache' <<<"$CACHE_HEADER"; then
     ok "HTML revalidates (${CACHE_HEADER:-none})"
   else
@@ -559,7 +678,7 @@ if ! $SKIP_PUBLIC; then
   fi
 
   # Every response should carry a correlation id; support quotes it when reporting a problem.
-  if curl -sI --max-time 20 "$PUBLIC_URL/api/v1/health" | grep -qi '^x-request-id:'; then
+  if grep -qi '^x-request-id:' <<<"$(curl -sI --max-time 20 "$PUBLIC_URL/api/v1/health" || true)"; then
     ok "responses carry X-Request-Id"
   else
     note_warning "no X-Request-Id header - correlation ids are not reaching clients"
@@ -569,7 +688,7 @@ if ! $SKIP_PUBLIC; then
   # depends on whether this deployment is the announced site or a review of it. Getting it wrong is
   # silent and slow to undo in one direction, so it is stated plainly on every deploy.
   ROBOTS_TXT="$(curl -s --max-time 20 "$PUBLIC_URL/robots.txt" || true)"
-  ROBOTS_META="$(curl -s --max-time 25 "$PUBLIC_URL/" | grep -o '<meta name="robots"[^>]*>' | head -1 || true)"
+  ROBOTS_META="$(grep -o '<meta name="robots"[^>]*>' <<<"$(curl -s --max-time 25 "$PUBLIC_URL/" || true)" | head -1 || true)"
   if grep -q 'Disallow: /$' <<<"$ROBOTS_TXT"; then
     ok "search engines are excluded (robots.txt disallows all)"
     grep -q 'noindex' <<<"$ROBOTS_META" \

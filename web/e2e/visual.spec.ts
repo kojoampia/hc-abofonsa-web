@@ -33,6 +33,45 @@ for (const viewport of VIEWPORTS) {
   }
 }
 
+/**
+ * Dropping Tailwind's Preflight (spec §5.3) means every reset it would have applied has to be
+ * added back deliberately. Two were missed for links — colour, which axe-core caught as a contrast
+ * failure, and `text-decoration`, which no automated check flags because an underline is not an
+ * accessibility problem. It simply made the site look broken: the hero's call-to-action buttons,
+ * the header wordmark and the phone numbers all rendered with a user-agent underline through them,
+ * and the visual baselines were generated from that state, so they agreed with it.
+ *
+ * A pixel diff cannot catch a regression it was taught to expect, so this asserts the rule rather
+ * than the picture.
+ */
+test('links are not underlined unless a utility asks for it (guards the missing Preflight resets)', async ({
+  page,
+}) => {
+  await gotoLocale(page, 'en');
+
+  const decorationOf = (selector: string) =>
+    page.locator(selector).first().evaluate((el) => getComputedStyle(el).textDecorationLine);
+
+  for (const selector of [
+    'abc-top-contact-strip a',
+    'abc-site-header nav a',
+    'abc-site-header a[href$="#contact"]',
+    'abc-hero-section a[href$="#pricing"]',
+    'abc-hero-section a[href$="#how"]',
+    'abc-site-footer a',
+  ]) {
+    expect(await decorationOf(selector), `${selector} should not be underlined`).toBe('none');
+  }
+
+  // ...and the inverse: a link that opts in still gets one, so the reset did not simply disable
+  // underlines everywhere.
+  await page.goto('/no-such-page');
+  await expect(page.locator('abc-not-found-page a, main a').first()).toHaveCSS(
+    'text-decoration-line',
+    'underline',
+  );
+});
+
 test('Material controls keep their styling alongside Tailwind (guards R-1)', async ({ page }) => {
   await gotoLocale(page, 'en');
   await page.emulateMedia({ reducedMotion: 'reduce' });

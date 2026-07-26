@@ -116,9 +116,13 @@ jobs:
             grep -q "<html lang=\"${locale}\"" /tmp/page.html \
               || { echo "::error::${path} did not render lang=${locale}"; exit 1; }
           done
-          curl -fsS "${base}/api/v1/health" | grep -q '"status":"UP"' \
+          # Captured, not piped: under pipefail `curl | grep -q` reports a successful match as a
+          # failure, because grep closes the pipe and curl exits 23 still writing. See deploy.sh.
+          health="$(curl -fsS "${base}/api/v1/health")"
+          grep -q '"status":"UP"' <<<"$health" \
             || { echo "::error::API health is not UP"; exit 1; }
-          curl -fsS "${base}/api/v1/content/site?locale=en" | grep -q '"siteSettings"' \
+          payload="$(curl -fsS "${base}/api/v1/content/site?locale=en")"
+          grep -q '"siteSettings"' <<<"$payload" \
             || { echo "::error::content API returned no site payload"; exit 1; }
 
   deploy-production:
@@ -149,5 +153,6 @@ jobs:
         run: |
           set -euo pipefail
           base="${{ vars.PRODUCTION_URL }}"
-          curl -fsS "${base}/api/v1/health" | grep -q '"status":"UP"'
+          health="$(curl -fsS "${base}/api/v1/health")"
+          grep -q '"status":"UP"' <<<"$health"
           curl -fsS -o /dev/null -w 'home %{http_code}\n' "${base}/"

@@ -64,11 +64,19 @@
     background: var(--mat-sys-surface, #fff);
   }
 
-  /* Without Preflight, anchors keep the user-agent's #0000EE — which on the navy header and hero
-   * lands at 1.4:1 against their background, a WCAG AA failure axe-core catches on every page.
-   * Links take the colour of whatever section they sit in; the ones that want a different colour
-   * set a `text-*` utility, which wins from the later layer. */
+  /* Without Preflight, anchors keep the user-agent's defaults for both colour and underline.
+   *
+   * `color: inherit` was added when axe-core caught the colour half: #0000EE on the navy header
+   * and hero is 1.4:1, a WCAG AA failure. The underline half is not an accessibility failure, so
+   * nothing automated flagged it — it just made every link on the site wrong, including the ones
+   * styled as buttons: the hero's "View plans and pricing", the header wordmark and the phone
+   * numbers all rendered with a user-agent underline through them.
+   *
+   * `text-decoration: inherit` is what Preflight itself does. Links that genuinely want an
+   * underline ask for it with the `underline` / `hover:underline` utilities, which win from the
+   * later layer — so the 404 page's link and the footer's hover underlines are unaffected. */
   a {
     color: inherit;
+    text-decoration: inherit;
   }
 }

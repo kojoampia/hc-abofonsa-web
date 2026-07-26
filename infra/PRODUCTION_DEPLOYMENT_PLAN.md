@@ -89,9 +89,12 @@ docker compose --env-file .env -f compose.yml ps    # all three healthy
 Verify from the server itself, before nginx is involved:
 
 ```bash
-curl -sI 127.0.0.1:8082/ | head -1                                  # 200
-curl -s  127.0.0.1:8082/api/v1/health                               # {"status":"UP",...}
-curl -s  '127.0.0.1:8082/api/v1/content/site?locale=en' | head -c 200
+# The Host header matters: Angular SSR rejects any host outside ALLOWED_HOSTS with a bare 400,
+# so a plain `curl 127.0.0.1:8082/` looks broken even when the stack is perfectly healthy.
+# nginx sends this header when it proxies; these checks do the same.
+curl -sI -H 'Host: web.abofonsa.com' 127.0.0.1:8082/ | head -1        # 200
+curl -s     -H 'Host: web.abofonsa.com' 127.0.0.1:8082/api/v1/health  # {"status":"UP",...}
+curl -s     -H 'Host: web.abofonsa.com' '127.0.0.1:8082/api/v1/content/site?locale=en' | head -c 200
 docker exec hc_abofonsa_mongo mongosh --quiet --eval 'rs.status().myState'   # 1 = PRIMARY
 ```
 
