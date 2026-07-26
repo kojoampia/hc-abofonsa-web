@@ -9,7 +9,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
     @if (process(); as process) {
       <section id="how" class="py-16" aria-labelledby="process-heading">
         <div class="max-w-6xl mx-auto px-4 prose-reset">
-          <p class="text-brand-gold text-sm uppercase tracking-wide">{{ process.eyebrow }}</p>
+          <p class="text-brand-gold-ink text-sm uppercase tracking-wide">{{ process.eyebrow }}</p>
           <h2 id="process-heading" class="font-serif text-3xl text-brand-navy mt-1 mb-10">{{ process.heading }}</h2>
           <ol class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 list-none m-0 p-0">
             @for (step of process.items; track step.key; let i = $index) {

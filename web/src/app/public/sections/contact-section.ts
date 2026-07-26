@@ -39,7 +39,7 @@ import { EnquiryReceipt } from '../../core/api/site-content.model';
               <p class="prose-reset">
                 <b class="text-brand-navy block">{{ 'topbar.phoneLabel' | transloco }}</b>
                 @for (phone of settings.phones; track phone) {
-                  <a class="block hover:underline" href="tel:{{ phone }}">{{ phone }}</a>
+                  <a class="flex items-center min-h-6 hover:underline" href="tel:{{ phone }}">{{ phone }}</a>
                 }
               </p>
               <p class="prose-reset">

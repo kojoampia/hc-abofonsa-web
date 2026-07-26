@@ -4,6 +4,11 @@
 @theme {
   --color-brand-navy: var(--mat-sys-primary);
   --color-brand-gold: var(--mat-sys-tertiary);
+  /* Brand gold (#c59437) is a fill colour, not an ink one: against white it manages 2.7:1, well
+   * under the 4.5:1 WCAG AA demands of body text (spec §6.2). This is the same hue darkened until
+   * it passes (5.0:1 on white, 4.7:1 on cream), for gold text on light surfaces. On navy the brand
+   * gold itself already clears AA at 4.9:1, so dark sections keep using --color-brand-gold. */
+  --color-brand-gold-ink: #8c6927;
   --color-brand-surface: var(--mat-sys-surface);
   --color-brand-line: var(--mat-sys-outline-variant);
   --color-brand-body: #4a5462;

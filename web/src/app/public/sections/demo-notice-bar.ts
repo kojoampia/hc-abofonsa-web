@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
   imports: [TranslocoPipe],
   template: `
     @if (isDemo()) {
-      <div class="bg-brand-gold text-white text-center text-sm px-4 py-1.5" role="note">
+      <div class="bg-brand-gold text-brand-navy text-center text-sm px-4 py-1.5" role="note">
         {{ 'demo.banner' | transloco }}
       </div>
     }

@@ -14,7 +14,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
           <h2 id="cta-heading" class="font-serif text-3xl">{{ cta.heading }}</h2>
           <p class="text-white/85">{{ cta.body }}</p>
           <div class="flex flex-wrap justify-center gap-3">
-            <a href="#contact" class="bg-brand-gold text-white rounded px-5 py-3">{{ 'common.requestConsultation' | transloco }}</a>
+            <a href="#contact" class="bg-brand-gold text-brand-navy rounded px-5 py-3">{{ 'common.requestConsultation' | transloco }}</a>
             @if (store.settings(); as settings) {
               <a href="tel:{{ settings.phones[0] }}" class="border border-white/40 rounded px-5 py-3">
                 {{ settings.phones[0] }}

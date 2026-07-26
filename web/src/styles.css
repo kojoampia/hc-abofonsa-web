@@ -11,7 +11,7 @@
  *
  * Problem 3 (token drift) is solved in ./styles/brand.css.
  */
-@layer tailwind-theme, material, tailwind-utilities;
+@layer base, tailwind-theme, material, tailwind-utilities;
 
 @import 'tailwindcss/theme.css' layer(tailwind-theme);
 @import 'tailwindcss/utilities.css' layer(tailwind-utilities);
@@ -23,38 +23,52 @@
 
 @import './styles/brand.css';
 
-/* Minimal, scoped replacement for the parts of Preflight we do want. */
-:where(.prose-reset) h1,
-:where(.prose-reset) h2,
-:where(.prose-reset) h3,
-:where(.prose-reset) h4,
-:where(.prose-reset) p,
-:where(.prose-reset) ul,
-:where(.prose-reset) ol,
-:where(.prose-reset) figure,
-:where(.prose-reset) blockquote {
-  margin: 0;
-}
-
-*,
-::before,
-::after {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+/* Minimal, scoped replacement for the parts of Preflight we do want.
+ *
+ * These live in the `base` layer, first in the cascade order above, so Material's component CSS
+ * and Tailwind's utilities both override them. Left unlayered they would outrank every layer and
+ * reintroduce the exact problem dropping Preflight was meant to avoid. */
+@layer base {
+  :where(.prose-reset) h1,
+  :where(.prose-reset) h2,
+  :where(.prose-reset) h3,
+  :where(.prose-reset) h4,
+  :where(.prose-reset) p,
+  :where(.prose-reset) ul,
+  :where(.prose-reset) ol,
+  :where(.prose-reset) figure,
+  :where(.prose-reset) blockquote {
+    margin: 0;
   }
-}
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--color-brand-body, #4a5462);
-  background: var(--mat-sys-surface, #fff);
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--color-brand-body, #4a5462);
+    background: var(--mat-sys-surface, #fff);
+  }
+
+  /* Without Preflight, anchors keep the user-agent's #0000EE — which on the navy header and hero
+   * lands at 1.4:1 against their background, a WCAG AA failure axe-core catches on every page.
+   * Links take the colour of whatever section they sit in; the ones that want a different colour
+   * set a `text-*` utility, which wins from the later layer. */
+  a {
+    color: inherit;
+  }
 }

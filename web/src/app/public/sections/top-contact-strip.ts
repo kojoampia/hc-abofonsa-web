@@ -11,8 +11,8 @@ import { SiteContentStore } from '../../core/api/site-content.store';
     @if (store.settings(); as settings) {
       <div class="bg-brand-navy text-white text-sm">
         <div class="max-w-6xl mx-auto px-4 py-1.5 flex flex-wrap items-center gap-x-6 gap-y-1">
-          <a class="hover:underline" href="tel:{{ settings.phones[0] }}">{{ settings.phones[0] }}</a>
-          <a class="hover:underline hidden sm:inline" href="mailto:{{ settings.email }}">{{ settings.email }}</a>
+          <a class="hover:underline inline-flex items-center min-h-6" href="tel:{{ settings.phones[0] }}">{{ settings.phones[0] }}</a>
+          <a class="hover:underline hidden sm:inline-flex items-center min-h-6" href="mailto:{{ settings.email }}">{{ settings.email }}</a>
           <span class="ml-auto hidden md:inline text-white/80">{{ 'topbar.hoursLabel' | transloco }}</span>
         </div>
       </div>

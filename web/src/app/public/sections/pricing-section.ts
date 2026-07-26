@@ -24,7 +24,7 @@ import { PlanPricePipe } from '../../shared/pipes/price.pipe';
               [attr.data-plan]="plan.code"
             >
               @if (plan.featured) {
-                <span class="self-start text-xs font-bold uppercase tracking-wide bg-brand-gold text-white rounded px-2 py-1">
+                <span class="self-start text-xs font-bold uppercase tracking-wide bg-brand-gold text-brand-navy rounded px-2 py-1">
                   {{ 'pricing.mostChosen' | transloco }}
                 </span>
               }

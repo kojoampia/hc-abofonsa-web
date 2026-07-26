@@ -15,7 +15,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
             }
           </div>
           <div class="prose-reset flex flex-col gap-4">
-            <p class="text-brand-gold text-sm uppercase tracking-wide">{{ approach.eyebrow }}</p>
+            <p class="text-brand-gold-ink text-sm uppercase tracking-wide">{{ approach.eyebrow }}</p>
             <h2 id="approach-heading" class="font-serif text-3xl text-brand-navy">{{ approach.heading }}</h2>
             <ul class="grid gap-5 list-none m-0 p-0 mt-2">
               @for (feature of approach.items; track feature.key) {

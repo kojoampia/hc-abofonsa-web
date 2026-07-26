@@ -21,6 +21,9 @@
     <java.version>25</java.version>
     <maven.compiler.release>25</maven.compiler.release>
     <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
+    <!-- Where the shipped UI bundles live relative to this module. Overridden in the Docker
+         build, whose context root is the repository root. -->
+    <abofonsa.i18n.dir>${project.basedir}/../web/public/i18n</abofonsa.i18n.dir>
   </properties>
 
   <dependencies>
@@ -121,7 +124,9 @@
               <outputDirectory>${project.build.outputDirectory}/i18n</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.basedir}/../web/public/i18n</directory>
+                  <directory>${abofonsa.i18n.dir}</directory>
+                  <!-- Absent in an api-only checkout: the copy no-ops and I18nService degrades
+                       to an empty default key set rather than failing the build. -->
                   <includes><include>*.json</include></includes>
                 </resource>
               </resources>

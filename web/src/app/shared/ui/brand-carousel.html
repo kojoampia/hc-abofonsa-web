@@ -21,9 +21,15 @@
     data-testid="carousel-track"
   >
     @for (item of items(); track $index) {
+      <!-- APG's basic carousel: each slide is a labelled group with roledescription "slide". It is
+           deliberately not role="tabpanel" — that belongs to the tabbed-carousel variant, which
+           requires role="tab" dots with roving tabindex and aria-controls. Half-implementing it
+           (a tablist of plain buttons) is an aria-required-children failure, and the picker below
+           is a slide chooser, not a tab strip. -->
       <div
-        class="w-full shrink-0"
-        role="tabpanel"
+        class="w-full shrink-0 carousel-slide"
+        role="group"
+        aria-roledescription="slide"
         [attr.aria-hidden]="$index !== index() ? 'true' : null"
         [attr.inert]="$index !== index() ? '' : null"
         [attr.aria-label]="$index + 1 + ' / ' + count()"
@@ -50,7 +56,7 @@
     ›
   </button>
 
-  <div class="flex justify-center gap-2 mt-4" role="tablist">
+  <div class="flex justify-center gap-2 mt-4" role="group" [attr.aria-label]="'a11y.chooseSlide' | transloco">
     @for (item of items(); track $index) {
       <button
         type="button"

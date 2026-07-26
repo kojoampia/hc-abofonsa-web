@@ -23,7 +23,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
                 }
               </div>
               <div class="p-8 lg:p-11 flex flex-col justify-center prose-reset gap-4">
-                <span class="text-xs font-bold tracking-widest text-brand-gold">
+                <span class="text-xs font-bold tracking-widest text-brand-gold-ink">
                   {{ 'services.slideLabel' | transloco: { index: i + 1, total: store.services().length } }}
                 </span>
                 <h3 class="text-2xl text-brand-navy">{{ service.name }}</h3>

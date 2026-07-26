@@ -18,7 +18,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
             <p class="italic text-white/80">{{ hero.subheading }}</p>
             <p class="text-white/90 max-w-prose">{{ hero.body }}</p>
             <div class="flex flex-wrap gap-3 mt-2">
-              <a href="#pricing" class="bg-brand-gold text-white rounded px-5 py-3">{{ 'common.viewPlans' | transloco }}</a>
+              <a href="#pricing" class="bg-brand-gold text-brand-navy rounded px-5 py-3">{{ 'common.viewPlans' | transloco }}</a>
               <a href="#how" class="border border-white/40 rounded px-5 py-3">{{ 'common.howItWorks' | transloco }}</a>
             </div>
             <dl class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 border-t border-white/20 pt-6">

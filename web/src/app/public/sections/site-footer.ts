@@ -20,16 +20,16 @@ import { SiteContentStore } from '../../core/api/site-content.store';
           <p class="font-semibold text-white">{{ 'footer.servicesHeading' | transloco }}</p>
           <ul class="mt-3 grid gap-2 list-none m-0 p-0">
             @for (service of store.services(); track service.id) {
-              <li><a class="hover:underline" href="#services">{{ service.name }}</a></li>
+              <li><a class="hover:underline inline-flex items-center min-h-6" href="#services">{{ service.name }}</a></li>
             }
           </ul>
         </nav>
         <nav [attr.aria-label]="'footer.companyHeading' | transloco" class="prose-reset">
           <p class="font-semibold text-white">{{ 'footer.companyHeading' | transloco }}</p>
           <ul class="mt-3 grid gap-2 list-none m-0 p-0">
-            <li><a class="hover:underline" href="#approach">{{ 'nav.approach' | transloco }}</a></li>
-            <li><a class="hover:underline" href="#pricing">{{ 'nav.pricing' | transloco }}</a></li>
-            <li><a class="hover:underline" href="#faq">{{ 'nav.faq' | transloco }}</a></li>
+            <li><a class="hover:underline inline-flex items-center min-h-6" href="#approach">{{ 'nav.approach' | transloco }}</a></li>
+            <li><a class="hover:underline inline-flex items-center min-h-6" href="#pricing">{{ 'nav.pricing' | transloco }}</a></li>
+            <li><a class="hover:underline inline-flex items-center min-h-6" href="#faq">{{ 'nav.faq' | transloco }}</a></li>
           </ul>
         </nav>
         <div class="prose-reset">
@@ -37,9 +37,9 @@ import { SiteContentStore } from '../../core/api/site-content.store';
           @if (store.settings(); as settings) {
             <ul class="mt-3 grid gap-2 list-none m-0 p-0">
               @for (phone of settings.phones; track phone) {
-                <li><a class="hover:underline" href="tel:{{ phone }}">{{ phone }}</a></li>
+                <li><a class="hover:underline inline-flex items-center min-h-6" href="tel:{{ phone }}">{{ phone }}</a></li>
               }
-              <li><a class="hover:underline" href="mailto:{{ settings.email }}">{{ settings.email }}</a></li>
+              <li><a class="hover:underline inline-flex items-center min-h-6" href="mailto:{{ settings.email }}">{{ settings.email }}</a></li>
               <li class="leading-relaxed">
                 {{ settings.address.street }}<br />{{ settings.address.district }}<br />{{ settings.address.city }},
                 {{ settings.address.country }}

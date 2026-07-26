@@ -1,10 +1,11 @@
-# Local development stack. `api`/`web` services are added in plan.md Phase 17 once their
-# Dockerfiles exist; for now this brings up MongoDB only, matching plan.md Phase 0 task 3.
+# Local development / CI stack (spec §12.1, plan.md Phase 17).
 #
-# MongoDB requires a replica set (even single-node) because the API uses multi-document
-# transactions when publishing content (see api's PublishingService) and Mongock's change-tracking
-# relies on it too. `mongo-init` runs `rs.initiate()` once and exits; `mongo` itself declares
-# `--replSet rs0` from boot so the API can connect immediately once the replica set is up.
+#   docker compose up -d mongo     # database only, for `./mvnw spring-boot:run` + `npm start`
+#   docker compose up --build      # the whole stack, as the e2e suite runs it
+#
+# MongoDB runs as a single-node replica set because the API uses multi-document transactions when
+# publishing content and the changelog runner relies on it. `mongo-init` performs `rs.initiate()`
+# once and exits; it is idempotent, so restarting the stack does not re-initiate.
 name: abofonsa
 
 services:
@@ -15,8 +16,8 @@ services:
     command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
       # Host port 27018, not the default 27017 - this machine already runs an unrelated
-      # `dev_mongodb` container bound to 127.0.0.1:27017 for another project. The api service
-      # inside this compose network still reaches this container at `mongo:27017` regardless.
+      # `dev_mongodb` container bound to 127.0.0.1:27017 for another project. Services inside
+      # this compose network still reach it at `mongo:27017` regardless.
       - "27018:27017"
     volumes:
       - mongo-data:/data/db
@@ -38,5 +39,47 @@ services:
       "try { rs.status(); print('replica set already initialized'); }
        catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }); print('replica set initiated'); }"
 
+  api:
+    build:
+      # Repository root as context: the API image needs web/public/i18n for the coverage report.
+      context: .
+      dockerfile: api/Dockerfile
+      # Works around a BuildKit DNS failure reaching Maven Central / npm in some sandboxed Docker
+      # setups - the same workaround hc-crowdfund-app's deploy.sh documents.
+      network: host
+    container_name: abofonsa_api
+    restart: unless-stopped
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/abofonsa?replicaSet=rs0
+      # Dev-only values. Production supplies real secrets via infra/prod-server/.env (Phase 20);
+      # HS512 needs >= 64 bytes of key material.
+      JWT_SIGNING_KEY: local-compose-signing-key-for-hs512-at-least-64-bytes-0000000000000
+      BOOTSTRAP_ADMIN_PASSWORD: local-bootstrap-password
+      ENQUIRY_IP_SALT: local-compose-ip-salt
+    ports:
+      - "8080:8080"
+    volumes:
+      - media-data:/app/media-storage
+
+  web:
+    build:
+      context: ./web
+      network: host
+    container_name: abofonsa_web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      # SSR runs in Node, where fetch has no origin - the API base must be absolute
+      # (see web/src/app/app.config.server.ts).
+      API_URL: http://api:8080
+    ports:
+      - "4000:4000"
+
 volumes:
   mongo-data:
+  media-data:

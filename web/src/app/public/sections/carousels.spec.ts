@@ -35,7 +35,7 @@ describe('content carousels (spec §6 #7/#14)', () => {
 
   it('ServicesCarousel renders exactly one slide per seeded service', async () => {
     const fixture = await render(ServicesCarousel);
-    expect(fixture.nativeElement.querySelectorAll('[role="tabpanel"]').length).toBe(6);
+    expect(fixture.nativeElement.querySelectorAll('[aria-roledescription="slide"]').length).toBe(6);
     expect(fixture.nativeElement.textContent).toContain('Service 1');
     expect(fixture.nativeElement.textContent).toContain('Available on:');
   });
@@ -52,7 +52,7 @@ describe('content carousels (spec §6 #7/#14)', () => {
 
   it('TestimonialsCarousel renders quotes, attribution and an accessible rating', async () => {
     const fixture = await render(TestimonialsCarousel);
-    expect(fixture.nativeElement.querySelectorAll('[role="tabpanel"]').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('[aria-roledescription="slide"]').length).toBe(2);
     expect(fixture.nativeElement.textContent).toContain('Adwoa Boateng');
     expect(fixture.nativeElement.querySelector('[aria-label="Rating: 5/5"]')).toBeTruthy();
   });

@@ -10,7 +10,7 @@ import { SiteContentStore } from '../../core/api/site-content.store';
       <section class="py-16 bg-brand-cream" aria-labelledby="angel-heading">
         <div class="max-w-6xl mx-auto px-4 grid lg:grid-cols-2 gap-10 items-center">
           <div class="prose-reset flex flex-col gap-4">
-            <p class="text-brand-gold text-sm uppercase tracking-wide">{{ angel.eyebrow }}</p>
+            <p class="text-brand-gold-ink text-sm uppercase tracking-wide">{{ angel.eyebrow }}</p>
             <h2 id="angel-heading" class="font-serif text-3xl text-brand-navy">{{ angel.heading }}</h2>
             <ul class="grid gap-5 list-none m-0 p-0 mt-2">
               @for (feature of angel.items; track feature.key) {

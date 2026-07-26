@@ -11,8 +11,11 @@ import { AdminAuthService } from './core/admin-auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   styles: `
-    .admin-accent { background: #17a9ce; }
-    .admin-link.active { background: rgb(23 169 206 / 0.12); color: #0d7d9c; font-weight: 600; }
+    /* The CMS teal darkened until it carries text at WCAG AA: the brand tone #17a9ce gives white
+     * only 2.8:1, and the old active-link ink #0d7d9c reached 4.2:1 on its own tint. Both now
+     * clear 4.5:1 while staying the same hue, so the CMS still reads as the same colour. */
+    .admin-accent { background: #10758e; }
+    .admin-link.active { background: rgb(23 169 206 / 0.12); color: #0e6980; font-weight: 600; }
   `,
   template: `
     <div class="min-h-screen grid grid-cols-[220px_1fr]">

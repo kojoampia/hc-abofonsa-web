@@ -26,7 +26,8 @@ type Localized = Record<string, string>;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, DragDropModule, MatButtonModule, PreviewPane],
   styles: `
-    .locale-tab.active { background: #17a9ce; color: white; }
+    /* Same darkened CMS teal as the shell — white on #17a9ce is only 2.8:1. */
+    .locale-tab.active { background: #10758e; color: white; }
     textarea, input[type='text'], input[type='number'], select {
       border: 1px solid var(--color-brand-line, #e2e5ea);
       border-radius: 6px;

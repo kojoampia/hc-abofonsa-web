@@ -148,7 +148,7 @@ describe('BrandCarousel (spec §6.1 C-1..C-9)', () => {
   });
 
   it('C-7: off-screen slides are aria-hidden and inert (nothing inside is tab-reachable)', async () => {
-    const slides = fixture.nativeElement.querySelectorAll('[role="tabpanel"]');
+    const slides = fixture.nativeElement.querySelectorAll('[aria-roledescription="slide"]');
     expect(slides.length).toBe(3);
     expect(slides[0].getAttribute('aria-hidden')).toBeNull();
     expect(slides[1].getAttribute('aria-hidden')).toBe('true');

@@ -22,7 +22,7 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
     <header class="sticky top-0 z-40 bg-brand-surface/95 backdrop-blur border-b border-brand-line">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-6">
         <a href="#top" class="font-serif text-xl text-brand-navy font-semibold" [attr.aria-label]="'a11y.logoAlt' | transloco">
-          Abofonsa <span class="text-brand-gold">BridgeCare</span>
+          Abofonsa <span class="text-brand-gold-ink">BridgeCare</span>
         </a>
 
         <nav class="hidden lg:flex items-center gap-5 text-sm ml-auto" [attr.aria-label]="'a11y.mainNav' | transloco">

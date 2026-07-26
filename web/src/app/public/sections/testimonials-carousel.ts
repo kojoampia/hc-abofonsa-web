@@ -17,7 +17,10 @@ import { SiteContentStore } from '../../core/api/site-content.store';
         <abc-brand-carousel [items]="store.stories()" [label]="carouselLabel()">
           <ng-template #slide let-story>
             <figure class="bg-brand-surface rounded-card shadow-card p-8 prose-reset mx-1">
-              <div class="text-brand-gold" [attr.aria-label]="('testimonials.ratingLabel' | transloco) + ': ' + story.rating + '/5'">
+              <!-- role="img" is required, not decorative: aria-label is prohibited on a bare div,
+                   and the stars are the only carrier of the rating once they are aria-hidden. -->
+              <div class="text-brand-gold-ink" role="img"
+                [attr.aria-label]="('testimonials.ratingLabel' | transloco) + ': ' + story.rating + '/5'">
                 <span aria-hidden="true">{{ '★'.repeat(story.rating) }}</span>
               </div>
               <blockquote class="mt-4 text-brand-body leading-relaxed">“{{ story.quote }}”</blockquote>
