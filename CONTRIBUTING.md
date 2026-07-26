@@ -77,6 +77,38 @@ fresh:
   `docker build -f api/Dockerfile .`; `docker build api/` will not work. The `abofonsa.i18n.dir`
   Maven property makes the location overridable, and the copy no-ops in an api-only checkout.
 
+## Deliberate departures from the spec — do not "fix" these back
+
+The section above lists places where the spec's *toolchain* assumptions no longer hold. These are
+different: the spec is still buildable as written, and we chose not to. Each was decided with the
+client and is settled. If you are reading the spec and about to make the code match it, read the
+reason here first.
+
+### The language chooser is two-letter code buttons, not a `mat-select`
+
+**Spec §6 component table, row 4** specifies `mat-select`, and `plan.md` task 73 repeats it.
+Superseded on 2026-07-26 at the client's explicit instruction: *"keep the 2-letter codes."*
+
+`LanguageSwitcher` renders one button per locale — `EN` `ES` `FR` `DE` — with the active one
+filled. Do not change it to a dropdown, and **do not change it to flags**, which is the tempting
+alternative and the wrong one:
+
+- **A flag is a country, not a language.** English, Spanish, French and German are each spoken
+  across many countries. This site serves Ghanaian families and their relatives abroad; a Ghanaian
+  visitor reading English is not represented by a British or American flag. Several of the
+  available choices are also actively contentious, and none of that is a problem worth importing
+  into a healthcare company's homepage.
+- **Codes need no images**, which keeps them inside the §13.1 performance budget and out of the
+  media pipeline entirely.
+- **Accessibility is better**, not worse: each button carries the language's own endonym as its
+  accessible name, so a screen reader announces "Español", not the letters "E S". The group is
+  labelled "Change language" in the active language, the current locale is marked with
+  `aria-current`, and the buttons meet the WCAG 2.2 24px minimum target.
+
+The rationale also lives in the component's own header comment, so it is visible at the point of
+change. Journey 2b in `web/e2e/journeys.spec.ts` drives these buttons by `data-testid="lang-<code>"`
+and will fail if the markup goes back to a select.
+
 ## Branch protection and release settings
 
 These are GitHub repo-settings actions. They cannot be automated from this codebase, and that is

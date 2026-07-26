@@ -383,9 +383,11 @@ Each is `ChangeDetectionStrategy.OnPush`, reads only from `SiteContentStore` (§
 
 - **[73]** Shell + nav cluster: `DemoNoticeBar` (compiled out via `environment.isDemo`),
   `TopContactStrip`, `SiteHeader` (sticky nav + scroll-spy, `mat-menu` mobile drawer),
-  `LanguageSwitcher` (`mat-select`).
-  *Verify*: scroll-spy highlights the active section; language switcher navigates to the correct
-  locale-prefixed path.
+  `LanguageSwitcher` — **two-letter code buttons (`EN` `ES` `FR` `DE`), not the `mat-select` the
+  spec's §6 table specifies, and not flags.** Client decision, 2026-07-26; the reasoning is in
+  CONTRIBUTING.md under "Deliberate departures from the spec". Do not revert either way.
+  *Verify*: scroll-spy highlights the active section; the switcher navigates to the correct
+  locale-prefixed path **and back to English**, which is the case that regressed (journey 2b).
 - **[74]** `HeroSection` (LCP element — preloaded, `fetchpriority="high"` hero image per §13.1) and
   `AssuranceBar`.
   *Verify*: Lighthouse/`web-vitals` LCP element is confirmed to be the hero image, not a later

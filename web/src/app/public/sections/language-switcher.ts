@@ -5,13 +5,25 @@ import { LocaleService } from '../../core/i18n/locale.service';
 import { LOCALE_NAMES, Locale, SUPPORTED_LOCALES } from '../../core/i18n/locales';
 
 /**
- * Spec §6 #4 — the language chooser: one button per locale, showing its two-letter code.
+ * The language chooser: one button per locale, showing its two-letter code.
  *
- * Two-letter codes rather than flags, deliberately. A flag is a country, not a language: English,
- * Spanish, French and German are each spoken across many countries, so any single flag misstates
- * whose language it is, and some of those choices are actively contentious. The code needs no
- * image, and each button carries the language's own endonym as its accessible name, so a screen
- * reader announces "Español" rather than spelling out "E S".
+ * ---------------------------------------------------------------------------------------------
+ * SETTLED DECISION — do not change this to a dropdown, and do not change it to flags.
+ *
+ * The spec's §6 component table (row 4) says `mat-select`, and plan.md task 73 repeats it. Both
+ * are superseded: the client asked for code buttons on 2026-07-26 and confirmed them the same day
+ * ("keep the 2-letter codes"). Reading the spec and "restoring" a select would be undoing a
+ * deliberate choice, which is why this note is here rather than only in a commit message.
+ * Full reasoning: CONTRIBUTING.md, "Deliberate departures from the spec".
+ *
+ * Flags are the tempting alternative and the wrong one. A flag is a country, not a language:
+ * English, Spanish, French and German are each spoken across many countries, and this site serves
+ * Ghanaian families and relatives abroad — a Ghanaian visitor reading English is not represented
+ * by a British or American flag. Several of the plausible choices are actively contentious too.
+ * Codes carry no such claim, need no image, and read better to assistive technology, because each
+ * button's accessible name is the language's own endonym: a screen reader says "Español", not
+ * "E S".
+ * ---------------------------------------------------------------------------------------------
  *
  * Switching navigates to the locale-prefixed path so the URL always reflects the language (§10.4).
  */

@@ -106,6 +106,25 @@ test.describe('Journey 2b — switching language with the chooser', () => {
     await chooseAndExpect('en', /\/$/);
   });
 
+  /**
+   * The chooser is code buttons by client decision (2026-07-26), superseding the spec's §6 table,
+   * which says `mat-select`. Asserted here so a revert to a dropdown — or a switch to flags —
+   * fails the suite rather than shipping. See CONTRIBUTING.md, "Deliberate departures from the
+   * spec", before changing this.
+   */
+  test('the chooser is one code button per locale, not a dropdown and not flags', async ({ page }) => {
+    await gotoLocale(page, 'en');
+    const chooser = page.locator('[data-testid="language-switcher"]:visible');
+
+    await expect(chooser.locator('button')).toHaveCount(4);
+    const codes = (await chooser.locator('button').allTextContents()).map((text) => text.trim());
+    expect(codes).toEqual(['en', 'es', 'fr', 'de']);
+    // Visible text is the code; the accessible name is the language's own endonym.
+    await expect(page.locator('[data-testid="lang-es"]:visible')).toHaveAttribute('aria-label', 'Español');
+    // No select control, and no flag imagery, anywhere in the chooser.
+    await expect(chooser.locator('select, mat-select, [role="combobox"], img, svg')).toHaveCount(0);
+  });
+
   test('the choice survives a reload, because it is what the cookie now remembers', async ({ page }) => {
     await gotoLocale(page, 'en');
     await page.locator('[data-testid="lang-de"]:visible').click();
