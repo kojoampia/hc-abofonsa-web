@@ -86,8 +86,11 @@ reason here first.
 
 ### The language chooser is two-letter code buttons, not a `mat-select`
 
-**Spec §6 component table, row 4** specifies `mat-select`, and `plan.md` task 73 repeats it.
-Superseded on 2026-07-26 at the client's explicit instruction: *"keep the 2-letter codes."*
+**Spec §6 component table, row 4** originally specified `mat-select`, and `plan.md` task 73
+repeated it. Superseded on 2026-07-26 at the client's explicit instruction: *"keep the 2-letter
+codes."* The specification itself now carries the amendment — the table row is struck through and
+points to **§6.4**, which states the decision in full, and it is logged in **§14.3** — so the two
+documents no longer disagree.
 
 `LanguageSwitcher` renders one button per locale — `EN` `ES` `FR` `DE` — with the active one
 filled. Do not change it to a dropdown, and **do not change it to flags**, which is the tempting

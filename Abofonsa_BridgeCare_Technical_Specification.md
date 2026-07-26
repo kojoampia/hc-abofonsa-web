@@ -540,7 +540,7 @@ Each section of the approved design maps to one standalone component. All are
 | 1 | `DemoNoticeBar` | Demo banner | UI string | Removed in production build via `environment.isDemo` |
 | 2 | `TopContactStrip` | Phone / email / hours | `siteSettings` | |
 | 3 | `SiteHeader` | Sticky nav + scroll-spy | `navigation` | `mat-menu` for the mobile drawer |
-| 4 | `LanguageSwitcher` | Locale selector | Static | `mat-select`; writes to `LocaleService` |
+| 4 | `LanguageSwitcher` | Locale selector | Static | ~~`mat-select`~~ → **two-letter code buttons** (`EN` `ES` `FR` `DE`); writes to `LocaleService`. **Amended 2026-07-26 — see §6.4** |
 | 5 | `HeroSection` | Hero, stats, badge | `sections.hero` | LCP element — see §13.1 |
 | 6 | `AssuranceBar` | Four assurance items | `sections.assurance` | |
 | 7 | `ServicesCarousel` | Six service slides | `services` | Uses `BrandCarousel` (§6.1) |
@@ -640,6 +640,44 @@ locales plus `x-default`. It also injects JSON-LD:
 - `FAQPage` built from the FAQ entries
 
 All values come from MongoDB so they stay consistent with the visible page.
+
+---
+
+### 6.4 `LanguageSwitcher` — amendment, 2026-07-26
+
+> **This clause supersedes row 4 of the table above.** It is an implementation-time amendment
+> agreed with the client, not a correction of an error, and it is recorded here so that reading
+> the specification alone cannot lead anyone to undo it.
+
+`LanguageSwitcher` renders **one button per locale showing its two-letter code** — `EN` `ES` `FR`
+`DE` — with the active locale marked `aria-current="true"` and visually filled. It is **not** a
+`mat-select`, and it must **not** become flag icons.
+
+Two-letter codes, not flags, for three reasons:
+
+1. **A flag denotes a country, not a language.** English, Spanish, French and German are each
+   spoken across many countries. This site serves Ghanaian families and their relatives abroad, so
+   a British or American flag would misrepresent the very audience reading the English version;
+   several of the other plausible choices are politically contentious. A language code makes no
+   such claim.
+2. **No image is required**, which keeps the chooser inside the §13.1 performance budget and
+   entirely outside the media pipeline.
+3. **Assistive technology reads it better.** Each button's accessible name is the language's own
+   endonym, so a screen reader announces "Español" rather than spelling out "E S". The group is
+   labelled with `lang.switchLanguage` in the active language, and each button meets the WCAG 2.2
+   SC 2.5.8 24 px minimum target — which the §6.2 requirements below demand and a dense row of
+   flag icons would have made harder to satisfy.
+
+Enforced by journey 2b in `web/e2e/journeys.spec.ts`, which fails on a `select`, a `combobox` role,
+or any `img`/`svg` inside the chooser. See also `CONTRIBUTING.md`, "Deliberate departures from the
+spec".
+
+**Related defect, fixed at the same time.** English is the only locale served without a path prefix
+(§5.4), so choosing it navigates to `/` — a URL indistinguishable from a first visit, which §10.4
+resolves via the locale cookie. Because the cookie still named the language being switched away
+from, English could never be selected. The switcher therefore records the chosen locale *before*
+navigating: an explicit choice must update the remembered preference, or the one locale without a
+prefix is unreachable.
 
 ---
 
@@ -2153,6 +2191,23 @@ all slides rather than disappearing.
 | 5 | Is a fifth locale anticipated? | Four; the design accommodates more without schema change |
 | 6 | Where is media stored — local filesystem or object storage? | Local filesystem behind nginx |
 | 7 | Should enquiries also be emailed to the coordination desk? | Stored only; email is a small addition if wanted |
+
+### 14.3 Decisions taken during implementation
+
+Settled with the client after this specification was written. Each supersedes the clause named,
+and the clause itself carries a pointer back here. Recorded so that a later reading of the
+specification cannot silently reverse a decision that was made deliberately.
+
+| Date | Supersedes | Decision | Why it is not simply an error to correct |
+|---|---|---|---|
+| 2026-07-26 | §6 table row 4 (`mat-select`) — see §6.4 | `LanguageSwitcher` is two-letter code buttons (`EN` `ES` `FR` `DE`). Not a dropdown, and explicitly not flags. | A flag denotes a country, not a language; the audience spans many countries and some flag choices are contentious. Codes need no image (§13.1 budget) and give assistive technology each language's endonym as the accessible name. Enforced by e2e journey 2b. |
+
+Separately, a number of the specification's *toolchain* assumptions no longer hold against current
+library versions — Mongock, the Boot 4.1 health SPI package move, `TestRestTemplate`, the
+`spring.mongodb.*` property namespace, Testcontainers 2.x. Those are not decisions and are not
+listed here; they are recorded in `CONTRIBUTING.md` under "Toolchain deviations". The distinction
+matters: those deviations fail to compile or resolve if reverted, whereas the decision above would
+build perfectly well and quietly undo a choice.
 
 ---
 
