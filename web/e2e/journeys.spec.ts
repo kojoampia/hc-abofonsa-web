@@ -71,6 +71,54 @@ test.describe('Journey 2 — locale switch', () => {
   }
 });
 
+test.describe('Journey 2b — switching language with the chooser', () => {
+  /**
+   * Journey 2 above proves each locale *renders* when visited directly. It never used the chooser,
+   * so it missed the defect a tester found immediately: you could switch to any language and never
+   * back to English.
+   *
+   * English is the only locale without a path prefix, so choosing it lands on `/`, which is
+   * indistinguishable from a first visit — and the shell resolves `/` from the locale cookie, which
+   * still held the language being abandoned. Every switch worked except the one back.
+   */
+  test('every locale can be chosen, including returning to English', async ({ page }) => {
+    await gotoLocale(page, 'en');
+
+    // The header renders a switcher for each breakpoint — one in the desktop nav, one beside the
+    // mobile menu button — so exactly one is visible at a time. Targeting the visible one is both
+    // unambiguous and what a real click hits.
+    const button = (code: string) => page.locator(`[data-testid="lang-${code}"]:visible`);
+
+    const chooseAndExpect = async (code: string, expectedPath: RegExp) => {
+      await button(code).click();
+      await expect(page).toHaveURL(expectedPath);
+      await expect(page.locator('html')).toHaveAttribute('lang', code);
+      // The active button is the one just chosen, and only that one.
+      await expect(page.locator('[data-testid="language-switcher"]:visible [aria-current="true"]')).toHaveCount(1);
+      await expect(button(code)).toHaveAttribute('aria-current', 'true');
+    };
+
+    await chooseAndExpect('es', /\/es$/);
+    await chooseAndExpect('en', /\/$/); // the regression: this used to stay Spanish
+    await chooseAndExpect('fr', /\/fr$/);
+    await chooseAndExpect('en', /\/$/);
+    await chooseAndExpect('de', /\/de$/);
+    await chooseAndExpect('en', /\/$/);
+  });
+
+  test('the choice survives a reload, because it is what the cookie now remembers', async ({ page }) => {
+    await gotoLocale(page, 'en');
+    await page.locator('[data-testid="lang-de"]:visible').click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+
+    // Back to English, then reload `/` — the cookie must say English, or the reload reverts.
+    await page.locator('[data-testid="lang-en"]:visible').click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
+});
+
 test.describe('Journey 3 — no authentication on the public site (guards R8)', () => {
   test('no password input, no sign-in link, and no cookie beyond the functional locale one', async ({ page }) => {
     for (const locale of ['en', 'es', 'fr', 'de']) {

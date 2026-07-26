@@ -95,6 +95,41 @@ describe('public shell and navigation chrome', () => {
       (fixture.componentInstance as unknown as { switchTo: (l: string) => void }).switchTo('en');
       expect(navigate).toHaveBeenLastCalledWith('/'); // English has no prefix
     });
+
+    /**
+     * The regression that made English unselectable. `/` carries no locale prefix, so the shell
+     * resolves it from the cookie — which still named the language being switched away from. The
+     * choice has to be recorded before navigating, or English can never be chosen at all.
+     */
+    it('records the chosen locale before navigating, so choosing English is not undone by the cookie', async () => {
+      const fixture = await render(LanguageSwitcher);
+      const localeService = TestBed.inject(LocaleService);
+      vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+      const component = fixture.componentInstance as unknown as { switchTo: (l: string) => void };
+
+      component.switchTo('es');
+      expect(localeService.current()).toBe('es');
+      expect(document.cookie).toContain('abofonsa_locale=es');
+
+      component.switchTo('en');
+      expect(localeService.current()).toBe('en');
+      expect(document.cookie).toContain('abofonsa_locale=en');
+    });
+
+    it('renders one button per locale, labelled by its endonym, marking the active one', async () => {
+      const fixture = await render(LanguageSwitcher);
+      const buttons = Array.from(fixture.nativeElement.querySelectorAll('button.lang-button')) as HTMLElement[];
+
+      expect(buttons.map((b) => b.textContent?.trim())).toEqual(['en', 'es', 'fr', 'de']);
+      // The visible text is a code; the accessible name is the language's own name.
+      expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+        'English',
+        'Español',
+        'Français',
+        'Deutsch',
+      ]);
+      expect(buttons.filter((b) => b.getAttribute('aria-current') === 'true')).toHaveLength(1);
+    });
   });
 
   describe('DemoNoticeBar (spec §6 #1)', () => {
