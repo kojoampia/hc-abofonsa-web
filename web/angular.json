@@ -95,6 +95,29 @@
           "options": {
             "setupFiles": [
               "src/test-setup.ts"
+            ],
+            "coverage": true,
+            "coverageExclude": [
+              "src/main.ts",
+              "src/main.server.ts",
+              "src/server.ts",
+              "src/app/app.config*.ts",
+              "src/app/app.routes.server.ts",
+              "src/environments/**",
+              "src/test-setup.ts",
+              "src/app/testing/**",
+              "src/app/admin/testing/**",
+              "src/app/core/api/site-content.model.ts"
+            ],
+            "coverageThresholds": {
+              "statements": 75,
+              "branches": 75,
+              "functions": 75,
+              "lines": 75
+            },
+            "coverageReporters": [
+              "json-summary",
+              "text-summary"
             ]
           }
         }
