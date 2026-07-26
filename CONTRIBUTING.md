@@ -127,3 +127,19 @@ Prometheus alert rules for all four spec §13.5 thresholds, and the blackbox upt
 
 Routine releases are automated (`.github/workflows/release.yml`): merge to `main` → SHA-tagged
 images → staging → smoke test → manual approval → production.
+
+For a manual build or deploy, `./build.sh` and `./deploy.sh` at the repo root do the same work by
+hand — same images, same `./start` script, so an automated deploy and a manual one cannot drift:
+
+```bash
+./build.sh                  # build + push both images, tagged with the current commit
+./deploy.sh                 # build, ship config, restart, verify
+./deploy.sh --verify-only   # touch nothing; just run the health and HTTP checks
+TAG=<sha> ./deploy.sh --skip-build   # roll back to a previously pushed image
+./deploy.sh --bootstrap --with-nginx --with-tls   # first-time install on a bare server
+```
+
+`--bootstrap` generates the three secrets by running `openssl rand` **on the server**, so they
+never exist locally or on the wire. Every mutating step announces itself and prompts; certbot
+prompts even under `--yes`, because it is rate-limited and publishes the hostname to public
+Certificate Transparency logs.
