@@ -30,7 +30,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 SSH_HOST="${SSH_HOST:-webserver}"                                # ~/.ssh/config alias
 REMOTE_DIR="${REMOTE_DIR:-~/webroot/01-healthconnect/abofonsa}"  # expanded remotely, not here
-REGISTRY="${REGISTRY:-ghcr.io/jojoaddison}"
+REGISTRY="${REGISTRY:-docker.jojoaddison.net}"
 PUBLIC_URL="${PUBLIC_URL:-https://web.abofonsa.com}"
 FRONTEND_PORT="${FRONTEND_PORT:-8082}"   # loopback-only port the host nginx proxies to
 API_CONTAINER="hc_abofonsa_api"

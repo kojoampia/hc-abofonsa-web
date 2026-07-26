@@ -1976,7 +1976,7 @@ push / pull request
    └── e2e:      playwright test (against compose-provisioned stack)
 
 main branch, all green
-   ├── build and push images  ghcr.io/jojoaddison/abofonsa-{api,web}:${SHA}
+   ├── build and push images  docker.jojoaddison.net/abofonsa-{api,web}:${SHA}
    ├── deploy to staging
    ├── smoke test staging
    └── manual approval → deploy to production

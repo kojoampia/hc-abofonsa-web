@@ -47,7 +47,7 @@ services:
        catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }); print('replica set initiated'); }"
 
   api:
-    image: ${REGISTRY:-ghcr.io/jojoaddison}/abofonsa-api:${TAG:-latest}
+    image: ${REGISTRY:-docker.jojoaddison.net}/abofonsa-api:${TAG:-latest}
     container_name: hc_abofonsa_api
     restart: unless-stopped
     depends_on:
@@ -96,7 +96,7 @@ services:
       start_period: 120s
 
   web:
-    image: ${REGISTRY:-ghcr.io/jojoaddison}/abofonsa-web:${TAG:-latest}
+    image: ${REGISTRY:-docker.jojoaddison.net}/abofonsa-web:${TAG:-latest}
     container_name: hc_abofonsa_web
     restart: unless-stopped
     depends_on:

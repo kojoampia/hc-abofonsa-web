@@ -12,7 +12,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 # Namespace prefix, not just the host — image names are ${REGISTRY}/abofonsa-{api,web}.
 # Matches infra/prod-server/.env.example and .github/workflows/release.yml so a hand-built image
 # and a CI-built one land in the same place.
-REGISTRY="${REGISTRY:-ghcr.io/jojoaddison}"
+REGISTRY="docker.jojoaddison.net"
 REGISTRY_HOST="${REGISTRY%%/*}"
 API_IMAGE="${REGISTRY}/abofonsa-api"
 WEB_IMAGE="${REGISTRY}/abofonsa-web"

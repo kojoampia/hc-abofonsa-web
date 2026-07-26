@@ -522,7 +522,7 @@ Each is `ChangeDetectionStrategy.OnPush`, reads only from `SiteContentStore` (§
   against it, torn down after.
   *Verify* (106–108): each job is independently red/green — intentionally breaking the consent gate
   (task 46) fails only the backend and e2e jobs, not the frontend job, proving job isolation.
-- **[109]** Add the main-branch pipeline: build/push `ghcr.io/jojoaddison/abofonsa-{api,web}:${SHA}`,
+- **[109]** Add the main-branch pipeline: build/push `docker.jojoaddison.net/abofonsa-{api,web}:${SHA}`,
   deploy to staging, smoke test, manual-approval gate before production (§12.2).
   *Verify*: a merge to `main` produces both images tagged with the commit SHA and stops at the
   approval gate without deploying further.
