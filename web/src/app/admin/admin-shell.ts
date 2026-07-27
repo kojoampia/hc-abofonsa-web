@@ -28,6 +28,7 @@ import { AdminAuthService } from './core/admin-auth.service';
           <a class="admin-link rounded px-3 py-2" routerLink="/admin/content/plans" routerLinkActive="active">Plans</a>
           <a class="admin-link rounded px-3 py-2" routerLink="/admin/content/testimonials" routerLinkActive="active">Testimonials</a>
           <a class="admin-link rounded px-3 py-2" routerLink="/admin/content/faqs" routerLinkActive="active">FAQs</a>
+          <a class="admin-link rounded px-3 py-2" routerLink="/admin/content/career-tracks" routerLinkActive="active">Career tracks</a>
           <a class="admin-link rounded px-3 py-2" routerLink="/admin/translations" routerLinkActive="active">Translations</a>
           <a class="admin-link rounded px-3 py-2" routerLink="/admin/media" routerLinkActive="active">Media</a>
           <a class="admin-link rounded px-3 py-2" routerLink="/admin/enquiries" routerLinkActive="active">Enquiries</a>

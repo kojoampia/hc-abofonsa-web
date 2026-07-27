@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 /** The single aggregate payload behind {@code GET /api/v1/content/site} (spec §7.4 AD-3) — every
- * published section, service, plan, testimonial and FAQ for one locale, in one cached response. */
+ * published section, service, plan, testimonial and FAQ for one locale, in one cached response.
+ *
+ * <p>This is the *home page's* content specifically. Careers sections and careers FAQs are excluded
+ * and served by {@link CareersContentDTO} instead — see that record for why. */
 public record SiteContentDTO(
         String locale,
         Instant generatedAt,

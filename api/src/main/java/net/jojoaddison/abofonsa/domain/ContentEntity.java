@@ -4,7 +4,7 @@ import java.time.Instant;
 import net.jojoaddison.abofonsa.domain.enumeration.PublicationStatus;
 
 /**
- * Marker for the five content types with a publish/revision lifecycle (spec §7.3). Any
+ * Marker for the content types with a publish/revision lifecycle (spec §7.3). Any
  * {@code switch} over this hierarchy is checked for exhaustiveness at compile time — adding a
  * sixth content type breaks the build until every switch handles it.
  *
@@ -17,7 +17,7 @@ import net.jojoaddison.abofonsa.domain.enumeration.PublicationStatus;
  * Module System modules (not used in this project), a sealed type's permitted subtypes must share
  * its package.
  */
-public sealed interface ContentEntity permits CareService, Plan, Testimonial, Faq, Section {
+public sealed interface ContentEntity permits CareService, Plan, Testimonial, Faq, Section, CareerTrack {
 
     String id();
 

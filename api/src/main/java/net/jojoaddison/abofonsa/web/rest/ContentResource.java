@@ -5,6 +5,7 @@ import java.util.List;
 import net.jojoaddison.abofonsa.domain.enumeration.Locale;
 import net.jojoaddison.abofonsa.service.SiteContentService;
 import net.jojoaddison.abofonsa.service.dto.CareServiceDTO;
+import net.jojoaddison.abofonsa.service.dto.CareersContentDTO;
 import net.jojoaddison.abofonsa.service.dto.FaqDTO;
 import net.jojoaddison.abofonsa.service.dto.PlanDTO;
 import net.jojoaddison.abofonsa.service.dto.SiteContentDTO;
@@ -34,6 +35,14 @@ public class ContentResource {
     @GetMapping("/api/v1/content/site")
     public ResponseEntity<SiteContentDTO> site(@RequestParam(defaultValue = "en") Locale locale) {
         return ResponseEntity.ok().cacheControl(CACHE_CONTROL).body(siteContentService.publishedSite(locale));
+    }
+
+    /** The careers page's content (careers-plan.md §5). Separate from /site so the home page does
+     * not pay for content it never renders, and so careers FAQs cannot leak into the family
+     * accordion. */
+    @GetMapping("/api/v1/content/careers")
+    public ResponseEntity<CareersContentDTO> careers(@RequestParam(defaultValue = "en") Locale locale) {
+        return ResponseEntity.ok().cacheControl(CACHE_CONTROL).body(siteContentService.publishedCareers(locale));
     }
 
     @GetMapping("/api/v1/content/services")

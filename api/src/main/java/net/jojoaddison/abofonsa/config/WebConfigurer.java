@@ -60,6 +60,7 @@ public class WebConfigurer implements WebMvcConfigurer {
                 case "testimonials" -> ContentType.TESTIMONIAL;
                 case "faqs" -> ContentType.FAQ;
                 case "sections" -> ContentType.SECTION;
+                case "career-tracks" -> ContentType.CAREER_TRACK;
                 case "settings" -> ContentType.SETTINGS;
                 default -> throw new IllegalArgumentException("Unknown content type: " + source);
             };

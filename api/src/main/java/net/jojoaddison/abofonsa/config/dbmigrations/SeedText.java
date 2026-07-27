@@ -15,6 +15,20 @@ final class SeedText {
 
     private SeedText() {}
 
+    /**
+     * English only, relying on {@link LocalizedText#resolve}'s fallback for the other three.
+     *
+     * <p>Used by the careers seeds (careers-plan.md D-5): the four locales exist because *families*
+     * are in the diaspora, whereas applicants are in Ghana. Seeding machine translations of
+     * recruitment copy nobody has asked for would be inventing content, and worse, it would look
+     * reviewed. An editor can translate a track in the CMS the day it is actually needed.
+     */
+    static LocalizedText en(String english) {
+        var values = new EnumMap<Locale, String>(Locale.class);
+        values.put(Locale.EN, english);
+        return new LocalizedText(values);
+    }
+
     static LocalizedText lt(String en, String es, String fr, String de) {
         var values = new EnumMap<Locale, String>(Locale.class);
         values.put(Locale.EN, en);

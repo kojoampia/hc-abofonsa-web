@@ -6,5 +6,7 @@ public enum FaqCategory {
     STAFF,
     PLANS,
     CLINICAL,
-    BILLING
+    BILLING,
+    /** Questions from prospective staff, shown on /careers rather than the home page. */
+    CAREERS
 }

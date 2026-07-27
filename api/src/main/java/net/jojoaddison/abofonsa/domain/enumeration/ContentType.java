@@ -8,5 +8,6 @@ public enum ContentType {
     TESTIMONIAL,
     FAQ,
     SECTION,
+    CAREER_TRACK,
     SETTINGS
 }

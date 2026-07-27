@@ -177,7 +177,7 @@ carries everything.
 Numbered to continue `plan.md` (which ends at 127). Each phase commits on its own branch, as with
 the rest of this project.
 
-### Phase C1 — Content model and API (tasks 128–133)
+### Phase C1 — Content model and API (tasks 128–133) — **DONE**, see [docs/phase-c1-career-content-model.md](docs/phase-c1-career-content-model.md)
 
 - **[128]** Add `CAREER_TRACK` to `ContentType`, the `CareerTrack` domain record, repository, and
   `V011SeedCareerTracks` seeding all six D-2 tracks. Nurse, carer and doctor seed with
@@ -190,7 +190,11 @@ the rest of this project.
   or a raw key.
 - **[130]** Add `CAREERS` to the FAQ category enum and seed the questions from §3.
   *Verify*: existing FAQ tests still pass; the new category filters correctly.
-- **[131]** Extend the public payload with `careerTracks` and the new sections.
+- **[131]** ~~Extend the public payload with `careerTracks` and the new sections.~~ **Changed during
+  the build:** careers content is served by its own `GET /api/v1/content/careers` instead. Folding
+  it into `/content/site` would have put careers FAQs into the home page's accordion (`FaqDTO` has
+  no category and the accordion renders the list unfiltered) and made every home visitor download
+  content they never see. See the phase summary.
   *Verify*: a new `CareerContentResourceTest` asserts an unpublished track is absent and a
   published one carries its `authorityRole`.
 - **[132]** CMS: `CAREER_TRACK` in `EDITOR_CONFIG`, reusing the existing one-editor pattern, with

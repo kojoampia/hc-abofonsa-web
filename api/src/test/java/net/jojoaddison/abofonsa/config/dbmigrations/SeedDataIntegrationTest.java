@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import net.jojoaddison.abofonsa.AbstractIntegrationTest;
 import net.jojoaddison.abofonsa.domain.AdminUser;
 import net.jojoaddison.abofonsa.domain.enumeration.AdminRole;
+import net.jojoaddison.abofonsa.domain.enumeration.FaqCategory;
 import net.jojoaddison.abofonsa.repository.CareServiceRepository;
 import net.jojoaddison.abofonsa.repository.FaqRepository;
 import net.jojoaddison.abofonsa.repository.PlanRepository;
@@ -43,6 +44,9 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private SectionRepository sectionRepository;
+
+    @Autowired
+    private net.jojoaddison.abofonsa.repository.CareerTrackRepository careerTrackRepository;
 
     @Autowired
     private SiteSettingsRepository siteSettingsRepository;
@@ -83,16 +87,38 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
         assertThat(testimonials).allMatch(t -> t.consent().obtained());
     }
 
+    /** Seven family FAQs on the home page, plus six careers questions the careers page selects by
+     * category. Asserted separately, because the split is the point: a careers question appearing
+     * among the family FAQs is the bug the payload separation exists to prevent. */
     @Test
-    void sevenFaqsSeeded() {
-        assertThat(faqRepository.findAll()).hasSize(7);
+    void sevenFamilyFaqsAndSixCareersFaqsSeeded() {
+        var faqs = faqRepository.findAll();
+        assertThat(faqs.stream().filter(f -> f.category() != FaqCategory.CAREERS))
+                .hasSize(7);
+        assertThat(faqs.stream().filter(f -> f.category() == FaqCategory.CAREERS))
+                .hasSize(6);
     }
 
     @Test
-    void sevenSectionsSeededOnePerKey() {
+    void oneSectionPerKeyAcrossBothPages() {
         var sections = sectionRepository.findAll();
-        assertThat(sections).hasSize(7);
-        assertThat(sections.stream().map(s -> s.key()).distinct()).hasSize(7);
+        // Seven home-page sections + four careers ones, each key used exactly once.
+        assertThat(sections).hasSize(11);
+        assertThat(sections.stream().map(s -> s.key()).distinct()).hasSize(11);
+        assertThat(sections.stream().filter(s -> s.key().name().startsWith("CAREERS_")))
+                .hasSize(4);
+    }
+
+    @Test
+    void everyCareerTrackCarriesAnAuthorityRoleAndItsDocumentList() {
+        var tracks = careerTrackRepository.findAll();
+        assertThat(tracks).hasSize(6);
+        assertThat(tracks).allSatisfy(track -> {
+            assertThat(track.authorityRole()).isNotNull();
+            // The document list is what keeps applicants out of returned_for_correction, so an
+            // empty one would defeat the point of the page (careers-plan.md §1).
+            assertThat(track.documents()).isNotEmpty();
+        });
     }
 
     @Test

@@ -91,9 +91,17 @@ class I18nAdminResourceTest extends AbstractIntegrationTest {
         assertThat((List<?>) byLocale.get("en").get("missingUiKeys")).isEmpty();
         assertThat((List<String>) byLocale.get("fr").get("missingUiKeys")).containsExactly("a11y.skip", "form.submit");
         assertThat(((Number) byLocale.get("fr").get("totalUiKeys")).intValue()).isEqualTo(4);
-        // Seeded content is fully translated, so completeness sits near 1.0 for every locale.
-        assertThat(((Number) byLocale.get("es").get("contentCompleteness")).doubleValue())
-                .isGreaterThan(0.8);
+        // Content completeness is now materially below 1.0, and legitimately so: the careers
+        // content is seeded English-only by decision (careers-plan.md D-5), because the four
+        // locales exist for diaspora *families* while applicants are in Ghana. The metric is
+        // reporting a real gap, not a defect — do not "fix" this by machine-translating
+        // recruitment copy into three languages nobody asked for.
+        //
+        // The assertion is deliberately loose rather than pinned: it checks the metric still
+        // discriminates (neither 0 nor 1), so it would catch the report breaking outright, without
+        // becoming a tripwire every time content is added in one locale.
+        var esCompleteness = ((Number) byLocale.get("es").get("contentCompleteness")).doubleValue();
+        assertThat(esCompleteness).isStrictlyBetween(0.0, 1.0);
     }
 
     @Test

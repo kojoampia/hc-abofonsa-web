@@ -61,6 +61,7 @@ public class ContentAdminService {
             case TESTIMONIAL -> "testimonials";
             case FAQ -> "faqs";
             case SECTION -> "sections";
+            case CAREER_TRACK -> "careerTracks";
             case SETTINGS -> "siteSettings";
         };
     }

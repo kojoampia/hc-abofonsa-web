@@ -70,6 +70,26 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
     { key: 'items', label: 'Items', kind: 'section-items' },
     { key: 'imageId', label: 'Image', kind: 'media' },
   ],
+  'career-tracks': [
+    { key: 'slug', label: 'Slug', kind: 'text' },
+    { key: 'title', label: 'Track title', kind: 'localized', requiredEn: true },
+    { key: 'blurb', label: 'What the work is', kind: 'localized-area' },
+    // Must stay in step with AuthorityRole on the API. The value travels in the `track` parameter
+    // of the handoff link, so professional.abofonsa.com knows which role was chosen without asking
+    // again — a free-text field here would break that silently.
+    {
+      key: 'authorityRole',
+      label: 'Clinical authority (sent to the onboarding app)',
+      kind: 'select',
+      options: ['ROLE_NURSE', 'ROLE_CARER', 'ROLE_DOCTOR', 'ROLE_PARAMEDIC', 'ROLE_PHARMACIST', 'ROLE_THERAPIST'],
+    },
+    // Untick for a track being recruited ahead of its rota: the page then says "we are building
+    // this team" rather than implying a vacancy that cannot be filled.
+    { key: 'openings', label: 'Currently recruiting', kind: 'boolean' },
+    { key: 'requirements', label: 'Requirements', kind: 'localized-list' },
+    { key: 'documents', label: 'Documents we will ask for', kind: 'localized-list' },
+    { key: 'displayOrder', label: 'Display order', kind: 'number' },
+  ],
   settings: [
     { key: 'organisationName', label: 'Organisation name', kind: 'text' },
     { key: 'tagline', label: 'Tagline', kind: 'localized' },

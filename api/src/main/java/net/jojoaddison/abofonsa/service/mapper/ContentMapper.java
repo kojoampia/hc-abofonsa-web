@@ -1,6 +1,7 @@
 package net.jojoaddison.abofonsa.service.mapper;
 
 import net.jojoaddison.abofonsa.domain.CareService;
+import net.jojoaddison.abofonsa.domain.CareerTrack;
 import net.jojoaddison.abofonsa.domain.Faq;
 import net.jojoaddison.abofonsa.domain.LocalizedText;
 import net.jojoaddison.abofonsa.domain.Plan;
@@ -12,6 +13,7 @@ import net.jojoaddison.abofonsa.repository.MediaRepository;
 import net.jojoaddison.abofonsa.service.PriceFormatter;
 import net.jojoaddison.abofonsa.service.dto.AddressDTO;
 import net.jojoaddison.abofonsa.service.dto.CareServiceDTO;
+import net.jojoaddison.abofonsa.service.dto.CareerTrackDTO;
 import net.jojoaddison.abofonsa.service.dto.FaqDTO;
 import net.jojoaddison.abofonsa.service.dto.MediaDTO;
 import net.jojoaddison.abofonsa.service.dto.PlanComparisonDTO;
@@ -112,6 +114,27 @@ public class ContentMapper {
                 resolve(doc.availableOn(), locale),
                 toMedia(doc.imageId(), locale),
                 doc.displayOrder());
+    }
+
+    public CareerTrackDTO toView(CareerTrack doc, Locale locale) {
+        return new CareerTrackDTO(
+                doc.id(),
+                doc.slug(),
+                resolve(doc.title(), locale),
+                resolve(doc.blurb(), locale),
+                resolveAll(doc.requirements(), locale),
+                resolveAll(doc.documents(), locale),
+                doc.authorityRole() == null ? null : doc.authorityRole().name(),
+                doc.openings(),
+                doc.displayOrder());
+    }
+
+    /** A CMS-created document may omit a localized list entirely; an absent list is an empty one,
+     * never an NPE taking down the whole public payload. */
+    private static java.util.List<String> resolveAll(java.util.List<LocalizedText> texts, Locale locale) {
+        return texts == null
+                ? java.util.List.of()
+                : texts.stream().map(t -> resolve(t, locale)).toList();
     }
 
     public PlanDTO toView(Plan doc, Locale locale) {

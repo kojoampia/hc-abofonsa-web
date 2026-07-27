@@ -4,7 +4,15 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api/api-base-url';
 
 /** Content types as the API paths them (spec §7.5 {type}). */
-export type AdminContentType = 'services' | 'plans' | 'testimonials' | 'faqs' | 'sections' | 'settings';
+export type AdminContentType =
+  | 'services'
+  | 'plans'
+  | 'testimonials'
+  | 'faqs'
+  | 'sections'
+  // Hyphenated to match ContentTypePathConverter on the API; the enum there is CAREER_TRACK.
+  | 'career-tracks'
+  | 'settings';
 
 export interface AuthTokens {
   accessToken: string;
