@@ -34,9 +34,12 @@ REMOTE_DIR="${REMOTE_DIR:-~/webroot/01-healthconnect/abofonsa}"  # expanded remo
 REGISTRY="${REGISTRY:-docker.jojoaddison.net}"
 PUBLIC_URL="${PUBLIC_URL:-https://web.abofonsa.com}"
 FRONTEND_PORT="${FRONTEND_PORT:-8082}"   # loopback-only port the host nginx proxies to
-API_CONTAINER="hc_abofonsa_api"
-WEB_CONTAINER="hc_abofonsa_web"
-MONGO_CONTAINER="hc_abofonsa_mongo"
+# Must match `container_name:` in infra/prod-server/compose.yml. Hyphens, not underscores: an
+# underscore is illegal in a hostname, so a container named hc_abofonsa_api cannot be addressed
+# over the compose network without Tomcat rejecting the request with a bare 400.
+API_CONTAINER="abofonsa-api"
+WEB_CONTAINER="abofonsa-web"
+MONGO_CONTAINER="abofonsa-mongodb"
 APP_NETWORK="abofonsanet"
 NGINX_CONF="abofonsa.conf"
 
@@ -123,6 +126,16 @@ command -v ssh    >/dev/null || die "ssh not found on PATH"
 ssh -n -o BatchMode=yes -o ConnectTimeout=10 "$SSH_HOST" true 2>/dev/null \
   || die "cannot ssh to '$SSH_HOST' non-interactively. Check ~/.ssh/config and your agent."
 ok "ssh to $SSH_HOST works"
+
+# The container names above are duplicated from compose.yml, and drifted once already: compose was
+# renamed and this script kept polling a container that no longer existed, so a perfectly good
+# deploy sat waiting for health on a ghost. Check the two agree before doing anything.
+for expected in "$API_CONTAINER" "$WEB_CONTAINER" "$MONGO_CONTAINER"; do
+  grep -q "container_name: *$expected\b" infra/prod-server/compose.yml \
+    || die "this script expects a container named '$expected', but infra/prod-server/compose.yml
+        does not declare it. The two have drifted - reconcile them before deploying."
+done
+ok "container names agree with compose.yml"
 
 CONTAINERS_EXIST=false
 remote "docker inspect $API_CONTAINER >/dev/null 2>&1" && CONTAINERS_EXIST=true
