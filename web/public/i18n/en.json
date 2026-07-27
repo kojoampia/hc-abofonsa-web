@@ -57,6 +57,8 @@
     "email": "Email address",
     "emailInvalid": "Please enter a valid email address",
     "emailOptional": "Email address (optional)",
+    "errorSendFailed": "We could not send your request. Please try again, or call us on {{phone}}.",
+    "errorTooMany": "You have sent several requests recently. Please try again shortly, or call us on {{phone}}.",
     "heading": "Request a consultation",
     "intro": "Tell us a little about the situation and a nurse will call you back.",
     "message": "How can we help?",

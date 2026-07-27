@@ -57,6 +57,8 @@
     "email": "Adresse e-mail",
     "emailInvalid": "Veuillez saisir une adresse e-mail valide",
     "emailOptional": "Adresse e-mail (facultatif)",
+    "errorSendFailed": "Nous n'avons pas pu envoyer votre demande. Veuillez réessayer ou nous appeler au {{phone}}.",
+    "errorTooMany": "Vous avez envoyé plusieurs demandes récemment. Veuillez réessayer dans quelques minutes ou nous appeler au {{phone}}.",
     "heading": "Demander une consultation",
     "intro": "Décrivez-nous brièvement la situation et un infirmier ou une infirmière vous rappellera.",
     "message": "Comment pouvons-nous vous aider ?",

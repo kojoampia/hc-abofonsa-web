@@ -57,6 +57,8 @@
     "email": "E-Mail-Adresse",
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "emailOptional": "E-Mail-Adresse (optional)",
+    "errorSendFailed": "Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder rufen Sie uns an: {{phone}}.",
+    "errorTooMany": "Sie haben in kurzer Zeit mehrere Anfragen gesendet. Bitte versuchen Sie es später erneut oder rufen Sie uns an: {{phone}}.",
     "heading": "Beratung anfragen",
     "intro": "Schildern Sie uns kurz die Situation — eine Pflegefachkraft ruft Sie zurück.",
     "message": "Wie können wir helfen?",

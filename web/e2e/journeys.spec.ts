@@ -27,7 +27,11 @@ test.describe('Journey 1 — browse and convert', () => {
     await page.getByTestId('enquiry-message').fill('Please call me back about care options.');
     // mat-checkbox carries the testid on its host element; the real control is the inner input.
     await page.getByTestId('enquiry-consent').locator('input[type=checkbox]').check();
-    await page.waitForTimeout(3200); // clears the minimum dwell time (spec §7.7)
+    // Deliberately no pause before submitting. This used to wait out spec §7.7's minimum dwell,
+    // which meant the test never exercised what a decisive visitor actually does — fill the form
+    // quickly and press send — and so never saw that they were rejected as a bot and shown a
+    // content-load error. The component now waits out the remainder itself, so submitting
+    // immediately must succeed.
     await page.getByTestId('enquiry-submit').click();
 
     const confirmation = page.getByTestId('enquiry-confirmation');

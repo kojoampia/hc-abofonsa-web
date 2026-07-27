@@ -57,6 +57,8 @@
     "email": "Correo electrónico",
     "emailInvalid": "Introduzca una dirección de correo electrónico válida",
     "emailOptional": "Correo electrónico (opcional)",
+    "errorSendFailed": "No pudimos enviar su solicitud. Vuelva a intentarlo o llámenos al {{phone}}.",
+    "errorTooMany": "Ha enviado varias solicitudes recientemente. Inténtelo de nuevo en unos minutos o llámenos al {{phone}}.",
     "heading": "Solicitar una consulta",
     "intro": "Cuéntenos brevemente su situación y un profesional de enfermería le llamará.",
     "message": "¿Cómo podemos ayudarle?",

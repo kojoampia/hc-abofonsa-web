@@ -12,6 +12,13 @@ import { LocaleService } from '../../core/i18n/locale.service';
 import { EnquiryReceipt } from '../../core/api/site-content.model';
 
 /**
+ * Mirrors `abofonsa.enquiry.min-dwell-ms` in the API's application.yml. If the server's value is
+ * raised above this, fast submissions start being rejected again — with a clear message and a
+ * phone number, so the failure degrades rather than breaking, but the two should be moved together.
+ */
+const MIN_DWELL_MS = 3000;
+
+/**
  * Spec §6 #17 — contact details + the enquiry form on Material controls, mirroring the backend's
  * Bean Validation. The hidden `company` honeypot and the dwell-time measurement feed the §7.7
  * anti-abuse checks; the consent checkbox is the §13.3 lawful basis.
@@ -133,8 +140,16 @@ import { EnquiryReceipt } from '../../core/api/site-content.model';
               <p class="text-sm text-red-700 -mt-2" role="alert">{{ 'form.consentRequired' | transloco }}</p>
             }
 
-            @if (failed()) {
-              <p class="text-sm text-red-700" role="alert">{{ 'error.loadFailed' | transloco }}</p>
+            @if (failure(); as failure) {
+              <!-- A submission failure is not a content-load failure. This used to render
+                   'error.loadFailed' — "We could not load this content" — which describes the
+                   wrong thing entirely and leaves someone who has just typed out their family's
+                   situation with no idea whether it was sent. The phone number is always offered
+                   alongside, because this form is the business's primary conversion and a visitor
+                   who cannot submit must still have a way through. -->
+              <p class="text-sm text-red-700" role="alert" data-testid="enquiry-error">
+                {{ failure | transloco: { phone: store.settings()?.phones?.[0] ?? '' } }}
+              </p>
             }
 
             <button mat-flat-button color="primary" type="submit" [disabled]="submitting()" data-testid="enquiry-submit">
@@ -166,18 +181,34 @@ export class ContactSection {
   });
 
   protected readonly submitting = signal(false);
-  protected readonly failed = signal(false);
+  /** The i18n key of the current failure, or null. Null-vs-key rather than a boolean, because the
+   * reasons are not interchangeable: "try again in a moment" and "try again now" are different
+   * instructions and giving the wrong one wastes the visitor's time. */
+  protected readonly failure = signal<string | null>(null);
   protected readonly receipt = signal<EnquiryReceipt | null>(null);
   protected readonly submittedName = signal('');
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const value = this.form.getRawValue();
     this.submitting.set(true);
-    this.failed.set(false);
+    this.failure.set(null);
+
+    // The server rejects anything submitted faster than `abofonsa.enquiry.min-dwell-ms` as bot
+    // traffic (spec §7.7). That check is right and stays, but it should never fire on a real
+    // person: someone who has already decided, and types quickly, was being told their enquiry
+    // failed with no way to tell why. Waiting out the remainder here means the form genuinely has
+    // been on screen for the minimum by the time we send, so the guard sees the truth. It costs a
+    // decisive visitor at most a couple of seconds, spent inside the "Sending…" state they are
+    // already watching. A scripted POST does not run this code and is still rejected.
+    const elapsed = Date.now() - this.mountedAt;
+    if (elapsed < MIN_DWELL_MS) {
+      await new Promise((resolve) => setTimeout(resolve, MIN_DWELL_MS - elapsed));
+    }
+
     this.api
       .submitEnquiry({
         name: value.name,
@@ -198,8 +229,13 @@ export class ContactSection {
           this.receipt.set(receipt);
           this.submitting.set(false);
         },
-        error: () => {
-          this.failed.set(true);
+        error: (error: unknown) => {
+          // 429 is the only failure a visitor can act on differently - waiting helps, retrying now
+          // does not. Everything else (a rejected submission, a network drop, a 5xx) gets the same
+          // advice, deliberately: spec §7.7 forbids revealing which anti-abuse rule fired, so
+          // naming it would be both a leak and, to an honest visitor, meaningless.
+          const status = (error as { status?: number })?.status;
+          this.failure.set(status === 429 ? 'form.errorTooMany' : 'form.errorSendFailed');
           this.submitting.set(false);
         },
       });
