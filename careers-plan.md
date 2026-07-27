@@ -38,43 +38,51 @@ we state clearly here is a review cycle the credentialing reviewer does not have
 
 ---
 
-## 2. Blocking decisions
+## 2. Decisions
 
-These come before any build. The first is genuinely blocking; the rest change scope.
+### D-1 — Enrolment policy — **RESOLVED 2026-07-28: both, self-service primary**
 
-### D-1 — Is enrolment invitation-only, self-service, or both? **(blocks everything)**
+The primary call-to-action is **"Create your account"**, linking to
+`professional.abofonsa.com/register`. A secondary **"Request an invitation"** is built into the
+page but hidden behind a CMS boolean, so the policy can tighten later without a rebuild.
 
-`professional-onboarding-workflow.md` lists this as undecided, and it determines what the primary
-call-to-action can say. The three answers produce three different pages:
+This unblocks the careers page immediately: `/register` already exists on the professional side, so
+the only ask of that repo is that it accept three query parameters (§5). If the invitation path is
+ever switched on, the request-invitation surface must be built **there**, not here, so the email
+address is captured inside the audited flow.
 
-| Answer | Primary CTA | Where it goes |
-|---|---|---|
-| Self-service | "Create your account" | `professional.abofonsa.com/register` |
-| Invitation-only | "Request an invitation" | `professional.abofonsa.com/request-invitation` — **built there, not here**, so the email address is captured inside the audited flow |
-| Both | "Create your account" primary, "Request an invitation" secondary | Both of the above |
+The corollary is that **the careers page is the filter**. With self-service registration there is
+nothing between a curious visitor and the credentialing reviewer's queue except the clarity of this
+page. That raises the stakes on §3 items 2 and 3 — eligibility and the document list — from "nice
+to state" to "the mechanism that protects reviewer time".
 
-Design for **both** and hide whichever is unused behind a CMS flag. That costs one boolean and
-avoids rebuilding the page when the policy settles.
+### D-2 — Which clinical authorities — **RESOLVED 2026-07-28: all six**
 
-### D-2 — Which of the six clinical authorities are we actually recruiting for?
+`ROLE_NURSE`, `ROLE_CARER`, `ROLE_DOCTOR`, `ROLE_PARAMEDIC`, `ROLE_PHARMACIST`, `ROLE_THERAPIST`.
 
-The workflow defines `ROLE_DOCTOR`, `ROLE_NURSE`, `ROLE_PARAMEDIC`, `ROLE_PHARMACIST`,
-`ROLE_THERAPIST`, `ROLE_CARER`. Advertising a track the platform cannot yet roster is a promise
-we break at step 10. Confirm which are live; the others stay unpublished (the CMS already has a
-DRAFT state for exactly this).
+Nurses and carers are certainly rosterable — every plan tier is built on them — and doctors are
+advertised on the PAWPAW and MELON tiers. Paramedics, pharmacists and therapists appear nowhere in
+the current service or plan content, so for those the platform is recruiting ahead of the product.
 
-### D-3 — What may we say about terms?
+That is a legitimate choice — you cannot staff a service before you have staff — but it makes the
+`openings` flag load-bearing rather than decorative (task 133). A track that is being recruited for
+speculatively should say so, rather than implying a rota exists. It also keeps **CR-2** live: if a
+paramedic is approved before there is a duty roster to put them on, the onboarding stalls at step
+10 with an activated professional and nothing to assign. Worth confirming with `hc-professional`
+that an approved professional with no roster is a state their flow tolerates.
+
+### D-3 — What may we say about terms? **(open)**
 
 Pay, employment vs contract, shift patterns, and travel expectations. Until these are confirmed the
 page must not imply any of them. "Competitive rates" with nothing behind it is worse than silence —
 it is the kind of claim that gets quoted back during a dispute.
 
-### D-4 — What is the credential-review turnaround?
+### D-4 — What is the credential-review turnaround? **(open)**
 
 Step 7 has no SLA. Do not publish "hear back within X days" until someone owns that number. State
 the *stages* instead, which is honest and still reassuring.
 
-### D-5 — Which locales?
+### D-5 — Which locales? **(open)**
 
 The site serves four (en/es/fr/de) because *families* are in the diaspora. Applicants are in Ghana.
 English is certainly required; the rest may be noise. The i18n key-parity CI check means UI strings
@@ -82,7 +90,7 @@ must exist in all four regardless, but **CMS content can be English-only and fal
 resolver already does this. Recommendation: publish English, leave the others to fall back, revisit
 if Francophone West Africa becomes a recruiting ground.
 
-### D-6 — Indexing
+### D-6 — Indexing **(open)**
 
 `SITE_INDEXABLE=false` today. Careers pages are the strongest organic-search asset this site will
 have ("home care nursing jobs Accra"), and they are worthless while excluded. This does not change
@@ -172,7 +180,9 @@ the rest of this project.
 ### Phase C1 — Content model and API (tasks 128–133)
 
 - **[128]** Add `CAREER_TRACK` to `ContentType`, the `CareerTrack` domain record, repository, and
-  `V011SeedCareerTracks` seeding the tracks confirmed in **D-2**.
+  `V011SeedCareerTracks` seeding all six D-2 tracks. Nurse, carer and doctor seed with
+  `openings: true`; paramedic, pharmacist and therapist seed `openings: false` until a rota exists
+  for them, so the page never implies a vacancy that cannot be filled.
   *Verify*: `./mvnw verify` green; the seed is idempotent on restart.
 - **[129]** Add the four `careers*` section keys via `V012SeedCareerSections`, with English copy
   and the other locales falling back (**D-5**).
@@ -202,8 +212,10 @@ the rest of this project.
   `returned_for_correction` as *"we will ask you for one more thing"*.
   *Verify*: reviewed against `professional-onboarding-workflow.md` §Status model so the two cannot
   drift silently.
-- **[137]** The handoff CTA per §5, with the `src`/`track`/`locale` parameters.
-  *Verify*: e2e asserts each track's CTA carries its own `authorityRole`.
+- **[137]** The handoff CTA per §5, with the `src`/`track`/`locale` parameters, plus the
+  invitation-request secondary behind its CMS boolean (default off, per D-1).
+  *Verify*: e2e asserts each track's CTA carries its own `authorityRole`, and that the secondary
+  CTA is absent while the flag is off.
 - **[138]** SEO: title, description, canonical, `JobPosting`-adjacent structured data **only if**
   D-3 settles terms — `schema.org/JobPosting` requires fields we may not be able to state
   truthfully, and inventing them to satisfy a crawler is not acceptable.
@@ -263,8 +275,14 @@ the copy is decorative and should be rewritten rather than merely admired.
 
 ## 9. Open with `hc-professional`
 
-1. **D-1** — enrolment policy. Blocks the CTA.
-2. Does the registration route accept `track`, `locale` and `src`, and degrade gracefully?
-3. Which of the six authorities are actually rosterable today (**D-2**)?
-4. Is there a `request-invitation` surface, if D-1 lands on invitation-only?
-5. Where does `src` surface for measurement?
+D-1 and D-2 are settled, so the remaining asks on that repo are narrower:
+
+1. **Does `/register` accept `track`, `locale` and `src`, and degrade gracefully when they are
+   absent or unrecognised?** The only hard dependency; a stale bookmarked link must still land on a
+   working registration page.
+2. **Where does `src` surface for measurement?** Without it the funnel in §8 cannot be joined and
+   the attribution is decorative.
+3. **Does the flow tolerate an approved professional with no duty roster?** Now that paramedics,
+   pharmacists and therapists are advertised ahead of their rotas, step 10 can be reached with
+   nothing to assign.
+4. Deferred until the invitation path is switched on: a `request-invitation` surface.
