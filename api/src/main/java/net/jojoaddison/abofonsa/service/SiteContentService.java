@@ -5,6 +5,14 @@ import static net.jojoaddison.abofonsa.config.CacheConfiguration.SITE_CONTENT;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
+import net.jojoaddison.abofonsa.domain.CareerTrack;
+import net.jojoaddison.abofonsa.domain.Faq;
+import net.jojoaddison.abofonsa.domain.LocalizedText;
+import net.jojoaddison.abofonsa.domain.Section;
 import net.jojoaddison.abofonsa.domain.enumeration.FaqCategory;
 import net.jojoaddison.abofonsa.domain.enumeration.Locale;
 import net.jojoaddison.abofonsa.domain.enumeration.PublicationStatus;
@@ -137,22 +145,64 @@ public class SiteContentService {
      */
     @Cacheable(cacheNames = SITE_CONTENT, key = "'careers:' + #locale.code()")
     public CareersContentDTO publishedCareers(Locale locale) {
-        var sections = new LinkedHashMap<String, net.jojoaddison.abofonsa.service.dto.SectionDTO>();
-        sectionRepository.findByStatus(PublicationStatus.PUBLISHED).stream()
+        var sectionEntities = sectionRepository.findByStatus(PublicationStatus.PUBLISHED).stream()
                 .filter(s -> isCareersSection(s.key()))
                 .sorted(Comparator.comparing(s -> s.key().ordinal()))
-                .forEach(s -> sections.put(sectionKeyOf(s.key()), mapper.toView(s, locale)));
-
-        var tracks = careerTrackRepository.findByStatusOrderByDisplayOrderAsc(PublicationStatus.PUBLISHED).stream()
-                .map(t -> mapper.toView(t, locale))
                 .toList();
-
-        var faqs = faqRepository.findByStatusOrderByDisplayOrderAsc(PublicationStatus.PUBLISHED).stream()
+        var trackEntities = careerTrackRepository.findByStatusOrderByDisplayOrderAsc(PublicationStatus.PUBLISHED);
+        var faqEntities = faqRepository.findByStatusOrderByDisplayOrderAsc(PublicationStatus.PUBLISHED).stream()
                 .filter(f -> f.category() == FaqCategory.CAREERS)
-                .map(f -> mapper.toView(f, locale))
                 .toList();
 
-        return new CareersContentDTO(locale.code(), Instant.now(), sections, tracks, faqs);
+        var sections = new LinkedHashMap<String, net.jojoaddison.abofonsa.service.dto.SectionDTO>();
+        sectionEntities.forEach(s -> sections.put(sectionKeyOf(s.key()), mapper.toView(s, locale)));
+        var tracks = trackEntities.stream().map(t -> mapper.toView(t, locale)).toList();
+        var faqs = faqEntities.stream().map(f -> mapper.toView(f, locale)).toList();
+
+        var contentLanguage = careersContentLanguage(locale, sectionEntities, trackEntities, faqEntities);
+        return new CareersContentDTO(locale.code(), contentLanguage, Instant.now(), sections, tracks, faqs);
+    }
+
+    /**
+     * Which language the careers payload's prose is actually in, as opposed to which one was asked
+     * for. Anything {@code resolve} could not find in {@code locale} comes back as English, and the
+     * page has to label that or it fails WCAG 2.2 AA 3.1.2 (see {@link CareersContentDTO}).
+     *
+     * <p>All-or-nothing on purpose: the requested locale is only claimed when every localized string
+     * in the payload has a translation in it. A partly-translated payload reports {@code en}, which
+     * mislabels the translated parts — the lesser error, because the alternative mislabels the
+     * English ones, and English inside a Spanish page is the case that actually breaks
+     * pronunciation. It is also a transient state by design: careers content is edited per entity
+     * with a completeness indicator per locale, so "half a page translated" is something an editor
+     * is shown and can finish, not a resting state. If partial translation ever becomes normal, this
+     * needs to move down to the individual DTO.
+     */
+    static String careersContentLanguage(
+            Locale locale, List<Section> sections, List<CareerTrack> tracks, List<Faq> faqs) {
+        if (locale == Locale.EN) {
+            return Locale.EN.code();
+        }
+        Stream<LocalizedText> texts = Stream.of(
+                        sections.stream()
+                                .flatMap(s -> Stream.concat(
+                                        Stream.of(s.eyebrow(), s.heading(), s.subheading(), s.body()),
+                                        nonNull(s.items()).flatMap(i -> Stream.of(i.title(), i.body())))),
+                        tracks.stream().flatMap(t -> Stream.of(
+                                        Stream.of(t.title(), t.blurb()),
+                                        nonNull(t.requirements()),
+                                        nonNull(t.documents()))
+                                .flatMap(Function.identity())),
+                        faqs.stream().flatMap(f -> Stream.of(f.question(), f.answer())))
+                .flatMap(Function.identity())
+                .filter(Objects::nonNull)
+                // An absent optional field (a section with no eyebrow) is not an untranslated one.
+                .filter(text -> !text.values().isEmpty());
+
+        return texts.allMatch(text -> text.hasTranslation(locale)) ? locale.code() : Locale.EN.code();
+    }
+
+    private static <T> Stream<T> nonNull(List<T> list) {
+        return list == null ? Stream.empty() : list.stream();
     }
 
     private static boolean isCareersSection(net.jojoaddison.abofonsa.domain.enumeration.SectionKey key) {

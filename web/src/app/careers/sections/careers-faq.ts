@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { CareersContentStore } from '../careers-content.store';
+import { ContentLang } from '../content-lang.directive';
 
 /** Applicant questions. Same accordion as the home page's FAQ, different source — these come from
  * the careers payload, which is why they cannot appear among the family questions. */
 @Component({
   selector: 'abc-careers-faq',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatExpansionModule, TranslocoPipe],
+  imports: [MatExpansionModule, TranslocoPipe, ContentLang],
   template: `
     @if (store.faqs().length) {
       <section id="careers-faq" class="py-16" aria-labelledby="careers-faq-heading">
@@ -20,9 +21,9 @@ import { CareersContentStore } from '../careers-content.store';
             @for (faq of store.faqs(); track faq.id) {
               <mat-expansion-panel>
                 <mat-expansion-panel-header>
-                  <mat-panel-title>{{ faq.question }}</mat-panel-title>
+                  <mat-panel-title abcContentLang>{{ faq.question }}</mat-panel-title>
                 </mat-expansion-panel-header>
-                <p class="text-brand-body leading-relaxed">{{ faq.answer }}</p>
+                <p abcContentLang class="text-brand-body leading-relaxed">{{ faq.answer }}</p>
               </mat-expansion-panel>
             }
           </mat-accordion>

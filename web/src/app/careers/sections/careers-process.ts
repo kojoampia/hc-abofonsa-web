@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CareersContentStore } from '../careers-content.store';
+import { ContentLang } from '../content-lang.directive';
 
 /**
  * Task 136 — what happens after you apply.
@@ -21,20 +22,21 @@ import { CareersContentStore } from '../careers-content.store';
 @Component({
   selector: 'abc-careers-process',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ContentLang],
   template: `
     @if (section(); as process) {
       <section class="py-16" aria-labelledby="careers-process-heading">
         <div class="max-w-6xl mx-auto px-4 prose-reset flex flex-col gap-6">
           @if (process.eyebrow) {
-            <p class="text-brand-gold-ink text-sm uppercase tracking-wide">{{ process.eyebrow }}</p>
+            <p abcContentLang class="text-brand-gold-ink text-sm uppercase tracking-wide">{{ process.eyebrow }}</p>
           }
-          <h2 id="careers-process-heading" class="font-serif text-3xl text-brand-navy">{{ process.heading }}</h2>
+          <h2 abcContentLang id="careers-process-heading" class="font-serif text-3xl text-brand-navy">{{ process.heading }}</h2>
           @if (process.subheading) {
-            <p class="text-brand-body">{{ process.subheading }}</p>
+            <p abcContentLang class="text-brand-body">{{ process.subheading }}</p>
           }
           <ol class="grid md:grid-cols-4 gap-6 mt-2 list-none p-0">
             @for (step of process.items; track step.key) {
-              <li class="prose-reset">
+              <li abcContentLang class="prose-reset">
                 <b class="text-brand-navy block">{{ step.title }}</b>
                 <p class="text-sm text-brand-body mt-1 leading-relaxed">{{ step.body }}</p>
               </li>

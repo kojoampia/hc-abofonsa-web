@@ -375,3 +375,75 @@ test.describe('Journey 8 — revision rollback', () => {
     }
   });
 });
+
+/**
+ * Journey 9 — a candidate arrives, reads a role, and is handed to the onboarding app (task 140).
+ *
+ * The whole careers page exists to produce one outbound link, and that link is the entire contract
+ * with `hc-professional`: the domains are different, so there is no shared session and anything the
+ * far side needs has to survive in the URL.
+ *
+ * `careers.spec.ts` already asserts each card's `href`. This is the part an attribute check cannot
+ * reach — that clicking really leaves the site. A relative URL, a router-intercepted click, or a
+ * `preventDefault` somewhere would all keep the `href` correct while sending nobody anywhere.
+ * The outbound request is intercepted rather than followed: professional.abofonsa.com is a separate
+ * deployment, and a journey that depends on it passes or fails for reasons that have nothing to do
+ * with this repository.
+ */
+test.describe('Journey 9 — careers handoff', () => {
+  test('from the header, through a track, to the onboarding app with the right parameters', async ({ page }) => {
+    let requested: URL | null = null;
+    await page.route('https://professional.abofonsa.com/**', async (route) => {
+      requested = new URL(route.request().url());
+      await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>stub portal</h1>' });
+    });
+
+    // A candidate does not arrive on /careers; they arrive on the site and look for the way in.
+    await gotoLocale(page, 'fr');
+    await page.locator('[data-testid="nav-careers"]:visible').click();
+    await expect(page).toHaveURL(/\/fr\/careers$/);
+
+    // They read a role. The nurse card is the one the service is actually built on.
+    const card = page.locator('[data-track="ROLE_NURSE"]');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText(/Nursing and Midwifery Council/i);
+
+    await card.locator('a[href*="/register"]').first().click();
+    await page.waitForURL(/professional\.abofonsa\.com/);
+
+    expect(requested, 'clicking the CTA must actually leave the site').not.toBeNull();
+    const url = requested!;
+    expect(url.pathname).toBe('/register');
+    // The role they chose, so they are not asked a second time.
+    expect(url.searchParams.get('track')).toBe('ROLE_NURSE');
+    // The language they were reading, so they are not dropped back into English mid-application.
+    expect(url.searchParams.get('locale')).toBe('fr');
+    // Attribution, without which nobody can say whether this page works (careers-plan.md §8).
+    expect(url.searchParams.get('src')).toBe('web-careers');
+
+    // No identifying information leaves web.abofonsa.com. Identification happens on the far side,
+    // after the candidate has chosen to start — careers-plan.md §6 is explicit that this page
+    // collects nothing, and a stray field added to this link would be the quiet way to break that.
+    expect([...url.searchParams.keys()].sort()).toEqual(['locale', 'src', 'track']);
+  });
+
+  /**
+   * The page-level call to action, which is the same link without a role. It must omit `track`
+   * rather than guessing one — sending everybody to the nurse form would be worse than asking.
+   */
+  test('the page-level call to action omits the role instead of inventing one', async ({ page }) => {
+    let requested: URL | null = null;
+    await page.route('https://professional.abofonsa.com/**', async (route) => {
+      requested = new URL(route.request().url());
+      await route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>stub portal</h1>' });
+    });
+
+    await page.goto('/careers');
+    await page.getByTestId('apply-primary').first().click();
+    await page.waitForURL(/professional\.abofonsa\.com/);
+
+    expect(requested).not.toBeNull();
+    expect(requested!.searchParams.has('track')).toBe(false);
+    expect(requested!.searchParams.get('src')).toBe('web-careers');
+  });
+});

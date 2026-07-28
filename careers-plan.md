@@ -227,14 +227,24 @@ the rest of this project.
 - **[139]** Nav and footer entry points.
   *Verify*: visual baselines regenerated; the home page is otherwise unchanged.
 
-### Phase C3 — Verification (tasks 140–143)
+### Phase C3 — Verification (tasks 140–143) — **DONE**, see [docs/phase-c3-careers-verification.md](docs/phase-c3-careers-verification.md)
 
 - **[140]** Playwright journey: land on `/careers`, read a track, follow the CTA, assert the
   outbound URL and its parameters.
 - **[141]** axe-core over `/careers` in all four locales, blocking on serious/critical, as
   everywhere else.
-- **[142]** Visual baselines at the three viewports.
-- **[143]** i18n key parity for the new UI strings across all four bundles.
+- **[142]** Visual baselines at the three viewports. *Three in English plus German at 390px, not
+  three × four — the copy is English-only, so the other locales differ only in chrome; what they
+  genuinely risk is text length, and German at the narrowest viewport is the worst case.*
+- **[143]** i18n key parity for the new UI strings across all four bundles. *Parity already held;
+  the gap closed instead was keys the app references that no bundle defines.*
+
+**Found here, outside the tasks:** every non-English careers page served English prose under a
+non-English `lang` — a WCAG 2.2 AA 3.1.2 failure that axe-core structurally cannot detect, because
+it does not read the words. The payload now reports the language it actually served
+(`contentLanguage`) and the page marks the difference per element. This is the visible cost of
+**D-5**: while careers copy stays English-only, `/es`, `/fr` and `/de` carry `lang="en"` markers
+throughout.
 
 ### Phase C4 — Launch (tasks 144–146)
 

@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
-import { PROFESSIONAL_PORTAL, handoffUrl } from './careers-content.store';
-import { CareerTrack } from '../core/api/site-content.model';
+import { ApplicationRef, provideZonelessChangeDetection, signal } from '@angular/core';
+import { of } from 'rxjs';
+import { CareersContentStore, PROFESSIONAL_PORTAL, handoffUrl } from './careers-content.store';
+import { ContentApi } from '../core/api/content.api';
+import { LocaleService } from '../core/i18n/locale.service';
+import { CareerTrack, CareersContent } from '../core/api/site-content.model';
 
 function track(overrides: Partial<CareerTrack> = {}): CareerTrack {
   return {
@@ -55,5 +58,68 @@ describe('handoffUrl (careers-plan.md §5)', () => {
     const url = new URL(handoffUrl('https://professional.abofonsa.com/invite?ref=partner', track(), 'de'));
     expect(url.searchParams.get('ref')).toBe('partner');
     expect(url.searchParams.get('locale')).toBe('de');
+  });
+});
+
+/**
+ * Careers copy is seeded English-only (careers-plan.md D-5), so `/es/careers` renders English prose
+ * inside `<html lang="es">` — a WCAG 2.2 AA failure under 3.1.2 that no automated checker detects,
+ * because deciding whether text matches its declared language means reading the text. The server
+ * reports the language it actually served; this turns that into an attribute, or into nothing.
+ */
+describe('CareersContentStore.contentLang', () => {
+  async function storeFor(
+    payload: Partial<CareersContent> | null,
+    pageLocale = 'es',
+  ): Promise<CareersContentStore> {
+    const content: CareersContent | null = payload && {
+      locale: pageLocale,
+      contentLanguage: 'en',
+      generatedAt: new Date().toISOString(),
+      sections: {},
+      tracks: [],
+      faqs: [],
+      ...payload,
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: LocaleService, useValue: { current: signal(pageLocale) } },
+        { provide: ContentApi, useValue: { careersContent: () => of(content) } },
+      ],
+    });
+    const store = TestBed.inject(CareersContentStore);
+    await TestBed.inject(ApplicationRef).whenStable();
+    return store;
+  }
+
+  it('reports the served language when it differs from the page, so the region can be marked', async () => {
+    expect((await storeFor({ contentLanguage: 'en' }, 'es')).contentLang()).toBe('en');
+  });
+
+  it('reports nothing when the content is in the page language — no attribute is the correct output', async () => {
+    expect((await storeFor({ contentLanguage: 'es' }, 'es')).contentLang()).toBe(null);
+  });
+
+  it('reports nothing on an English page, where the two always agree', async () => {
+    expect((await storeFor({ contentLanguage: 'en' }, 'en')).contentLang()).toBe(null);
+  });
+
+  /**
+   * Not a hardcoded 'en'. The day an editor translates the careers content the server starts
+   * reporting the requested locale and these attributes vanish on their own — where a literal would
+   * leave Spanish copy labelled English, with nothing left to prompt anyone to remove it.
+   */
+  it('stops marking once the content is genuinely translated', async () => {
+    expect((await storeFor({ contentLanguage: 'fr' }, 'fr')).contentLang()).toBe(null);
+  });
+
+  it('...and marks the same page while the content is still English', async () => {
+    expect((await storeFor({ contentLanguage: 'en' }, 'fr')).contentLang()).toBe('en');
+  });
+
+  it('marks nothing before the payload has arrived, rather than guessing', async () => {
+    expect((await storeFor(null, 'de')).contentLang()).toBe(null);
   });
 });

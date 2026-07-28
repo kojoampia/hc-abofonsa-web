@@ -14,7 +14,13 @@
   --color-brand-body: #4a5462;
   --color-brand-muted: #6b7480;
   --color-brand-cream: #faf7f0;
-  --color-brand-ok: #2e9e63;
+  /* Was #2e9e63, which is 3.39:1 against white — fine for the decorative ✓ marks it was introduced
+   * for, and a WCAG AA failure the moment it became the fill behind the careers page's "Recruiting
+   * now" badge (12px bold is not "large text", so it owes 4.5:1). Darkened until white text on it
+   * passes at 4.96:1, which also lifts the ✓ marks to 4.96:1 on white and 4.63:1 on cream. One
+   * token rather than an `-ok-deep` variant: every use is improved by the darker value, and a
+   * second token is a second thing to pick wrong. */
+  --color-brand-ok: #277f50;
 
   --font-serif: Georgia, 'Times New Roman', serif;
 

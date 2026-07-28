@@ -34,6 +34,74 @@ for (const viewport of VIEWPORTS) {
 }
 
 /**
+ * Task 142 — the careers page at the same three viewports.
+ *
+ * English only, unlike the home page above, and the asymmetry is deliberate. Careers copy is seeded
+ * English-only by decision (careers-plan.md D-5), so `/es/careers` and `/careers` differ in the
+ * chrome and nothing else; four locales here would be twelve baselines of the same photograph and
+ * twelve files to re-approve on every copy change. What the other locales genuinely risk is text
+ * *length* — and that is covered by the German case below rather than by three near-duplicates.
+ */
+for (const viewport of VIEWPORTS) {
+  test(`careers page — ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto('/careers');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(page.locator('[data-track]').first()).toBeVisible();
+    await page.waitForLoadState('networkidle');
+
+    await expect(page).toHaveScreenshot(`careers-${viewport.name}.png`, {
+      fullPage: true,
+      maxDiffPixelRatio: 0.01,
+      animations: 'disabled',
+    });
+  });
+}
+
+/**
+ * German at the narrowest viewport: the worst case for layout in this project. German is reliably
+ * the longest of the four translations and 390px is the least room, so if a translated label is
+ * going to overflow its control or push a card out of shape, it does it here. The careers page is
+ * the one place a *mixed* string occurs too — "Als Registered nurse bewerben" — which is longer
+ * than either language alone would suggest.
+ */
+test('careers page — mobile / de (longest strings, least room)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoLocale(page, 'de');
+  await page.goto('/de/careers');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('[data-track]').first()).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  await expect(page).toHaveScreenshot('careers-mobile-de.png', {
+    fullPage: true,
+    maxDiffPixelRatio: 0.01,
+    animations: 'disabled',
+  });
+});
+
+/**
+ * A pixel diff cannot fail for a reason it was taught to expect, and a call-to-action that has
+ * overflowed its button is still a valid picture. Asserted as a rule: every CTA's text stays inside
+ * it, in every locale, at the narrowest viewport.
+ */
+test('call-to-action labels stay inside their buttons in every language', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  for (const locale of ['en', 'es', 'fr', 'de']) {
+    await page.goto(locale === 'en' ? '/careers' : `/${locale}/careers`);
+    await expect(page.locator('[data-track]').first()).toBeVisible();
+
+    const overflowing = await page.locator('a[href*="/register"]').evaluateAll((links) =>
+      links
+        .filter((link) => link.scrollWidth > link.clientWidth + 1 || link.scrollHeight > link.clientHeight + 1)
+        .map((link) => link.textContent?.trim().slice(0, 60)),
+    );
+    expect(overflowing, `CTA text overflows its button in ${locale}`).toEqual([]);
+  }
+});
+
+/**
  * Dropping Tailwind's Preflight (spec §5.3) means every reset it would have applied has to be
  * added back deliberately. Two were missed for links — colour, which axe-core caught as a contrast
  * failure, and `text-decoration`, which no automated check flags because an underline is not an

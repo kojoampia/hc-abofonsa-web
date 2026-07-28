@@ -60,6 +60,27 @@ export class CareersContentStore {
   readonly loading = computed(() => this.resource.isLoading());
   readonly failed = computed(() => this.resource.status() === 'error');
 
+  /**
+   * The `lang` to put on the CMS-driven region, or `null` when it matches the page and no attribute
+   * is needed.
+   *
+   * Careers copy is seeded English-only (careers-plan.md D-5), so `/es/careers` renders English
+   * prose inside `<html lang="es">`. Left unmarked that is a WCAG 2.2 AA failure under 3.1.2
+   * Language of Parts: a screen reader applies Spanish pronunciation to English words and the
+   * output is not intelligible. No automated checker catches it — axe-core does not read prose — so
+   * the server reports the language it actually served and this turns it into an attribute.
+   *
+   * Deliberately not a hardcoded `'en'`: the day an editor translates the page this returns null on
+   * its own and the attribute disappears, with nothing to remember to undo.
+   */
+  readonly contentLang = computed(() => {
+    const content = this.content();
+    if (!content || content.contentLanguage === this.locale.current()) {
+      return null;
+    }
+    return content.contentLanguage;
+  });
+
   section(key: string) {
     return computed(() => this.sections()[key]);
   }

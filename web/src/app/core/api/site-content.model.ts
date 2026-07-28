@@ -119,6 +119,13 @@ export interface CareerTrack {
  * renders its FAQs. See CareersContentDTO on the API for why. */
 export interface CareersContent {
   locale: string;
+  /**
+   * The language the prose actually came back in, which is not always `locale`: careers copy is
+   * seeded English-only (careers-plan.md D-5), so a Spanish request resolves to English text. The
+   * page marks that region `lang="en"` — English inside `<html lang="es">` is a WCAG 2.2 AA failure
+   * under 3.1.2, and a screen reader reads it with the wrong pronunciation rules.
+   */
+  contentLanguage: string;
   generatedAt: string;
   sections: Record<string, Section>;
   tracks: CareerTrack[];

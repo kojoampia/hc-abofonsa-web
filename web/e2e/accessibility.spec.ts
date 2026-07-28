@@ -29,6 +29,62 @@ for (const locale of ['en', 'es', 'fr', 'de']) {
   });
 }
 
+/** Task 141 — the careers page gets the same floor as every public route. */
+for (const locale of ['en', 'es', 'fr', 'de']) {
+  test(`the careers page has no serious or critical a11y violations (${locale})`, async ({ page }) => {
+    await page.goto(locale === 'en' ? '/careers' : `/${locale}/careers`);
+    await expect(page.locator('[data-track]').first()).toBeVisible();
+    await scan(page, `/${locale}/careers`);
+  });
+}
+
+test('the careers FAQ accordion stays accessible once expanded', async ({ page }) => {
+  await page.goto('/careers');
+  await page.locator('abc-careers-faq mat-expansion-panel-header').first().click();
+  await scan(page, '/careers with an open FAQ panel');
+});
+
+/**
+ * WCAG 2.2 AA 3.1.2 (Language of Parts), which the scans above cannot reach: axe-core checks that
+ * `lang` is present and well-formed, never that it describes the words underneath it.
+ *
+ * Careers copy is seeded English-only by decision (careers-plan.md D-5), so `/es/careers` is an
+ * English page wearing a Spanish `lang`. A screen reader switches voice on that attribute, so
+ * unmarked the track descriptions — the text an applicant most needs — are read with Spanish
+ * pronunciation applied to English words.
+ *
+ * Asserted as a relationship rather than a constant: the day an editor translates a track the
+ * server stops reporting `en`, the attribute disappears, and this test follows it instead of
+ * failing.
+ */
+for (const locale of ['es', 'fr', 'de']) {
+  test(`untranslated careers copy is marked with the language it is actually in (${locale})`, async ({ page }) => {
+    const payload = page.waitForResponse((r) => r.url().includes('/content/careers'));
+    await page.goto(`/${locale}/careers`);
+    const served = (await (await payload).json()) as { contentLanguage: string };
+
+    await expect(page.locator('html')).toHaveAttribute('lang', locale);
+
+    const heading = page.locator('h1');
+    const trackTitle = page.locator('[data-track] h3').first();
+    const trackBlurb = page.locator('[data-track] p').first();
+
+    if (served.contentLanguage === locale) {
+      // Genuinely translated now — no attribute should be added, or it would mislabel the page.
+      await expect(trackTitle).not.toHaveAttribute('lang', /./);
+      return;
+    }
+
+    for (const element of [heading, trackTitle, trackBlurb]) {
+      await expect(element).toHaveAttribute('lang', served.contentLanguage);
+    }
+
+    // The chrome around it is translated and must NOT be marked, which is the reason the attribute
+    // sits on individual elements rather than on a wrapper around the whole page.
+    await expect(page.locator('#careers-tracks-heading')).not.toHaveAttribute('lang', /./);
+  });
+}
+
 test('the FAQ accordion stays accessible once expanded', async ({ page }) => {
   await gotoLocale(page, 'en');
   await page.locator('abc-faq-section mat-expansion-panel-header').first().click();

@@ -95,6 +95,38 @@ class CareerContentResourceTest extends AbstractIntegrationTest {
     }
 
     /**
+     * The other half of that fallback, and the part nothing else would notice.
+     *
+     * <p>Falling back to English is correct; serving it without saying so is not. The page wraps
+     * itself in {@code <html lang="es">}, and English prose inside that is a WCAG 2.2 AA failure
+     * under 3.1.2 — a screen reader applies Spanish pronunciation to English words. axe-core cannot
+     * catch it, because checking whether text matches its declared language means reading the text.
+     * So the payload states the language it actually served and the client marks the difference.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"es", "fr", "de"})
+    void anUntranslatedLocaleReportsThatItServedEnglish(String locale) {
+        var result = careers(locale);
+
+        assertThat(result.locale()).isEqualTo(locale);
+        assertThat(result.contentLanguage())
+                .as("careers copy is seeded English-only (D-5); the payload must admit it")
+                .isEqualTo("en");
+    }
+
+    @Test
+    void anEnglishRequestReportsEnglishAndNeedsNoMarkup() {
+        var result = careers("en");
+        assertThat(result.contentLanguage()).isEqualTo("en");
+        assertThat(result.contentLanguage()).isEqualTo(result.locale());
+    }
+
+    // It must also stop saying "en" once the content really is translated, or the attribute becomes
+    // permanent and mislabels Spanish copy as English the day someone writes it. Translating all
+    // sixteen seeded entities through the admin API to prove that is not worth the runtime, so the
+    // rule itself is driven in CareersContentLanguageTest.
+
+    /**
      * The reason the payloads are split. FaqDTO has no category and the home accordion renders its
      * list as-is, so a careers question left in the site payload would show up among the family
      * FAQs — and every home-page visitor would download careers content they never see.

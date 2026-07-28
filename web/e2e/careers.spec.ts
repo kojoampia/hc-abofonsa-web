@@ -59,13 +59,31 @@ test.describe('The careers page', () => {
     await expect(page.getByTestId('request-invitation')).toHaveCount(0);
   });
 
-  /** Task 133 rendered: a track with no rota is labelled, not hidden. */
-  test('a track without a rota is shown and labelled rather than dropped', async ({ page }) => {
+  /**
+   * Task 133 rendered: a track with no rota is labelled, not hidden.
+   *
+   * Asserted per role rather than as "at least one of each". The weaker form passed against a
+   * database where `paramedic` had been flipped to recruiting through the CMS and left that way,
+   * and the page then advertised a vacancy on a rota that does not exist — the precise claim
+   * careers-plan.md D-2 exists to avoid. It also let a visual baseline be captured from the drifted
+   * state, which would have made the wrong page the reference for every later comparison.
+   */
+  test('each track is badged according to whether it actually has a rota', async ({ page }) => {
     await page.goto('/careers');
-    const building = page.locator('[data-testid="badge-building"]');
-    await expect(building.first()).toBeVisible();
-    // Every track is present regardless of its openings flag.
     await expect(page.locator('[data-track]')).toHaveCount(6);
+
+    const recruiting = ['ROLE_NURSE', 'ROLE_CARER', 'ROLE_DOCTOR'];
+    const building = ['ROLE_PARAMEDIC', 'ROLE_PHARMACIST', 'ROLE_THERAPIST'];
+
+    for (const role of recruiting) {
+      await expect(page.locator(`[data-track="${role}"] [data-testid="badge-recruiting"]`)).toBeVisible();
+    }
+    for (const role of building) {
+      await expect(
+        page.locator(`[data-track="${role}"] [data-testid="badge-building"]`),
+        `${role} has no rota (careers-plan.md D-2) and must not be advertised as recruiting`,
+      ).toBeVisible();
+    }
   });
 
   /**
@@ -82,6 +100,41 @@ test.describe('The careers page', () => {
     const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
     expect(jsonLd.join(''), 'no JobPosting until D-3 settles terms').not.toContain('JobPosting');
   });
+
+  /**
+   * The call-to-action reads as a sentence in every language.
+   *
+   * The track name is a separate element inside the label so the English name can be marked
+   * `lang="en"` while the sentence around it stays in the page's language (WCAG 2.2 AA 3.1.2). That
+   * split is invisible in the DOM and was rendered as "Apply as aRegistered nurse": the anchor is
+   * `inline-flex`, which promotes each text node to a flex item and then drops the whitespace
+   * between items. Nothing else would have caught it — the markup is correct, the accessible name
+   * is *computed* with the space restored, and the visual baseline would simply have recorded the
+   * broken text as the expected picture.
+   *
+   * Probed with `innerText`, and specifically for a line break. `textContent` reports the spaces
+   * whether or not they render, so it cannot see this at all. `innerText` is layout-aware: when the
+   * pieces are flex items it returns "Als\nRegistered nurse\nbewerben", and when they are in normal
+   * inline flow it returns "Als Registered nurse bewerben". The newline is the flex promotion
+   * itself, which is the defect — measured against the pre-fix markup, the two differ in exactly
+   * this way and by 8px of rendered width.
+   */
+  for (const locale of ['en', 'es', 'fr', 'de']) {
+    test(`the call-to-action reads as one sentence, not three stacked pieces (${locale})`, async ({ page }) => {
+      await page.goto(locale === 'en' ? '/careers' : `/${locale}/careers`);
+      const cta = page.locator('[data-track="ROLE_NURSE"] a[href*="/register"]').first();
+      await expect(cta).toBeVisible();
+
+      const rendered = (await cta.evaluate((el) => (el as HTMLElement).innerText)).trim();
+      expect(rendered).toContain('Registered nurse');
+      expect(
+        rendered,
+        `the label broke into separate pieces in ${locale}: ${JSON.stringify(rendered)}`,
+      ).not.toContain('\n');
+      // The translated words must still be there — a split that dropped them would also be newline-free.
+      expect(rendered.replace('Registered nurse', '').trim().length).toBeGreaterThan(0);
+    });
+  }
 
   /** Task 139 — reachable, and reachable in the right language. */
   test('is reachable from the header and the footer, locale-prefixed', async ({ page }) => {
