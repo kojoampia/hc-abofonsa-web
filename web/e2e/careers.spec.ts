@@ -95,7 +95,9 @@ test.describe('The careers page', () => {
     await page.goto('/careers');
 
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/careers$/);
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /./);
+    // `/./` matched "careers.metaDescription" and let an untranslated key ship to production.
+    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute('content', /^careers\./);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /\w+\s+\w+/);
 
     const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
     expect(jsonLd.join(''), 'no JobPosting until D-3 settles terms').not.toContain('JobPosting');
@@ -133,6 +135,45 @@ test.describe('The careers page', () => {
       ).not.toContain('\n');
       // The translated words must still be there — a split that dropped them would also be newline-free.
       expect(rendered.replace('Registered nurse', '').trim().length).toBeGreaterThan(0);
+    });
+  }
+
+  /**
+   * The page title and description resolve in every language, even when the translation bundle is
+   * slow.
+   *
+   * This shipped broken. `careers.page.ts` sets the title from an effect whose dependencies are the
+   * site settings and the locale; the title itself came from `TranslocoService.translate`, which is
+   * a plain call that returns the *key* when that language's bundle has not loaded yet. Neither
+   * dependency changes when the bundle later arrives, so the effect never re-ran and
+   * `/de/careers` served — and kept showing, in the browser tab — `careers.metaTitle`.
+   *
+   * It passed locally and failed in production because it is a race, and the two environments
+   * order it differently: the bundle and the settings request are in flight together, and only
+   * when the settings win does the effect run too early. Locally the bundle is served by the same
+   * container that is rendering; in production the settings come from an API on the same host and
+   * arrive first.
+   *
+   * Delaying the bundle makes the losing order the only order, so this fails deterministically
+   * against the code that was deployed rather than depending on which request happens to win.
+   */
+  for (const locale of ['en', 'es', 'fr', 'de']) {
+    test(`page metadata survives a slow translation bundle (${locale})`, async ({ page }) => {
+      await page.route(`**/i18n/${locale}.json`, async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        await route.continue();
+      });
+
+      await page.goto(locale === 'en' ? '/careers' : `/${locale}/careers`);
+      await expect(page.locator('[data-track]').first()).toBeVisible();
+
+      await expect
+        .poll(() => page.title(), { message: 'the title never resolved past the raw key' })
+        .not.toMatch(/^careers\./);
+      await expect(page.locator('meta[name="description"]')).not.toHaveAttribute(
+        'content',
+        /^careers\./,
+      );
     });
   }
 
