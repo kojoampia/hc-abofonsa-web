@@ -12,6 +12,22 @@
     "skipToContent": "Aller au contenu principal",
     "slidePosition": "Diapositive {{ current }} sur {{ total }}"
   },
+  "careers": {
+    "apply": "Créer votre compte",
+    "applyFor": "Postuler comme {{track}}",
+    "building": "Équipe en constitution",
+    "buildingNote": "Nous n'avons pas encore de planning pour ce poste, mais nous aimerions vous rencontrer.",
+    "documents": "Ce qui vous sera demandé",
+    "documentsNote": "Les avoir sous la main accélère considérablement l'étape suivante.",
+    "faqHeading": "Questions des candidats",
+    "metaDescription": "Postes en soins infirmiers, aide à la personne et clinique dans le Grand Accra. Visites planifiées, supervision nominative et un compte rendu écrit de votre travail.",
+    "metaTitle": "Carrières — {{organisation}}",
+    "nav": "Carrières",
+    "recruiting": "Recrutement en cours",
+    "requestInvitation": "Demander une invitation",
+    "requirements": "Ce que nous recherchons",
+    "tracksHeading": "Postes que nous recrutons"
+  },
   "common": {
     "callUs": "Appelez-nous",
     "cancel": "Annuler",

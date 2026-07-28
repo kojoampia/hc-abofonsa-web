@@ -12,6 +12,22 @@
     "skipToContent": "Skip to main content",
     "slidePosition": "Slide {{ current }} of {{ total }}"
   },
+  "careers": {
+    "apply": "Create your account",
+    "applyFor": "Apply as a {{track}}",
+    "building": "Building this team",
+    "buildingNote": "We are not rostering this role yet, but we would like to hear from you.",
+    "documents": "What you will be asked for",
+    "documentsNote": "Having these ready makes the next step much quicker.",
+    "faqHeading": "Questions from applicants",
+    "metaDescription": "Nursing, care and clinical roles across Greater Accra. Scheduled visits, named supervision, and a written record of your work.",
+    "metaTitle": "Careers — {{organisation}}",
+    "nav": "Careers",
+    "recruiting": "Recruiting now",
+    "requestInvitation": "Request an invitation",
+    "requirements": "What we look for",
+    "tracksHeading": "Roles we recruit"
+  },
   "common": {
     "callUs": "Call us",
     "cancel": "Cancel",

@@ -12,6 +12,22 @@
     "skipToContent": "Zum Hauptinhalt springen",
     "slidePosition": "Folie {{ current }} von {{ total }}"
   },
+  "careers": {
+    "apply": "Konto erstellen",
+    "applyFor": "Als {{track}} bewerben",
+    "building": "Team im Aufbau",
+    "buildingNote": "Für diese Rolle gibt es noch keinen Dienstplan, aber wir würden gern von Ihnen hören.",
+    "documents": "Was wir von Ihnen benötigen",
+    "documentsNote": "Wenn Sie diese bereithalten, geht der nächste Schritt deutlich schneller.",
+    "faqHeading": "Fragen von Bewerbern",
+    "metaDescription": "Pflege-, Betreuungs- und klinische Rollen im Großraum Accra. Geplante Besuche, benannte Supervision und ein schriftlicher Bericht Ihrer Arbeit.",
+    "metaTitle": "Karriere — {{organisation}}",
+    "nav": "Karriere",
+    "recruiting": "Aktuell auf der Suche",
+    "requestInvitation": "Einladung anfragen",
+    "requirements": "Worauf wir achten",
+    "tracksHeading": "Rollen, die wir besetzen"
+  },
   "common": {
     "callUs": "Rufen Sie uns an",
     "cancel": "Abbrechen",

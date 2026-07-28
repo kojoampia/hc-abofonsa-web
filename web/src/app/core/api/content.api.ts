@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from './api-base-url';
-import { EnquiryReceipt, EnquiryRequest, SiteContent } from './site-content.model';
+import { CareersContent, EnquiryReceipt, EnquiryRequest, SiteContent } from './site-content.model';
 import { Locale } from '../i18n/locales';
 
 /** Typed HTTP client for the public content API (spec §5.5). */
@@ -13,6 +13,10 @@ export class ContentApi {
 
   siteContent(locale: Locale): Observable<SiteContent> {
     return this.http.get<SiteContent>(`${this.base}/content/site`, { params: { locale } });
+  }
+
+  careersContent(locale: Locale): Observable<CareersContent> {
+    return this.http.get<CareersContent>(`${this.base}/content/careers`, { params: { locale } });
   }
 
   submitEnquiry(body: EnquiryRequest): Observable<EnquiryReceipt> {

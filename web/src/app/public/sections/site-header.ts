@@ -3,12 +3,15 @@ import {
   Component,
   DestroyRef,
   afterNextRender,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RouterLink } from '@angular/router';
+import { LocaleService } from '../../core/i18n/locale.service';
 import { LanguageSwitcher } from './language-switcher';
 
 const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', 'faq', 'contact'];
@@ -17,7 +20,7 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
 @Component({
   selector: 'abc-site-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatMenuModule, MatButtonModule, TranslocoPipe, LanguageSwitcher],
+  imports: [MatMenuModule, MatButtonModule, TranslocoPipe, LanguageSwitcher, RouterLink],
   template: `
     <header class="sticky top-0 z-40 bg-brand-surface/95 backdrop-blur border-b border-brand-line">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-6">
@@ -37,6 +40,11 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
               {{ item.key | transloco }}
             </a>
           }
+          <!-- Careers is a different page and a different audience, so it is a routerLink among
+               anchor links, and deliberately the quietest item in the bar. -->
+          <a [routerLink]="careersLink()" class="hover:text-brand-navy py-3" data-testid="nav-careers">
+            {{ 'careers.nav' | transloco }}
+          </a>
           <a href="#contact" class="bg-brand-navy text-white rounded px-4 py-2">{{ 'nav.cta' | transloco }}</a>
           <abc-language-switcher />
         </nav>
@@ -63,6 +71,8 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
   `,
 })
 export class SiteHeader {
+  private readonly locale = inject(LocaleService);
+
   protected readonly navItems = [
     { id: 'services', key: 'nav.services' },
     { id: 'how', key: 'nav.how' },
@@ -71,6 +81,10 @@ export class SiteHeader {
     { id: 'testimonials', key: 'nav.testimonials' },
     { id: 'faq', key: 'nav.faq' },
   ];
+
+  /** Careers lives under the locale prefix like every other route, so the link has to be built
+   * rather than hard-coded — `/careers` in English, `/fr/careers` in French. */
+  protected readonly careersLink = computed(() => `${this.locale.pathPrefix()}/careers`);
 
   /** The section currently in view — drives aria-current and the highlight (scroll-spy). */
   readonly active = signal<string | null>(null);

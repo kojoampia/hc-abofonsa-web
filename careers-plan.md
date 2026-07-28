@@ -205,7 +205,7 @@ the rest of this project.
   site to someone who bookmarked it.
   *Verify*: integration test covers both states.
 
-### Phase C2 — The careers page (tasks 134–139)
+### Phase C2 — The careers page (tasks 134–139) — **DONE**, see [docs/phase-c2-careers-page.md](docs/phase-c2-careers-page.md)
 
 - **[134]** Lazy `/careers` route with locale prefixing, matching the public shell.
   *Verify*: `--stats-json` shows careers in its own chunk; `check-bundle-size` unchanged.

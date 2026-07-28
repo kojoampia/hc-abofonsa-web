@@ -18,6 +18,23 @@ export function localeRouteMatcher(segments: UrlSegment[]): UrlMatchResult | nul
   return null;
 }
 
+/**
+ * The routes inside the public shell, shared by `/` and `/{locale}` so the two cannot drift.
+ *
+ * `/careers` is lazily loaded: it is a secondary audience (careers-plan.md §5) and its content,
+ * components and store must not reach the initial bundle that a family visiting the home page
+ * downloads. `check-bundle-size.mjs` fails the build if they do.
+ */
+function publicChildren(): Routes {
+  return [
+    { path: '', component: HomePage, data: { section: 'home' } },
+    {
+      path: 'careers',
+      loadComponent: () => import('./careers/careers.page').then((m) => m.CareersPage),
+    },
+  ];
+}
+
 export const routes: Routes = [
   {
     path: 'admin',
@@ -27,12 +44,12 @@ export const routes: Routes = [
   {
     matcher: localeRouteMatcher,
     component: PublicShell,
-    children: [{ path: '', component: HomePage, data: { section: 'home' } }],
+    children: publicChildren(),
   },
   {
     path: '',
     component: PublicShell,
-    children: [{ path: '', component: HomePage, data: { section: 'home' } }],
+    children: publicChildren(),
   },
   { path: '**', component: NotFoundPage },
 ];

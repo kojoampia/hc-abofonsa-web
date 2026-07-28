@@ -24,6 +24,7 @@ public record SiteSettings(
         String whatsapp,
         String email,
         String website,
+        @Field("professionalInvitationUrl") String professionalInvitationUrl,
         Address address,
         @Field("coordinationHours") LocalizedText coordinationHours,
         @Field("onCallHours") LocalizedText onCallHours,

@@ -12,6 +12,22 @@
     "skipToContent": "Saltar al contenido principal",
     "slidePosition": "Diapositiva {{ current }} de {{ total }}"
   },
+  "careers": {
+    "apply": "Cree su cuenta",
+    "applyFor": "Postular como {{track}}",
+    "building": "Formando este equipo",
+    "buildingNote": "Aún no asignamos turnos para este puesto, pero nos gustaría conocerle.",
+    "documents": "Qué le pediremos",
+    "documentsNote": "Tenerlos preparados agiliza mucho el siguiente paso.",
+    "faqHeading": "Preguntas de los candidatos",
+    "metaDescription": "Puestos de enfermería, cuidado y clínicos en el Gran Acra. Visitas programadas, supervisión asignada y un registro escrito de su trabajo.",
+    "metaTitle": "Empleo — {{organisation}}",
+    "nav": "Empleo",
+    "recruiting": "Contratando ahora",
+    "requestInvitation": "Solicitar una invitación",
+    "requirements": "Qué buscamos",
+    "tracksHeading": "Puestos que buscamos"
+  },
   "common": {
     "callUs": "Llámenos",
     "cancel": "Cancelar",

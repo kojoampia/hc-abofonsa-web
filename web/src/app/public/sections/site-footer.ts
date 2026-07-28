@@ -1,12 +1,14 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RouterLink } from '@angular/router';
+import { LocaleService } from '../../core/i18n/locale.service';
 import { SiteContentStore } from '../../core/api/site-content.store';
 
 /** Spec §6 #18 — footer columns from siteSettings + the services list (never hardcoded). */
 @Component({
   selector: 'abc-site-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, RouterLink],
   template: `
     <footer class="bg-brand-navy text-white/80 text-sm">
       <div class="max-w-6xl mx-auto px-4 py-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -30,6 +32,10 @@ import { SiteContentStore } from '../../core/api/site-content.store';
             <li><a class="hover:underline inline-flex items-center min-h-6" href="#approach">{{ 'nav.approach' | transloco }}</a></li>
             <li><a class="hover:underline inline-flex items-center min-h-6" href="#pricing">{{ 'nav.pricing' | transloco }}</a></li>
             <li><a class="hover:underline inline-flex items-center min-h-6" href="#faq">{{ 'nav.faq' | transloco }}</a></li>
+            <li>
+              <a class="hover:underline inline-flex items-center min-h-6" [routerLink]="careersLink()"
+                data-testid="footer-careers">{{ 'careers.nav' | transloco }}</a>
+            </li>
           </ul>
         </nav>
         <div class="prose-reset">
@@ -58,6 +64,11 @@ import { SiteContentStore } from '../../core/api/site-content.store';
   `,
 })
 export class SiteFooter {
+  private readonly locale = inject(LocaleService);
+
+  /** Locale-prefixed like every other route. */
+  protected readonly careersLink = computed(() => `${this.locale.pathPrefix()}/careers`);
+
   protected readonly store = inject(SiteContentStore);
   protected readonly year = new Date().getFullYear();
 }

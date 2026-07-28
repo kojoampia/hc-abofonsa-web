@@ -1,4 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { contentApiStub, translocoTesting } from '../../testing/site-content.fixture';
 import { HeroSection } from './hero-section';
@@ -14,7 +15,7 @@ import { SiteFooter } from './site-footer';
 async function render<T>(component: new () => T): Promise<ComponentFixture<T>> {
   await TestBed.configureTestingModule({
     imports: [component as never, translocoTesting()],
-    providers: [provideZonelessChangeDetection(), contentApiStub()],
+    providers: [provideZonelessChangeDetection(), provideRouter([]), contentApiStub()],
   }).compileComponents();
   const fixture = TestBed.createComponent(component);
   fixture.detectChanges();

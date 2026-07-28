@@ -11,8 +11,17 @@
  * budget number creeping upward.
  *
  * The initial set is read from index.csr.html: the entry <script> plus every modulepreload the
- * build emitted for its static imports. That is the browser's own definition of "needed to start",
- * so it cannot drift from reality the way a hand-maintained file list would.
+ * build emitted for its static imports.
+ *
+ * **What this does NOT cover.** Chunks the app pulls in with a dynamic `import()` during hydration
+ * are not listed in the HTML and are not counted here. On the home page that is currently ~240 kB
+ * uncompressed across six files, mostly Angular Material — real cost to a real visitor that this
+ * number omits. Measured in the browser, the home page fetches 17 JS files; this script sees 11.
+ *
+ * That gap is why `e2e/visual.spec.ts` carries a browser-based weight assertion as well: it loads
+ * the page for real and counts everything that crosses the wire, compressed, which is the only
+ * honest measure. Keep this script as the fast pre-build check, but do not read its number as
+ * "what a visitor downloads" — read the e2e one for that.
  */
 import { gzipSync } from 'node:zlib';
 import { readFileSync, existsSync } from 'node:fs';

@@ -209,6 +209,7 @@ public class ContentMapper {
                 doc.email(),
                 address,
                 resolve(doc.coordinationHours(), locale),
-                resolve(doc.onCallHours(), locale));
+                resolve(doc.onCallHours(), locale),
+                doc.professionalInvitationUrl());
     }
 }

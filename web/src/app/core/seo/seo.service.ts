@@ -65,6 +65,30 @@ export class SeoService {
   }
 
   /**
+   * Head metadata for a routed page other than the home page.
+   *
+   * Shares the robots, canonical and hreflang handling with {@link apply} — a page that set its own
+   * canonical but forgot `noindex` would leak a review deployment into search results — but emits
+   * no JSON-LD. Structured data describes a specific entity, and inventing one for a page whose
+   * facts are not yet settled (careers-plan.md D-3) would publish a claim we cannot stand behind.
+   */
+  applyPage(locale: Locale, page: { title: string; description: string; path: string }): void {
+    this.title.setTitle(page.title);
+    this.meta.updateTag({ name: 'description', content: page.description });
+    this.meta.updateTag({ property: 'og:title', content: page.title });
+    this.meta.updateTag({ property: 'og:description', content: page.description });
+    this.meta.updateTag({ property: 'og:type', content: 'website' });
+    this.meta.updateTag({ property: 'og:url', content: this.urlFor(locale, page.path) });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: page.title });
+
+    this.setRobots();
+    this.setCanonicalAndAlternates(locale, page.path);
+    // A page carrying the home page's JSON-LD would describe the wrong thing; clear it.
+    this.document.head.querySelectorAll('script[type="application/ld+json"]').forEach((el) => el.remove());
+  }
+
+  /**
    * Emits `noindex` unless this deployment has explicitly opted in. Written on every page so a
    * review or staging host cannot leak a single indexable route, and paired with the `robots.txt`
    * the SSR server serves — a meta tag alone is ignored by crawlers that never fetch the page, and
@@ -77,24 +101,36 @@ export class SeoService {
     });
   }
 
-  private urlFor(locale: Locale): string {
+  /**
+   * `path` is the route below the locale prefix — empty for the home page, `careers` for /careers.
+   *
+   * The home page keeps its trailing slash (`/`, `/es`) exactly as before: those are the URLs the
+   * router actually serves, and a canonical that adds or drops a slash points at a URL that is
+   * arguably a different one. Sub-pages carry no trailing slash for the same reason.
+   */
+  private urlFor(locale: Locale, path = ''): string {
     const origin = this.origin();
-    return locale === DEFAULT_LOCALE ? `${origin}/` : `${origin}/${locale}`;
+    const prefix = locale === DEFAULT_LOCALE ? '/' : `/${locale}`;
+    if (!path) {
+      return `${origin}${prefix}`;
+    }
+    return prefix === '/' ? `${origin}/${path}` : `${origin}${prefix}/${path}`;
   }
 
-  private setCanonicalAndAlternates(locale: Locale): void {
+  private setCanonicalAndAlternates(locale: Locale, path = ''): void {
     const head = this.document.head;
     head.querySelectorAll('link[rel="canonical"], link[rel="alternate"][hreflang]').forEach((el) => el.remove());
 
     const canonical = this.document.createElement('link');
     canonical.setAttribute('rel', 'canonical');
-    canonical.setAttribute('href', this.urlFor(locale));
+    canonical.setAttribute('href', this.urlFor(locale, path));
     head.appendChild(canonical);
 
+    // Alternates point at the same page in each locale, not at the home page.
     for (const alt of SUPPORTED_LOCALES) {
-      head.appendChild(this.alternate(alt, this.urlFor(alt)));
+      head.appendChild(this.alternate(alt, this.urlFor(alt, path)));
     }
-    head.appendChild(this.alternate('x-default', this.urlFor(DEFAULT_LOCALE)));
+    head.appendChild(this.alternate('x-default', this.urlFor(DEFAULT_LOCALE, path)));
   }
 
   private alternate(hreflang: string, href: string): HTMLLinkElement {

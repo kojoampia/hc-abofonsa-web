@@ -99,6 +99,32 @@ export interface Address {
   country: string;
 }
 
+export interface CareerTrack {
+  id: string;
+  slug: string;
+  title: string;
+  blurb: string;
+  requirements: string[];
+  documents: string[];
+  /** One of the six ROLE_* values professional.abofonsa.com authorizes against; carried in the
+   * handoff link so the candidate is not asked to choose their role twice. */
+  authorityRole: string;
+  /** False for a track being recruited ahead of its rota — the card says so rather than implying
+   * a vacancy that cannot be filled. */
+  openings: boolean;
+  displayOrder: number;
+}
+
+/** The careers page's payload — its own endpoint, so the home page neither downloads it nor
+ * renders its FAQs. See CareersContentDTO on the API for why. */
+export interface CareersContent {
+  locale: string;
+  generatedAt: string;
+  sections: Record<string, Section>;
+  tracks: CareerTrack[];
+  faqs: Faq[];
+}
+
 export interface SiteSettings {
   organisationName: string;
   tagline: string;
@@ -107,6 +133,9 @@ export interface SiteSettings {
   email: string;
   address: Address;
   coordinationHours: string;
+  /** Set to show "Request an invitation" on the careers page; absent hides it. Presence is the
+   * switch, so it cannot be enabled without a destination (careers-plan.md D-1). */
+  professionalInvitationUrl?: string | null;
   onCallHours: string;
 }
 
