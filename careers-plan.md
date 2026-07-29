@@ -90,11 +90,25 @@ must exist in all four regardless, but **CMS content can be English-only and fal
 resolver already does this. Recommendation: publish English, leave the others to fall back, revisit
 if Francophone West Africa becomes a recruiting ground.
 
-### D-6 — Indexing **(open)**
+### D-6 — Indexing **(decided: stays off)**
 
-`SITE_INDEXABLE=false` today. Careers pages are the strongest organic-search asset this site will
-have ("home care nursing jobs Accra"), and they are worthless while excluded. This does not change
-the flag — it is an argument for flipping it at launch, tracked in `GO-LIVE-CHECKLIST.md`.
+`SITE_INDEXABLE=false`, and it stays false for now. Careers pages are the strongest organic-search
+asset this site will have ("home care nursing jobs Accra"), which is the argument for eventually
+flipping it — but not while `professional.abofonsa.com` serves nothing. Indexing the page in its
+current state would put a recruitment listing in front of applicants whose apply buttons are hidden
+(task 144), which converts nobody and teaches the search engine the page is thin.
+
+The flip is a one-line change in the server's `.env` with no rebuild. Two things that would have
+made it unsafe are now fixed regardless of when it happens:
+
+- unknown URLs answered `200` with the not-found page, so every typo and probe would have been
+  indexed as a real page — they now answer `404`;
+- there was no `sitemap.xml`. There is one now, generated across both public paths × four locales
+  with `hreflang` alternates, and gated on the same flag so it cannot advertise URLs that
+  `robots.txt` forbids.
+
+Revisit when the portal is deployed and the apply buttons are switched on. Tracked in
+`GO-LIVE-CHECKLIST.md`.
 
 ---
 
@@ -246,7 +260,7 @@ it does not read the words. The payload now reports the language it actually ser
 **D-5**: while careers copy stays English-only, `/es`, `/fr` and `/de` carry `lang="en"` markers
 throughout.
 
-### Phase C4 — Launch (tasks 144–146)
+### Phase C4 — Launch (tasks 144–146) — **DONE**, see [docs/phase-c4-handoff-verification.md](docs/phase-c4-handoff-verification.md)
 
 - **[144]** ~~Confirm the `professional.abofonsa.com` target route accepts the parameters and
   degrades gracefully.~~ **DONE — the answer is no.** `/register` accepts none of the three;
@@ -256,8 +270,16 @@ throughout.
   [docs/careers-handoff-contract.md](docs/careers-handoff-contract.md); not implemented there.
   Meanwhile the apply buttons are switched off from the CMS
   (`siteSettings.professionalPortalUrl`, seeded null) because the host serves nothing.
-- **[145]** Attribution reaches a dashboard someone reads.
-- **[146]** Decide indexing (**D-6**) and, if enabling, submit the careers URLs.
+- **[145]** ~~Attribution reaches a dashboard someone reads.~~ **DONE, on the receiving side.**
+  `hc-professional` implemented the contract (`web@2b46297`, `api@fba5b5c`): `/register` captures
+  `track`/`locale`/`src`, the wizard pre-selects the role, `source` is persisted on
+  `ProfessionalApplication`, and the review queue shows it as a column. §8's first two rows
+  (`/careers` sessions, CTA clicks) are *not* done and are not planned — measuring them needs
+  client-side analytics, which spec §10.4 relies on this site not having in order to justify having
+  no consent banner. The funnel is read from the far end instead.
+- **[146]** ~~Decide indexing (**D-6**)~~ **DONE — decided: stays off**, see D-6. No URLs submitted,
+  by that decision. The soft-404 and missing-sitemap blockers were fixed anyway, so the flip is a
+  `.env` change whenever it is wanted.
 
 ---
 

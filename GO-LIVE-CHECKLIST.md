@@ -16,12 +16,22 @@ the answer differs from the default.
 - [x] **Domain confirmed: `web.abofonsa.com`**, for a production review.
 - [ ] **Decide whether the apex `abofonsa.com` should also point here.** It is deliberately not
       claimed today — a server block for it would take it over for anything resolving to this host.
-- [ ] **`SITE_INDEXABLE` is still `false` while this is a review**, and flipped to `true` only when
-      this host is the announced public site.
+- [x] **`SITE_INDEXABLE` stays `false`** — decided in careers-plan.md D-6. Flip it to `true` only
+      when this host is the announced public site **and** `professional.abofonsa.com` is serving:
+      indexing `/careers` while its apply buttons are hidden (task 144) puts a recruitment listing
+      in front of applicants who cannot apply.
+- [ ] **When that flip happens, check `sitemap.xml` appears and `robots.txt` names it.** Both are
+      generated from the same flag, so they cannot disagree — but confirm rather than assume, and
+      submit `/careers` and `/{locale}/careers` at that point.
 
 Canonical and hreflang URLs are derived from the request, so they follow whatever host serves the
-page and cannot point at the wrong origin. Indexing is the part that needs a decision: while
-`SITE_INDEXABLE=false` the site serves `noindex` plus a disallow-all `robots.txt`.
+page and cannot point at the wrong origin. While `SITE_INDEXABLE=false` the site serves `noindex`, a
+disallow-all `robots.txt`, and no `sitemap.xml` at all — a sitemap listing URLs that `robots.txt`
+forbids would have the site contradicting itself.
+
+Unknown URLs answer `404`. They used to answer `200` with the not-found page, which no visitor would
+notice and a crawler would read as hundreds of thin duplicate pages. That mattered only once
+indexing was enabled, which is why it was fixed before the decision rather than after it.
 
 The default is off on purpose. A launch that forgets to opt in is simply not indexed for a few days
 and is fixed by one variable; a review host that forgets to opt out gets crawled on a public domain,

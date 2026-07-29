@@ -1,6 +1,8 @@
-# Phase C4 — checking the far side, and switching the buttons off
+# Phase C4 — checking the far side, switching the buttons off, and deciding not to index
 
-**Task 144 of [`careers-plan.md`](../careers-plan.md).** Branch `phase-c4-handoff-verification`.
+**Tasks 144–146 of [`careers-plan.md`](../careers-plan.md). Phase complete.**
+
+Branch `phase-c4-handoff-verification`.
 
 All green: 111 backend tests with the coverage gate, 165 frontend unit, 70 e2e, lint, i18n parity.
 
@@ -116,6 +118,30 @@ a `finally`.
 
 That split is the useful part: the shipped state and the contract are now tested separately, and
 neither can quietly become the other.
+
+---
+
+## Task 146 — decided: indexing stays off
+
+`SITE_INDEXABLE` remains `false`, and no URLs were submitted. The careers pages are the strongest
+organic-search asset this site will have, so this is not a permanent position — but indexing a
+recruitment page whose apply buttons are hidden (task 144) puts a listing in front of applicants who
+cannot act on it, and teaches the crawler the page is thin. Revisit when the portal serves.
+
+Two things were fixed first, because both made the flip unsafe and both were invisible while
+`robots.txt` disallowed everything:
+
+- **Unknown URLs answered `200`** with the not-found page. A soft 404: no visitor notices, a crawler
+  indexes every typo, stale link and probe as a real page. Now `404`, set through `RESPONSE_INIT` in
+  the component — only the router knows a path matched nothing, so deciding this in `server.ts`
+  would mean a second copy of the route table, and the copy that drifted would be the one choosing
+  status codes.
+- **There was no `sitemap.xml`.** There is now, covering both public paths across four locales with
+  `xhtml:link` alternates and `x-default`, gated on the same flag. Off means off: it `404`s while
+  excluded, and `robots.txt` only names it when indexing is on.
+
+The flip is now a one-line `.env` change with no rebuild, and `GO-LIVE-CHECKLIST.md` carries the
+condition attached to it.
 
 ---
 
