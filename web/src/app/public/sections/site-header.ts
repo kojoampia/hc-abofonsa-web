@@ -24,8 +24,35 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
   template: `
     <header class="sticky top-0 z-40 bg-brand-surface/95 backdrop-blur border-b border-brand-line">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-6">
-        <a href="#top" class="font-serif text-xl text-brand-navy font-semibold" [attr.aria-label]="'a11y.logoAlt' | transloco">
-          Abofonsa <span class="text-brand-gold-ink">BridgeCare</span>
+        <a
+          href="#top"
+          class="flex items-center gap-2.5 font-serif text-xl text-brand-navy font-semibold shrink-0"
+          [attr.aria-label]="'a11y.logoAlt' | transloco"
+        >
+          <!--
+            alt="" on purpose. The badge already contains the words "Abofonsa BridgeCare", the link
+            renders them again as text, and the link carries an aria-label — so giving the image a
+            name would make a screen reader say the same thing three times for one control. It is
+            decorative in the accessibility sense precisely because the information is already there.
+            width/height are set so the header does not reflow while it loads (CLS).
+          -->
+          <img
+            src="logo-abofonsa-bridgecare.png"
+            alt=""
+            aria-hidden="true"
+            width="40"
+            height="40"
+            class="h-10 w-10 shrink-0"
+          />
+          <!--
+            Hidden below 640px, where the badge stands in for it. The header had no slack at 390px:
+            adding the logo pushed the layout to 484px, which put the language chooser's last two
+            codes and the menu button off-screen and gave the page a horizontal scrollbar. The badge
+            is the more compressible of the two — it carries the brand at a glance, whereas the
+            chooser and the menu are controls people need to reach. The link keeps its aria-label, so
+            the accessible name is "Abofonsa BridgeCare logo" at every width.
+          -->
+          <span class="hidden sm:inline">Abofonsa <span class="text-brand-gold-ink">BridgeCare</span></span>
         </a>
 
         <nav class="hidden lg:flex items-center gap-5 text-sm ml-auto" [attr.aria-label]="'a11y.mainNav' | transloco">
