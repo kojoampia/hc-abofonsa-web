@@ -127,3 +127,50 @@ for (const locale of ['en', 'es', 'fr', 'de']) {
     }
   });
 }
+
+/**
+ * Unknown URLs answer 404, not 200 (careers-plan.md task 146).
+ *
+ * Every unrecognised path used to be served with HTTP 200 and the not-found page — a soft 404. No
+ * user notices; a crawler does. It indexes each typo, stale link and probe as a real page and then
+ * reads the site as full of thin duplicates. Invisible today only because `robots.txt` disallows
+ * everything, which is exactly why it had to be fixed *before* D-6 is decided rather than after.
+ */
+test('an unknown URL answers 404 while still rendering something useful', async ({ page, request }) => {
+  const bare = await request.get('/no-such-page');
+  expect(bare.status(), 'soft 404 — a crawler would index this as a real page').toBe(404);
+
+  // A locale-prefixed miss is the same kind of miss.
+  expect((await request.get('/de/no-such-page')).status()).toBe(404);
+
+  // The status is for machines; a person still gets a page with a way back.
+  await page.goto('/no-such-page');
+  await expect(page.locator('abc-not-found-page, main').first()).toBeVisible();
+  await expect(page.locator('a[href="/"]').first()).toBeVisible();
+});
+
+/**
+ * The sitemap is gated on the same flag as robots.txt.
+ *
+ * Serving a list of URLs while `robots.txt` says `Disallow: /` would have the site contradicting
+ * itself — one file inviting a crawler to fetch what the other forbids. Off means off.
+ */
+test('no sitemap is served while the site is excluded from search', async ({ request }) => {
+  const robots = await request.get('/robots.txt');
+  const body = await robots.text();
+  const excluded = body.includes('Disallow: /\n') && !body.includes('Disallow: /admin');
+
+  const sitemap = await request.get('/sitemap.xml');
+  if (excluded) {
+    expect(sitemap.status(), 'a sitemap must not advertise URLs robots.txt forbids').toBe(404);
+    expect(body, 'robots.txt must not point at a sitemap it is hiding').not.toContain('Sitemap:');
+  } else {
+    expect(sitemap.status()).toBe(200);
+    expect(sitemap.headers()['content-type']).toMatch(/xml/);
+    const xml = await sitemap.text();
+    // Careers is the point of task 146; the home page alone would not satisfy it.
+    expect(xml).toContain('/careers');
+    expect(xml).toContain('hreflang="x-default"');
+    expect(body).toContain('Sitemap:');
+  }
+});

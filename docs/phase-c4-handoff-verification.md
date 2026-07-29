@@ -9,7 +9,22 @@ it turned up three defects on this side that had nothing to do with the far side
 
 ---
 
-## The answer to task 144
+## Correction, added after the fact
+
+**Everything below about `hc-professional` was true when written and is now out of date.** It was
+verified against `web@424a11f`, `api@25300a0`; that side has since implemented the contract at
+`web@2b46297`, `api@fba5b5c` — `/register` captures all three parameters, the wizard pre-selects the
+track, and `source` is persisted and shown as a column in the review queue. **Task 145 is not
+blocked; it is done on the receiving side.** Only the Spanish question (contract item 2) is open.
+
+The lesson worth keeping is the process one: this phase's finding was a snapshot of another team's
+repository, and I later restated it as current fact without re-checking. Cross-repo findings expire.
+The status table in [careers-handoff-contract.md](careers-handoff-contract.md) is the maintained one;
+this document records what was found on the day.
+
+---
+
+## The answer to task 144 (as of `api@25300a0`, since superseded)
 
 `hc-professional` accepts **none** of the three parameters. Details, and what is required instead,
 are in [careers-handoff-contract.md](careers-handoff-contract.md) — written for whoever owns those
@@ -106,9 +121,14 @@ neither can quietly become the other.
 
 ## Still open
 
-- **Tasks 145 and 146.** 145 (attribution reaches a dashboard) is blocked on item 3 of the contract —
-  there is nowhere to put `src`. 146 is D-6, indexing, which should stay off at least until the
-  portal exists: a careers page indexed while its apply buttons are hidden is worse than not indexed.
+- **Task 145 is done** on the receiving side — see the correction at the top. What remains here are
+  §8's first two rows (`/careers` sessions per locale, CTA clicks by role), which need a privacy
+  decision this site was built to avoid: §10.4 leans on "no analytics or marketing cookies are set
+  anywhere on the site" to justify having no consent banner.
+- **Task 146** is D-6, indexing. The two things that made flipping it unsafe are now fixed: unknown
+  URLs answer 404 instead of 200, and a gated `sitemap.xml` exists. The decision itself is still
+  open, and should stay off at least until the portal is deployed — a careers page indexed while its
+  apply buttons are hidden is worse than not indexed.
 - **The `es` question** needs an answer from the portal side before careers can honestly keep
   offering Spanish to applicants.
 - **Soft 404s**: unknown routes return HTTP 200 with the not-found page. Harmless while

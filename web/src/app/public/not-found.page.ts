@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, RESPONSE_INIT, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -14,4 +14,25 @@ import { TranslocoPipe } from '@jsverse/transloco';
     </main>
   `,
 })
-export class NotFoundPage {}
+export class NotFoundPage {
+  constructor() {
+    /**
+     * Answer 404, not 200.
+     *
+     * Every unknown URL was served with HTTP 200 and this page's body — a "soft 404". Browsers do
+     * not care, which is why it survived, but a crawler does: it indexes each typo, dead link and
+     * probe as a real page, then treats the site as full of thin duplicate content. Harmless only
+     * because `robots.txt` currently disallows everything; a blocker the moment D-6 flips
+     * (careers-plan.md task 146).
+     *
+     * Set through the SSR response token rather than in `server.ts`, because only the router knows
+     * a path matched nothing — the server would have to re-implement the route table to find out,
+     * and the copy that drifted would be the one deciding status codes. Absent in the browser,
+     * where there is no response to modify.
+     */
+    const response = inject(RESPONSE_INIT, { optional: true });
+    if (response) {
+      response.status = 404;
+    }
+  }
+}

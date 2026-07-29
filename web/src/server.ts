@@ -67,8 +67,74 @@ for (const path of ['/api', '/media']) {
 app.get('/robots.txt', (_req, res) => {
   const indexable = process.env['SITE_INDEXABLE'] === 'true';
   res.type('text/plain').send(
-    indexable ? 'User-agent: *\nDisallow: /admin\n' : 'User-agent: *\nDisallow: /\n',
+    indexable
+      ? `User-agent: *\nDisallow: /admin\nSitemap: ${originOf(res.req)}/sitemap.xml\n`
+      : 'User-agent: *\nDisallow: /\n',
   );
+});
+
+/** The public routes, in the shape the sitemap needs. Keep in step with `app.routes.ts`. */
+const PUBLIC_PATHS = ['', 'careers'];
+const SITEMAP_LOCALES = ['en', 'es', 'fr', 'de'];
+
+/** Origin as the visitor sees it — behind nginx that is the forwarded host, not the socket. */
+function originOf(req: import('express').Request): string {
+  const forwardedProto = (req.headers['x-forwarded-proto'] as string | undefined)?.split(',')[0];
+  const host = req.headers['host'] ?? 'web.abofonsa.com';
+  return `${forwardedProto ?? req.protocol ?? 'https'}://${host}`;
+}
+
+function urlFor(origin: string, locale: string, path: string): string {
+  const prefix = locale === 'en' ? '' : `/${locale}`;
+  // `/es` and `/es/careers`, but `/` for English home — matching what the router actually serves,
+  // because a sitemap entry that redirects is a sitemap entry that wastes crawl budget.
+  return path ? `${origin}${prefix}/${path}` : `${origin}${prefix || '/'}`;
+}
+
+/**
+ * sitemap.xml (careers-plan.md task 146 — "submit the careers URLs").
+ *
+ * Generated, and gated on the same flag as robots.txt. Serving a sitemap while `robots.txt` says
+ * `Disallow: /` would be the site contradicting itself: one file inviting a crawler to a list of
+ * URLs the other forbids it to fetch. Off means genuinely off, so this 404s.
+ *
+ * Every URL carries `xhtml:link` alternates for all four locales, which is what tells a search
+ * engine these are translations of one page rather than four thin duplicates competing with each
+ * other. Each locale's own URL is included in its alternate set, as the spec requires.
+ */
+app.get('/sitemap.xml', (req, res) => {
+  if (process.env['SITE_INDEXABLE'] !== 'true') {
+    res.status(404).type('text/plain').send('Not found\n');
+    return;
+  }
+
+  const origin = originOf(req);
+  const entries = PUBLIC_PATHS.flatMap((path) =>
+    SITEMAP_LOCALES.map((locale) => {
+      const alternates = SITEMAP_LOCALES.map(
+        (alt) => `    <xhtml:link rel="alternate" hreflang="${alt}" href="${urlFor(origin, alt, path)}"/>`,
+      ).join('\n');
+      return [
+        '  <url>',
+        `    <loc>${urlFor(origin, locale, path)}</loc>`,
+        alternates,
+        `    <xhtml:link rel="alternate" hreflang="x-default" href="${urlFor(origin, 'en', path)}"/>`,
+        '  </url>',
+      ].join('\n');
+    }),
+  );
+
+  res
+    .type('application/xml')
+    .send(
+      [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+        ...entries,
+        '</urlset>',
+        '',
+      ].join('\n'),
+    );
 });
 
 /**

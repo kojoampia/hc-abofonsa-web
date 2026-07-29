@@ -4,8 +4,10 @@
 has to do with it.** Written for whoever owns `hc-professional`; nothing here has been implemented
 there.
 
-Verified against `hc-professional` at `web@424a11f`, `api@25300a0`, `gateway@61d611c`
-(careers-plan.md task 144). Everything below marked ✗ is a statement about that code, not a guess.
+**Status: implemented on the receiving side.** First verified against `web@424a11f`, `api@25300a0`,
+`gateway@61d611c`, where none of it was accepted. Re-verified against `web@2b46297`, `api@fba5b5c`,
+`gateway@61d611c`, where items 1, 3 and 4 are done. Item 2 (Spanish) is the only one outstanding, and
+it is a decision rather than a defect.
 
 ---
 
@@ -34,11 +36,16 @@ identifies nobody. Identification begins on the far side, after the candidate ha
 
 ## What the receiving side must do
 
-### 1. Accept `track` and carry it to the onboarding wizard ✗
+### 1. Accept `track` and carry it to the onboarding wizard ✓ **done**
 
-`/register` is the stock JHipster route. `register.route.ts` declares no resolver, the component
-injects no `ActivatedRoute`, and `Registration` is `(login, email, password, langKey)`. The parameter
-is dropped.
+~~`/register` is the stock JHipster route… the parameter is dropped.~~
+
+`core/careers/careers-handoff.service.ts` captures all three from the query string, validates them
+against `Authority` and `LANGUAGES`, and stores them under `hpd-careers-handoff`. The onboarding
+wizard pre-selects `requestedRole` from the captured track. **localStorage, not sessionStorage** —
+the activation email opens a fresh tab, which sessionStorage would not survive. A cross-device
+activation loses it and the wizard falls back to explicit choice, which is the degradation rule
+below working as intended.
 
 Role is chosen later, in the authenticated `/onboarding` wizard:
 
@@ -61,9 +68,11 @@ That side additionally defines `ROLE_ANGEL`, `ROLE_CHEMIST` and `ROLE_TECHNICIAN
 not advertise — so treat the parameter as *a value from a known set*, and fall back to today's
 behaviour on anything unrecognised rather than failing the page.
 
-### 2. Honour `locale`, or decide not to ✗
+### 2. Honour `locale`, or decide not to — **partly; `es` still dropped**
 
-`LANGUAGES` is `['en', 'fr', 'de']` and `i18n/` holds three directories. **There is no Spanish.**
+`LANGUAGES` is `['en', 'fr', 'de']` and `i18n/` holds three directories. **There is still no
+Spanish**, and the capture service validates against that list — so `locale=es` is dropped and a
+Spanish applicant continues in the portal's default language.
 
 Careers offers Spanish and will send `locale=es`. Two ways out, and this is a decision, not a bug to
 be fixed by default:
@@ -74,15 +83,15 @@ be fixed by default:
 For `en`/`fr`/`de`, the parameter should set `langKey` on registration rather than leaving it to the
 portal's own default.
 
-### 3. Store `src` somewhere a person can read ✗
+### 3. Store `src` somewhere a person can read ✓ **done**
 
-`OnboardingResource.StartApplicationRequest` is `(requestedRole, consentAccepted)`. There is no
-attribution field anywhere in the onboarding API, so careers-plan.md task 145 — "attribution reaches
-a dashboard someone reads" — currently has no target.
+`StartApplicationRequest` is now `(requestedRole, consentAccepted, source)`; `OnboardingService`
+normalises it onto `ProfessionalApplication.source`; `GET /applications` returns it; and the review
+queue renders it as a **column**, with the detail page showing it too. That is task 145's "dashboard
+someone reads", and it exists.
 
-What is needed is one nullable string persisted on the application at creation, surfaced wherever
-applications are reviewed or counted. Without it nobody can answer whether the careers page works,
-which is the only way to know if any of the rest was worth building.
+The one thing to preserve: `source` is capped at 64 characters and unknown values are dropped rather
+than rejected, so a malformed link never blocks an application.
 
 ### 4. Degrade gracefully with none of them ✓
 
