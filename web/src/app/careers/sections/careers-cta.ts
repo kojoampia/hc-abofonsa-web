@@ -3,7 +3,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SiteContentStore } from '../../core/api/site-content.store';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { CareerTrack } from '../../core/api/site-content.model';
-import { CareersContentStore, PROFESSIONAL_PORTAL, handoffUrl } from '../careers-content.store';
+import { CareersContentStore, handoffUrl } from '../careers-content.store';
 
 /**
  * The handoff (careers-plan.md §5, task 137).
@@ -21,8 +21,9 @@ import { CareersContentStore, PROFESSIONAL_PORTAL, handoffUrl } from '../careers
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslocoPipe],
   template: `
+    @if (registerUrl(); as href) {
     <a
-      [href]="registerUrl()"
+      [href]="href"
       rel="noopener"
       class="bg-brand-gold text-brand-navy rounded px-5 py-3 font-medium inline-flex items-center min-h-11"
       [attr.data-testid]="track() ? 'apply-' + track()!.slug : 'apply-primary'"
@@ -36,6 +37,7 @@ import { CareersContentStore, PROFESSIONAL_PORTAL, handoffUrl } from '../careers
         {{ 'careers.apply' | transloco }}
       }
     </a>
+    }
     @if (invitationUrl(); as invitation) {
       <a
         [href]="invitation"
@@ -86,9 +88,19 @@ export class CareersCta {
     return { before, after };
   }
 
-  protected readonly registerUrl = computed(() =>
-    handoffUrl(`${PROFESSIONAL_PORTAL}/register`, this.track(), this.locale.current()),
-  );
+  /**
+   * The handoff link, or null while no portal is configured — in which case no apply button renders
+   * at all (careers-plan.md task 144).
+   *
+   * professional.abofonsa.com is not deployed: the hostname resolves, nothing answers. A button that
+   * leads to a connection error is worse than no button, because the page has already asked someone
+   * to gather a licence and a Ghana Card before pressing it. The track cards, requirements and
+   * document lists all still render — the page keeps doing everything except promising a door.
+   */
+  protected readonly registerUrl = computed(() => {
+    const portal = this.settings()?.professionalPortalUrl;
+    return portal ? handoffUrl(`${portal.replace(/\/+$/, '')}/register`, this.track(), this.locale.current()) : null;
+  });
 
   protected readonly invitationUrl = computed(() => {
     const configured = this.settings()?.professionalInvitationUrl;

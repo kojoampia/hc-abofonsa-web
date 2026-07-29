@@ -142,6 +142,11 @@ export interface SiteSettings {
   coordinationHours: string;
   /** Set to show "Request an invitation" on the careers page; absent hides it. Presence is the
    * switch, so it cannot be enabled without a destination (careers-plan.md D-1). */
+  /**
+   * Where the careers apply buttons point. Absent hides every one of them — the portal is not
+   * deployed yet (careers-plan.md task 144), and availability is not a build-time fact.
+   */
+  professionalPortalUrl?: string | null;
   professionalInvitationUrl?: string | null;
   onCallHours: string;
 }

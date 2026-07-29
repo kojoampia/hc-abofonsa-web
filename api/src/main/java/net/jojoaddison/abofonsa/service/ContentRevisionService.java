@@ -78,12 +78,24 @@ public class ContentRevisionService {
                 entityId,
                 nextRevisionNumber,
                 new Document(snapshot),
-                PublicationStatus.valueOf(status),
+                // siteSettings is deliberately outside the publish lifecycle (see SiteSettings) and
+                // so carries no status, which arrived here as the string "null" and threw out of
+                // valueOf — after the write had already landed, turning a successful settings save
+                // into a 500. Revisions of a statusless document are still worth keeping; they just
+                // have no status to record.
+                statusOrNull(status),
                 changeSummary,
                 List.of(),
                 Instant.now(),
                 actorId);
         return repository.save(revision);
+    }
+
+    private static PublicationStatus statusOrNull(String status) {
+        if (status == null || status.isBlank() || "null".equals(status)) {
+            return null;
+        }
+        return PublicationStatus.valueOf(status);
     }
 
     public List<ContentRevision> history(ContentType entityType, String entityId) {

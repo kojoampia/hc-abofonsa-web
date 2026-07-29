@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE, adminTokens, authHeaders, gotoLocale, signInBrowser } from './support';
+import { API_BASE, PROFESSIONAL_PORTAL, adminTokens, authHeaders, gotoLocale, signInBrowser, withPortalConfigured } from './support';
 
 /** The eight spec §11.3 end-to-end journeys (plan tasks 93-100). */
 
@@ -391,7 +391,11 @@ test.describe('Journey 8 — revision rollback', () => {
  * with this repository.
  */
 test.describe('Journey 9 — careers handoff', () => {
-  test('from the header, through a track, to the onboarding app with the right parameters', async ({ page }) => {
+  test('from the header, through a track, to the onboarding app with the right parameters', async ({
+    page,
+    request,
+  }) => {
+    await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
     let requested: URL | null = null;
     await page.route('https://professional.abofonsa.com/**', async (route) => {
       requested = new URL(route.request().url());
@@ -425,13 +429,15 @@ test.describe('Journey 9 — careers handoff', () => {
     // after the candidate has chosen to start — careers-plan.md §6 is explicit that this page
     // collects nothing, and a stray field added to this link would be the quiet way to break that.
     expect([...url.searchParams.keys()].sort()).toEqual(['locale', 'src', 'track']);
+    });
   });
 
   /**
    * The page-level call to action, which is the same link without a role. It must omit `track`
    * rather than guessing one — sending everybody to the nurse form would be worse than asking.
    */
-  test('the page-level call to action omits the role instead of inventing one', async ({ page }) => {
+  test('the page-level call to action omits the role instead of inventing one', async ({ page, request }) => {
+    await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
     let requested: URL | null = null;
     await page.route('https://professional.abofonsa.com/**', async (route) => {
       requested = new URL(route.request().url());
@@ -445,5 +451,6 @@ test.describe('Journey 9 — careers handoff', () => {
     expect(requested).not.toBeNull();
     expect(requested!.searchParams.has('track')).toBe(false);
     expect(requested!.searchParams.get('src')).toBe('web-careers');
+    });
   });
 });

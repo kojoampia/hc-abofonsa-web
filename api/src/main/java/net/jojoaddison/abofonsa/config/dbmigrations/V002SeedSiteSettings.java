@@ -40,6 +40,13 @@ public class V002SeedSiteSettings implements Changelog {
                 "+233 242 286 304",
                 "info@abofonsa.com",
                 "https://www.abofonsa.com",
+                // Null on purpose, and this one is load-bearing: it is what keeps every "Create your
+                // account" button off the careers page. professional.abofonsa.com resolves but
+                // serves nothing (careers-plan.md task 144), and the page asks an applicant to
+                // gather a licence and a Ghana Card before pressing it — so a button ending in a
+                // connection error costs more than an absent one. An editor sets this the day the
+                // portal answers, and all eight buttons appear at once with no deploy.
+                null,
                 // Null on purpose: enrolment is self-service (careers-plan.md D-1) and
                 // /request-invitation does not exist on professional.abofonsa.com yet. An editor
                 // sets this the day it does, and the secondary call-to-action appears.
@@ -85,7 +92,11 @@ public class V002SeedSiteSettings implements Changelog {
                                         + " Unterstützung im Alltag."),
                         null),
                 Instant.now(),
-                "usr_admin");
+                "usr_admin",
+                // Spring Data assigns 0 on insert. Present so the CMS can save this document at all:
+                // the admin update matches on {_id, version}, and before this field existed it
+                // matched nothing.
+                null);
 
         mongoTemplate.insert(settings);
     }

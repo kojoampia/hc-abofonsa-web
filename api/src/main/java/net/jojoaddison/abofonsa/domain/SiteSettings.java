@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import net.jojoaddison.abofonsa.domain.enumeration.SocialPlatform;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -24,6 +25,7 @@ public record SiteSettings(
         String whatsapp,
         String email,
         String website,
+        @Field("professionalPortalUrl") String professionalPortalUrl,
         @Field("professionalInvitationUrl") String professionalInvitationUrl,
         Address address,
         @Field("coordinationHours") LocalizedText coordinationHours,
@@ -31,7 +33,17 @@ public record SiteSettings(
         List<SocialLink> socialLinks,
         Seo seo,
         Instant updatedAt,
-        String updatedBy) {
+        String updatedBy,
+        /**
+         * Optimistic-locking version, as on every other content type.
+         *
+         * <p>Absent until Phase C4, which meant the CMS could never save site settings at all: the
+         * admin update matches on {@code {_id, version}}, and a document with no {@code version}
+         * matches nothing, so every write silently modified zero documents and then 500ed on the
+         * conflict path. Nothing caught it because no test had ever saved this screen — the settings
+         * editor was only read from.
+         */
+        @Version Long version) {
 
     public static final String SINGLETON_VALUE = "SITE";
 

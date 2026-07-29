@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoLocale } from './support';
+import { PROFESSIONAL_PORTAL, gotoLocale, withPortalConfigured } from './support';
 
 /**
  * Plan task 102 / spec §11.1: home page at three viewports × four locales. Beyond catching
@@ -85,9 +85,12 @@ test('careers page — mobile / de (longest strings, least room)', async ({ page
  * overflowed its button is still a valid picture. Asserted as a rule: every CTA's text stays inside
  * it, in every locale, at the narrowest viewport.
  */
-test('call-to-action labels stay inside their buttons in every language', async ({ page }) => {
+test('call-to-action labels stay inside their buttons in every language', async ({ page, request }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
+  // Needs the portal configured, or there are no buttons to overflow — the shipped state hides them
+  // while professional.abofonsa.com is undeployed (careers-plan.md task 144).
+  await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
   for (const locale of ['en', 'es', 'fr', 'de']) {
     await page.goto(locale === 'en' ? '/careers' : `/${locale}/careers`);
     await expect(page.locator('[data-track]').first()).toBeVisible();
@@ -99,6 +102,7 @@ test('call-to-action labels stay inside their buttons in every language', async 
     );
     expect(overflowing, `CTA text overflows its button in ${locale}`).toEqual([]);
   }
+  });
 });
 
 /**

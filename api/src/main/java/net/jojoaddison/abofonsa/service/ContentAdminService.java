@@ -119,9 +119,13 @@ public class ContentAdminService {
                 .replaceOne(new Document("_id", new ObjectId(id)).append("version", expectedVersion), updated);
         if (result.getModifiedCount() == 0) {
             var current = findRequired(type, id);
-            throw new ConflictException(
-                    "The entity was modified by someone else",
-                    Map.of("currentVersion", current.get("version"), "current", current));
+            // A HashMap, not Map.of: `version` is absent on documents written before it existed, and
+            // Map.of rejects nulls — which turned every such conflict into a 500 that hid the real
+            // cause. A missing version is exactly the case worth reporting clearly.
+            var details = new java.util.HashMap<String, Object>();
+            details.put("currentVersion", current.get("version"));
+            details.put("current", current);
+            throw new ConflictException("The entity was modified by someone else", details);
         }
         revisionService.recordRawRevision(type, id, updated, String.valueOf(updated.get("status")), "updated", actorId);
         mediaService.syncReferences(type, id, updated);

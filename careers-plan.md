@@ -248,8 +248,14 @@ throughout.
 
 ### Phase C4 — Launch (tasks 144–146)
 
-- **[144]** Confirm the `professional.abofonsa.com` target route accepts the parameters and
-  degrades gracefully. **Cross-repo — coordinate, do not assume.**
+- **[144]** ~~Confirm the `professional.abofonsa.com` target route accepts the parameters and
+  degrades gracefully.~~ **DONE — the answer is no.** `/register` accepts none of the three;
+  role is chosen later in `/onboarding`, defaulting to `ROLE_NURSE`, so a doctor arriving from the
+  doctor card submits a *nurse* application. The portal also has no Spanish, and `src` has nowhere
+  to be stored. Specified for the hc-professional owner in
+  [docs/careers-handoff-contract.md](docs/careers-handoff-contract.md); not implemented there.
+  Meanwhile the apply buttons are switched off from the CMS
+  (`siteSettings.professionalPortalUrl`, seeded null) because the host serves nothing.
 - **[145]** Attribution reaches a dashboard someone reads.
 - **[146]** Decide indexing (**D-6**) and, if enabling, submit the careers URLs.
 

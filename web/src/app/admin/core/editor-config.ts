@@ -103,6 +103,12 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
     { key: 'address.country', label: 'Country', kind: 'text' },
     { key: 'coordinationHours', label: 'Coordination hours', kind: 'localized' },
     { key: 'onCallHours', label: 'On-call hours', kind: 'localized' },
+    // Both careers destinations. Neither was editable here before Phase C4 — the invitation URL was
+    // added to the API in C2 and never surfaced, so "an editor supplies a destination" was only ever
+    // true through the API. Leaving the portal URL blank hides every apply button on /careers, which
+    // is the correct state until professional.abofonsa.com actually serves.
+    { key: 'professionalPortalUrl', label: 'Professional portal URL (blank hides the apply buttons)', kind: 'text' },
+    { key: 'professionalInvitationUrl', label: 'Invitation URL (blank hides the invitation button)', kind: 'text' },
   ],
 };
 

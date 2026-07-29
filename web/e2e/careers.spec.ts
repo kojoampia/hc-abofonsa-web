@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoLocale } from './support';
+import { PROFESSIONAL_PORTAL, gotoLocale, withPortalConfigured } from './support';
 
 /** Phase C2 verification (careers-plan.md tasks 134, 137, 139). */
 
@@ -25,7 +25,8 @@ test.describe('The careers page', () => {
    * with hc-professional. A card whose link carries the wrong role sends a candidate to the far
    * side to be asked their role a second time.
    */
-  test('each track links out carrying its own authority role, locale and attribution', async ({ page }) => {
+  test('each track links out carrying its own authority role, locale and attribution', async ({ page, request }) => {
+    await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
     await page.goto('/careers');
     const cards = await page.locator('[data-track]').all();
     expect(cards.length).toBeGreaterThan(0);
@@ -41,12 +42,34 @@ test.describe('The careers page', () => {
       expect(url.searchParams.get('src')).toBe('web-careers');
       expect(url.searchParams.get('locale')).toBe('en');
     }
+    });
   });
 
-  test('the locale travels with the candidate', async ({ page }) => {
-    await page.goto('/fr/careers');
-    const href = await page.locator('a[href*="/register"]').first().getAttribute('href');
-    expect(new URL(href!).searchParams.get('locale')).toBe('fr');
+  test('the locale travels with the candidate', async ({ page, request }) => {
+    await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
+      await page.goto('/fr/careers');
+      const href = await page.locator('a[href*="/register"]').first().getAttribute('href');
+      expect(new URL(href!).searchParams.get('locale')).toBe('fr');
+    });
+  });
+
+  /**
+   * The state the site actually ships in (careers-plan.md task 144).
+   *
+   * professional.abofonsa.com resolves but nothing serves it, and the page asks an applicant to
+   * gather a licence and a Ghana Card *before* pressing the button — so a button that ends in a
+   * connection error costs more than an absent one. Everything an applicant needs in order to decide
+   * still renders; only the promise of a door is withheld.
+   */
+  test('no apply button renders while no portal is configured', async ({ page }) => {
+    await page.goto('/careers');
+
+    await expect(page.locator('[data-track]')).toHaveCount(6);
+    await expect(page.locator('a[href*="/register"]')).toHaveCount(0);
+    await expect(page.getByTestId('apply-primary')).toHaveCount(0);
+    // The page is not gutted: the reason to apply, and the preparation, are still there.
+    await expect(page.locator('[data-track="ROLE_NURSE"]')).toContainText(/Nursing and Midwifery Council/i);
+    await expect(page.getByText(/What you will be asked for/i).first()).toBeVisible();
   });
 
   /**
@@ -122,7 +145,11 @@ test.describe('The careers page', () => {
    * this way and by 8px of rendered width.
    */
   for (const locale of ['en', 'es', 'fr', 'de']) {
-    test(`the call-to-action reads as one sentence, not three stacked pieces (${locale})`, async ({ page }) => {
+    test(`the call-to-action reads as one sentence, not three stacked pieces (${locale})`, async ({
+      page,
+      request,
+    }) => {
+      await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
       await page.goto(locale === 'en' ? '/careers' : `/${locale}/careers`);
       const cta = page.locator('[data-track="ROLE_NURSE"] a[href*="/register"]').first();
       await expect(cta).toBeVisible();
@@ -135,6 +162,7 @@ test.describe('The careers page', () => {
       ).not.toContain('\n');
       // The translated words must still be there — a split that dropped them would also be newline-free.
       expect(rendered.replace('Registered nurse', '').trim().length).toBeGreaterThan(0);
+      });
     });
   }
 

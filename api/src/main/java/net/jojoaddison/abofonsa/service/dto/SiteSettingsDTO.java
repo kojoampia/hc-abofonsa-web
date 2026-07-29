@@ -12,6 +12,22 @@ public record SiteSettingsDTO(
         String coordinationHours,
         String onCallHours,
         /**
+         * Where the careers page's "Create your account" buttons point, or {@code null} to hide every
+         * apply call-to-action on the page (careers-plan.md task 144).
+         *
+         * <p>This was a compiled-in constant until Phase C4, on the argument that the page's only
+         * conversion should not depend on a content field somebody could mistype. Checking the
+         * far side against reality reversed it: professional.abofonsa.com is not deployed — the
+         * hostname resolves but nothing answers — so the constant meant the live site shipped eight
+         * buttons to a dead host, with no way to withdraw them short of a release. Availability is
+         * not a build-time fact, so it does not belong in the build.
+         *
+         * <p>Absent by design until the portal actually serves. The page still lists every track and
+         * everything an applicant needs to prepare; it simply stops promising a door that is not
+         * there yet.
+         */
+        String professionalPortalUrl,
+        /**
          * Where "Request an invitation" points on the careers page, or {@code null} to hide that
          * call-to-action entirely (careers-plan.md D-1: enrolment is self-service primary, with the
          * invitation path switched on later).

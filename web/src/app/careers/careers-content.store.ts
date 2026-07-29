@@ -5,13 +5,17 @@ import { LocaleService } from '../core/i18n/locale.service';
 import { CareerTrack } from '../core/api/site-content.model';
 
 /**
- * Where a candidate is handed over to the onboarding app.
+ * The origin the handoff is expected to point at.
  *
- * A compiled-in constant rather than CMS content, deliberately: this is the careers page's only
- * conversion, and a mistyped value in a content field would break it silently for everyone with no
- * build or test failing. It changes roughly never, and when it does it should go through review.
- * The one genuinely switchable part — whether the invitation path is offered — *is* CMS-controlled,
- * through `siteSettings.professionalInvitationUrl`.
+ * No longer where the link comes from — that is `siteSettings.professionalPortalUrl` as of Phase C4
+ * — but kept as the one place the expected destination is written down, so tests and reviewers have
+ * something to compare a CMS value against.
+ *
+ * It *was* the source, compiled in on the argument that the page's only conversion should not
+ * depend on a field somebody could mistype. Task 144 checked the far side and reversed that:
+ * professional.abofonsa.com resolves but nothing serves it, so a compiled-in destination meant the
+ * live site carried eight buttons to a dead host with no way to withdraw them short of a release.
+ * Whether a host is answering is not a build-time fact.
  */
 export const PROFESSIONAL_PORTAL = 'https://professional.abofonsa.com';
 
