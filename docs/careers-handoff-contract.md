@@ -4,10 +4,16 @@
 has to do with it.** Written for whoever owns `hc-professional`; nothing here has been implemented
 there.
 
-**Status: implemented on the receiving side.** First verified against `web@424a11f`, `api@25300a0`,
-`gateway@61d611c`, where none of it was accepted. Re-verified against `web@2b46297`, `api@fba5b5c`,
-`gateway@61d611c`, where items 1, 3 and 4 are done. Item 2 (Spanish) is the only one outstanding, and
-it is a decision rather than a defect.
+**Status: fully implemented on the receiving side.** First verified against `web@424a11f`,
+`api@25300a0`, where none of it was accepted; then `web@2b46297`, `api@fba5b5c` (items 1, 3, 4); then
+`web@0088d95`, `api@ec82f24`, which added Spanish and closed item 2.
+
+**All four items are done.** What remains is not code: `professional.abofonsa.com` does not serve yet,
+so this side keeps its apply buttons hidden (see the last section).
+
+That history is the point of this table. Each check was a snapshot of a repository moving
+independently of this one, and each was out of date within days — twice I restated an old snapshot as
+current fact. Re-verify before relying on any line here.
 
 ---
 
@@ -68,20 +74,16 @@ That side additionally defines `ROLE_ANGEL`, `ROLE_CHEMIST` and `ROLE_TECHNICIAN
 not advertise — so treat the parameter as *a value from a known set*, and fall back to today's
 behaviour on anything unrecognised rather than failing the page.
 
-### 2. Honour `locale`, or decide not to — **partly; `es` still dropped**
+### 2. Honour `locale` ✓ **done**
 
-`LANGUAGES` is `['en', 'fr', 'de']` and `i18n/` holds three directories. **There is still no
-Spanish**, and the capture service validates against that list — so `locale=es` is dropped and a
-Spanish applicant continues in the portal's default language.
+~~`LANGUAGES` is `['en', 'fr', 'de']`… there is no Spanish.~~ Resolved by adding it, rather than by
+careers withdrawing the offer.
 
-Careers offers Spanish and will send `locale=es`. Two ways out, and this is a decision, not a bug to
-be fixed by default:
-
-- Add `es` to the portal, or
-- Tell us, and the careers page stops offering Spanish applicants a continuity it cannot deliver.
-
-For `en`/`fr`/`de`, the parameter should set `langKey` on registration rather than leaving it to the
-portal's own default.
+`LANGUAGES` is now `['en', 'es', 'fr', 'de']` with 34 Spanish bundles, matching English's count and
+none of them empty. The capture service validates against that list, so `es` now passes;
+`register.component.ts` calls `translateService.use(...)` and stores the choice, and the account is
+created with `langKey` set to the carried locale. A Spanish applicant arriving from `/es/careers`
+registers in Spanish and stays there.
 
 ### 3. Store `src` somewhere a person can read ✓ **done**
 
@@ -102,7 +104,8 @@ paste links with the query string stripped, and the page must not depend on the 
 
 ## What this side does meanwhile
 
-`professional.abofonsa.com` resolves (199.247.5.252) but nothing answers, and none of the three repos
+`professional.abofonsa.com` resolves (199.247.5.252) but nothing answers — still true after the
+contract was fully implemented, so this is a deployment gap, not a code one. None of the three repos
 has build or deploy tooling.
 
 **So the apply buttons are switched off, and they are switched off from the CMS, not the build.**
