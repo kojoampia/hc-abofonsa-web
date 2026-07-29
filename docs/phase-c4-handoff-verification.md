@@ -69,7 +69,14 @@ diagnostic path that crashes on exactly the input it exists to describe.
 the publish lifecycle so has no status — arriving as the string `"null"`. The save succeeded and the
 caller got a 500, which is the worst of both.
 
-All three are fixed, and a test now saves settings through the admin API, publishes, and reads the
+All three are fixed for a freshly seeded database — and that is not the same as fixed. V002 has
+already run in production and never runs again, so the live settings document kept its missing
+`version`. Checked before deploying: 1 of 1 `siteSettings` documents lacked it, against 0 of 43
+across the other six collections. **V015 backfills it.** Without that, the deploy would have looked
+like a success — the buttons are *supposed* to be hidden right now — and the switch would have been
+welded off until the day someone first tried to turn it on.
+
+A test now saves settings through the admin API, publishes, and reads the
 result back on the public payload. It also **clears the value again**, which is both the "and off"
 half of the claim and basic hygiene — my first version left the portal configured and broke the next
 test, which is precisely how a career track once stayed flipped to "recruiting" and reached a visual
