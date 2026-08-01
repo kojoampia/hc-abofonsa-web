@@ -10,10 +10,12 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Namespace prefix, not just the host — image names are ${REGISTRY}/abofonsa-{api,web}.
-# Matches infra/prod-server/.env.example and .github/workflows/release.yml so a hand-built image
-# and a CI-built one land in the same place.
-# Overridable so deploy.sh can pass its own value; the default is this fleet's private
-# registry, which is where the running production images actually come from.
+#
+# This is the `local` deploy channel's registry, and it is deliberately NOT where CI pushes:
+# .github/workflows/release.yml builds the same two images and pushes them to ghcr.io. The two
+# channels are told apart by the registry, which is why the server's .env pins REGISTRY alongside
+# TAG and why `./deploy.sh --channel github` never calls this script — see CONTRIBUTING.md
+# "Deploy channels". Overridable so deploy.sh can pass its own value.
 REGISTRY="${REGISTRY:-docker.jojoaddison.net}"
 REGISTRY_HOST="${REGISTRY%%/*}"
 API_IMAGE="${REGISTRY}/abofonsa-api"

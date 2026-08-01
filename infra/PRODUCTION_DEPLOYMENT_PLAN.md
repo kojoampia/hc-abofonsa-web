@@ -165,13 +165,30 @@ scratch stack unless you are deliberately rolling back.
 
 After the first deploy, releases are automated: merging to `main` builds SHA-tagged images, deploys
 to staging, smoke-tests it, and waits for a reviewer to approve production
-(`.github/workflows/release.yml`). A manual deploy is the same script:
+(`.github/workflows/release.yml`).
+
+A manual deploy runs the same `./start` on the server. Which images it pulls is set by the
+**channel** — see CONTRIBUTING.md "Deploy channels" for the full table:
+
+```bash
+./deploy.sh                    # images built on your machine  -> docker.jojoaddison.net
+./deploy.sh --channel github   # images built by GitHub Actions -> ghcr.io/kojoampia
+```
+
+Both point the server's `.env` at the right `REGISTRY` **and** `TAG` before restarting, which is the
+part that is easy to get wrong by hand. Editing `.env` on the server directly still works, but
+change both keys together — they are one setting in two lines:
 
 ```bash
 cd ~/webroot/01-healthconnect/abofonsa
-sed -i 's/^TAG=.*/TAG=<commit-sha>/' .env
+sed -i 's|^REGISTRY=.*|REGISTRY=ghcr.io/kojoampia|' .env   # only if switching source
+sed -i 's|^TAG=.*|TAG=<commit-sha>|' .env                  # full SHA on GHCR, short SHA locally
 ./start
 ```
+
+Setting `TAG` alone to a GHCR SHA while `REGISTRY` still names the private registry fails the pull
+on an image that was built perfectly well — and fails *after* `.env` is rewritten, so the stack is
+then pinned to a tag it cannot start. `./deploy.sh` exists partly to make that unrepresentable.
 
 Pin `TAG` to a SHA rather than leaving it at `latest`. With `latest`, "what is running in
 production" has no answer, and a rollback has nothing to roll back to.
@@ -179,8 +196,13 @@ production" has no answer, and a rollback has nothing to roll back to.
 ### Rolling back
 
 ```bash
-sed -i 's/^TAG=.*/TAG=<previous-sha>/' .env && ./start
+TAG=<previous-sha> ./deploy.sh --skip-build        # previous image came from the private registry
+TAG=<previous-sha> ./deploy.sh --channel github    # previous image came from GHCR
 ```
+
+Every deploy prints the correct one of these in its summary, chosen from the registry that was
+actually live — so the hint cannot suggest a rollback that looks for a full-SHA tag in a registry
+that never had it. On the server by hand it is the two `sed` lines above, then `./start`.
 
 Images are immutable and every merged commit has one, so this is fast. What it does **not** undo is
 a database migration — the changelog runner only rolls forward. A rollback across a migration needs
@@ -192,6 +214,12 @@ a restore.
 
 - **`docker compose` without `--env-file .env`** silently gets no secrets and fails on the `:?`
   guards. Use `./start`, which passes it.
+- **`REGISTRY` and `TAG` move together.** They are one setting split over two lines, and since the
+  `github` channel arrived they can disagree. A tag that exists only on GHCR paired with the
+  private registry fails the pull; the reverse quietly deploys an older image if that tag happens
+  to exist in both. `./deploy.sh` always writes both. If the GHCR packages are private the server
+  also needs `docker login ghcr.io` once with a `read:packages` token — without it the pull is
+  refused with `denied`, which reads like a missing image rather than a missing credential.
 - **The `monitoring` network must exist** before the API starts; it belongs to
   `~/webroot/00-admin/monitoring`. `infra.sh` warns if it is missing.
 - **First boot is slow.** The OTel agent's instrumentation adds real startup latency on this

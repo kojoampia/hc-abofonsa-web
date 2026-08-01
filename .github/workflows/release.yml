@@ -8,6 +8,15 @@
 # one-time manual step — see CONTRIBUTING.md "Branch protection". Until it is configured, this
 # workflow builds and pushes images and stops before staging, because neither environment's
 # secrets exist yet.
+#
+# The images this builds are the `github` deploy channel. `./deploy.sh --channel github` deploys
+# exactly these, by hand, to the same servers with the same `./start` — so a CI deploy and a manual
+# deploy of a CI-built image are the same operation. The deploy jobs below and that channel both
+# write REGISTRY *and* TAG into the server's .env for the same reason; see the staging job.
+#
+# Pulling these on the server needs no credential if the packages are public. If they are private,
+# the server needs `docker login ghcr.io` once with a read:packages token — deploy.sh checks for
+# this and says so; these jobs will simply fail in `./start`.
 name: Release
 
 on:
@@ -92,9 +101,19 @@ jobs:
           script: |
             set -euo pipefail
             cd ${{ secrets.STAGING_PATH }}
-            # `TAG` is what infra/prod-server/compose.yml reads for both image references.
-            export TAG=${{ needs.build-images.outputs.sha }}
-            sed -i "s/^TAG=.*/TAG=${{ needs.build-images.outputs.sha }}/" .env
+            # REGISTRY and TAG are what infra/prod-server/compose.yml reads for both image
+            # references, and BOTH have to be written. This job pushed to ghcr.io, but a server
+            # bootstrapped by ./deploy.sh's local channel has REGISTRY=docker.jojoaddison.net —
+            # setting only TAG points it at a full-SHA tag that exists solely on GHCR, and the
+            # pull fails on an image that built perfectly well.
+            # Appended when absent, because `sed -i s/^KEY=.*/` matches nothing and exits 0 on an
+            # .env that predates this line, leaving compose to use its built-in default instead.
+            set_env_key() {
+              if grep -q "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env
+              else printf '%s\n' "$1=$2" >> .env; fi
+            }
+            set_env_key REGISTRY "${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}"
+            set_env_key TAG "${{ needs.build-images.outputs.sha }}"
             ./start   # pulls with --env-file .env, then recreates
 
   smoke-test:
@@ -144,9 +163,16 @@ jobs:
           script: |
             set -euo pipefail
             cd ${{ secrets.PRODUCTION_PATH }}
-            # `TAG` is what infra/prod-server/compose.yml reads for both image references.
-            export TAG=${{ needs.build-images.outputs.sha }}
-            sed -i "s/^TAG=.*/TAG=${{ needs.build-images.outputs.sha }}/" .env
+            # Both keys, for the reason spelled out in the staging job above: this workflow's
+            # images live on GHCR, and a server left pointing at the private registry will fail
+            # the pull rather than deploy the wrong thing — but it fails after .env has been
+            # rewritten, so the stack is then pinned to a tag it cannot start.
+            set_env_key() {
+              if grep -q "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env
+              else printf '%s\n' "$1=$2" >> .env; fi
+            }
+            set_env_key REGISTRY "${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}"
+            set_env_key TAG "${{ needs.build-images.outputs.sha }}"
             ./start   # pulls with --env-file .env, then recreates
 
       - name: Verify production is serving

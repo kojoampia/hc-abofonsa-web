@@ -137,7 +137,8 @@ Without it the dependency-check job still runs but is rate-limited to the point 
 
 Until the environments exist, `release.yml` builds and pushes images to GHCR and then stops: the
 deploy jobs have nothing to connect to. That is the intended state before Phase 20 provisions the
-server, not a misconfiguration.
+server, not a misconfiguration — and the images it pushed are still deployable by hand with
+`./deploy.sh --channel github` (see "Deploy channels" below), which is the point of that channel.
 
 ## Production deployment
 
@@ -164,7 +165,8 @@ Routine releases are automated (`.github/workflows/release.yml`): merge to `main
 images → staging → smoke test → manual approval → production.
 
 For a manual build or deploy, `./build.sh` and `./deploy.sh` at the repo root do the same work by
-hand — same images, same `./start` script, so an automated deploy and a manual one cannot drift:
+hand — same `./start` script, same config sync, same verification, so an automated deploy and a
+manual one cannot drift:
 
 ```bash
 ./build.sh                  # build + push both images, tagged with the current commit
@@ -173,6 +175,43 @@ hand — same images, same `./start` script, so an automated deploy and a manual
 TAG=<sha> ./deploy.sh --skip-build   # roll back to a previously pushed image
 ./deploy.sh --bootstrap --with-nginx --with-tls   # first-time install on a bare server
 ```
+
+### Deploy channels
+
+A **channel** is where the images being deployed came from. It decides two things and nothing else:
+whether a build runs on your machine, and what `REGISTRY` the server's `.env` is pointed at.
+Everything after that is identical.
+
+| Channel | Command | Images | `REGISTRY` | `TAG` |
+|---|---|---|---|---|
+| `local` (default) | `./deploy.sh` | built here by `./build.sh` | `docker.jojoaddison.net` | short SHA |
+| `github` | `./deploy.sh --channel github` | built by `release.yml` | `ghcr.io/kojoampia` | **full** SHA |
+
+```bash
+./deploy.sh --channel github            # deploy the GHCR image built for HEAD
+TAG=<full-sha> ./deploy.sh --channel github   # deploy or roll back to any built commit
+GHCR_OWNER=someone-else ./deploy.sh --channel github   # a different GHCR namespace
+```
+
+The `github` channel builds nothing. It confirms both images exist and that the **server** can pull
+them — probed over SSH, because a GHCR token in your own `~/.docker/config.json` proves nothing
+about the machine doing the pulling — and only then rewrites `.env` and restarts. If the packages
+are private, the server needs one read-only credential:
+
+```bash
+ssh webserver 'echo <token> | docker login ghcr.io -u kojoampia --password-stdin'   # read:packages
+```
+
+Public packages need no credential at all. `deploy.sh` tells the two failure modes apart — GHCR
+answers an unauthenticated request for a private package with `denied` rather than 404, so "no such
+tag" and "no permission" look alike until they are distinguished, and they have completely
+different fixes.
+
+Both channels write **`REGISTRY` and `TAG`** into the server's `.env`, appending either if absent;
+so does `release.yml`. Writing only `TAG` is what breaks the moment a second registry exists — the
+tag moves to a SHA that only GHCR has while `REGISTRY` still names the private registry, and the
+pull fails on an image that built perfectly well. `--verify-only`, `--recover` and the rollback hint
+in the deploy summary all read the registry that is actually live rather than assuming a channel.
 
 `--bootstrap` generates the three secrets by running `openssl rand` **on the server**, so they
 never exist locally or on the wire. Every mutating step announces itself and prompts; certbot
