@@ -17,11 +17,21 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=build /src/target/*.jar app.jar
 
-# OpenTelemetry Java agent, pinned to the same release hc-crowdfund-app runs on this host — a
-# shared collector is easier to reason about when every service instruments identically. The agent
-# is inert unless JAVA_TOOL_OPTIONS names it, which only infra/prod-server/compose.yml does, so
-# local compose and CI are unaffected by its presence.
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.9.0/opentelemetry-javaagent.jar otel-javaagent.jar
+# OpenTelemetry Java agent. Inert unless JAVA_TOOL_OPTIONS names it, which only
+# infra/prod-server/compose.yml does, so local compose and CI are unaffected by its presence.
+#
+# v2.30.0, and deliberately NOT the v2.9.0 hc-crowdfund-app pins. v2.9.0 is from October 2024 and
+# predates Java 25; this image is temurin:25, and on that runtime it instruments NOTHING. It loads,
+# logs its version banner, exports JVM metrics — those come from runtime MBeans and need no
+# bytecode rewriting — and rewrites not one application class, with no error at any log level.
+# That is not theoretical: this service ran that way for months, showing full JVM panels in Grafana
+# while absent from Tempo's service list entirely, with zero request metrics behind every RED panel
+# and SLO that names it.
+#
+# Do not "align" this back to hc-crowdfund-app's version to make the host uniform. That app is
+# unaffected only because it still runs Java 21; the version that matters is the JVM's, not the
+# neighbour's.
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar otel-javaagent.jar
 # Media binaries live on the filesystem behind nginx (spec §8.2/§14.2 #6); this is a volume mount
 # point in compose/production so uploads survive container replacement.
 RUN mkdir -p /app/media-storage && chown -R app:app /app
