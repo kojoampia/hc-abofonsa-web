@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { contentApiStub, translocoTesting } from '../../testing/site-content.fixture';
+import { contentApiStub, makeSiteContent, translocoTesting } from '../../testing/site-content.fixture';
 import { HeroSection } from './hero-section';
 import { AssuranceBar } from './assurance-bar';
 import { ProcessSteps } from './process-steps';
@@ -9,13 +9,15 @@ import { ApproachSection } from './approach-section';
 import { StatsBand } from './stats-band';
 import { AngelNetworkSection } from './angel-network-section';
 import { CtaBand } from './cta-band';
+import { ProfessionalCta } from './professional-cta';
 import { TopContactStrip } from './top-contact-strip';
 import { SiteFooter } from './site-footer';
+import { SiteContent } from '../../core/api/site-content.model';
 
-async function render<T>(component: new () => T): Promise<ComponentFixture<T>> {
+async function render<T>(component: new () => T, content?: SiteContent): Promise<ComponentFixture<T>> {
   await TestBed.configureTestingModule({
     imports: [component as never, translocoTesting()],
-    providers: [provideZonelessChangeDetection(), provideRouter([]), contentApiStub()],
+    providers: [provideZonelessChangeDetection(), provideRouter([]), contentApiStub(content)],
   }).compileComponents();
   const fixture = TestBed.createComponent(component);
   fixture.detectChanges();
@@ -74,6 +76,53 @@ describe('static content sections (spec §6)', () => {
     const fixture = await render(TopContactStrip);
     expect(fixture.nativeElement.textContent).toContain('+233 302 717 577');
     expect(fixture.nativeElement.textContent).toContain('info@abofonsa.com');
+  });
+
+  it('ProfessionalCta gives clinicians a route off the landing page', async () => {
+    const fixture = await render(ProfessionalCta);
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+
+    expect(text).toContain('Join the clinicians behind BridgeCare');
+    // The document list is the whole reason /careers exists; the direct route must still say what
+    // to bring, or it just moves unprepared applications further down the queue.
+    expect(text).toContain('Ghana Card or passport');
+    expect(fixture.nativeElement.querySelector('[data-testid="home-careers-cta"]').getAttribute('href')).toBe(
+      '/careers',
+    );
+  });
+
+  /**
+   * The same CMS field that switches the careers page's eight apply buttons switches this one, so
+   * there is no state where the home page promises a door the careers page withholds.
+   */
+  it('ProfessionalCta shows no registration link while the CMS has no portal configured', async () => {
+    const fixture = await render(ProfessionalCta);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="home-apply"]')).toBeNull();
+    // ...and the surviving link takes the primary styling rather than sitting alone looking disabled.
+    expect(fixture.nativeElement.querySelector('[data-testid="home-careers-cta"]').className).toContain(
+      'bg-brand-navy',
+    );
+  });
+
+  it('ProfessionalCta links straight to registration once a portal is configured, with its own attribution', async () => {
+    const content = makeSiteContent();
+    content.siteSettings.professionalPortalUrl = 'https://professional.abofonsa.com/';
+
+    const fixture = await render(ProfessionalCta, content);
+    const href = fixture.nativeElement.querySelector('[data-testid="home-apply"]').getAttribute('href');
+    const url = new URL(href);
+
+    expect(url.origin).toBe('https://professional.abofonsa.com');
+    // A trailing slash in the CMS value must not become //register.
+    expect(url.pathname).toBe('/register');
+    expect(url.searchParams.get('locale')).toBe('en');
+    // web-home, not web-careers: the far end is the only place that can tell which of the two
+    // arguments converts (careers-plan.md §8), and it can only tell if they arrive distinguishable.
+    expect(url.searchParams.get('src')).toBe('web-home');
+    // No track: the home page never asked which role they hold, and a guessed one would arrive in
+    // the credentialing queue as fact.
+    expect(url.searchParams.has('track')).toBe(false);
   });
 
   it('SiteFooter derives its service links from the services array, never hardcoded', async () => {

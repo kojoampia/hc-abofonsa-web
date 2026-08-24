@@ -17,14 +17,16 @@ public record SiteSettingsDTO(
          *
          * <p>This was a compiled-in constant until Phase C4, on the argument that the page's only
          * conversion should not depend on a content field somebody could mistype. Checking the
-         * far side against reality reversed it: professional.abofonsa.com is not deployed — the
-         * hostname resolves but nothing answers — so the constant meant the live site shipped eight
-         * buttons to a dead host, with no way to withdraw them short of a release. Availability is
-         * not a build-time fact, so it does not belong in the build.
+         * far side against reality reversed it: professional.abofonsa.com resolved but nothing
+         * answered, so the constant meant the live site shipped eight buttons to a dead host, with no
+         * way to withdraw them short of a release. Availability is not a build-time fact, so it does
+         * not belong in the build.
          *
-         * <p>Absent by design until the portal actually serves. The page still lists every track and
-         * everything an applicant needs to prepare; it simply stops promising a door that is not
-         * there yet.
+         * <p>The portal serves now and an editor has set this in the CMS (task 147), so the buttons
+         * are live — and the seed here stays null, because that is the safe default for any database
+         * created from scratch and the decision belongs to whoever can see whether the host is up.
+         * Clearing the field withdraws every button again in one publish: the page keeps every track
+         * and everything an applicant needs to prepare, and stops promising only the door.
          */
         String professionalPortalUrl,
         /**

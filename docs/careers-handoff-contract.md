@@ -1,15 +1,18 @@
 # The careers handoff contract
 
-**What `web.abofonsa.com/careers` sends to `professional.abofonsa.com`, and what the receiving side
-has to do with it.** Written for whoever owns `hc-professional`; nothing here has been implemented
-there.
+**What `web.abofonsa.com` sends to `professional.abofonsa.com`, and what the receiving side has to do
+with it.** Written for whoever owns `hc-professional`.
 
 **Status: fully implemented on the receiving side.** First verified against `web@424a11f`,
 `api@25300a0`, where none of it was accepted; then `web@2b46297`, `api@fba5b5c` (items 1, 3, 4); then
 `web@0088d95`, `api@ec82f24`, which added Spanish and closed item 2.
 
-**All four items are done.** What remains is not code: `professional.abofonsa.com` does not serve yet,
-so this side keeps its apply buttons hidden (see the last section).
+**All four items are done, and the link is live.** `professional.abofonsa.com` now serves the
+`hc-professional` application, `professionalPortalUrl` is set in this side's mini CMS, and every apply
+call-to-action on `/careers` — plus a new one on the landing page — points at it (task 147).
+
+One thing changed on *this* side that the receiving side should know about: **`src` now carries two
+values.** See the table below.
 
 That history is the point of this table. Each check was a snapshot of a repository moving
 independently of this one, and each was out of date within days — twice I restated an old snapshot as
@@ -31,7 +34,16 @@ is the entire agreement between the two applications.
 |---|---|---|
 | `track` | one of the six `AuthorityRole` names | The role the candidate chose by reading a specific card |
 | `locale` | `en`, `es`, `fr` or `de` | The language they were reading in |
-| `src` | always `web-careers` | So the funnel can be joined at the far end |
+| `src` | `web-careers` or `web-home` | So the funnel can be joined at the far end |
+
+`src=web-home` is new as of task 147: the landing page now carries its own "Create your account"
+link, and the two surfaces are separate arguments that only the far end can tell apart. It is a
+second **value**, not a fourth parameter — the set is still exactly `{track, locale, src}`, and
+`e2e/journeys.spec.ts` Journey 9 still fails if that changes. **Anything on the receiving side that
+matches `source == 'web-careers'` exactly will now under-count.** A candidate arriving from the home
+page also carries no `track`, for the same reason the page-level call-to-action does not: nobody
+asked them which role they hold, and a defaulted role reaching the credentialing queue as a stated
+fact is the original defect this contract was written to fix.
 
 `track` is omitted — not empty, absent — on the page-level call to action, where no role was chosen.
 
@@ -102,21 +114,24 @@ paste links with the query string stripped, and the page must not depend on the 
 
 ---
 
-## What this side does meanwhile
+## The gate on this side — now open
 
-`professional.abofonsa.com` resolves (199.247.5.252) but nothing answers — still true after the
-contract was fully implemented, so this is a deployment gap, not a code one. None of the three repos
-has build or deploy tooling.
+~~`professional.abofonsa.com` resolves (199.247.5.252) but nothing answers.~~ **It serves.**
+`/register` returns `200` with the `hpd-app` shell, so the deployment gap that outlasted the contract
+is closed, and `professionalPortalUrl` has been set in the mini CMS. All eight calls-to-action on
+`/careers` are live, and so is the landing page's.
 
-**So the apply buttons are switched off, and they are switched off from the CMS, not the build.**
-`siteSettings.professionalPortalUrl` is seeded null; while it is null no apply button renders
-anywhere on `/careers`. The page still lists all six tracks with their requirements and document
-lists, so an applicant can still learn what to prepare — what is withheld is the promise of a door.
+Note what a `200` there does and does not prove. The portal is a single-page application, so
+`/zzz-not-a-page` answers `200` too: the check confirms the host and the SPA fallback are healthy,
+not that the register route renders or that the captured parameters survive to the wizard. Click the
+handoff through in a real browser once — the workspace already requires that of any deploy touching a
+dashboard, and this is the one link the careers page exists to produce.
 
-Setting that field in the CMS and publishing turns all eight buttons on at once, with no deploy.
-**Do not set it until the portal actually serves**, and preferably not until items 1–3 above are
-done, because a working button into a flow that mislabels the applicant's role is worse than no
-button.
+**The switch remains a CMS field, not a build value**, which is what makes the reverse direction
+cheap: clearing `siteSettings.professionalPortalUrl` and publishing withdraws every apply button on
+the site within one publish and with no release. If the portal goes down, that is the lever. The page
+keeps all six tracks with their requirements and document lists either way — what is withheld is the
+promise of a door, not the reason to walk through it.
 
 ---
 

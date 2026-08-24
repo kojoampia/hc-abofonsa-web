@@ -2,43 +2,14 @@ import { Injectable, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ContentApi } from '../core/api/content.api';
 import { LocaleService } from '../core/i18n/locale.service';
-import { CareerTrack } from '../core/api/site-content.model';
 
 /**
- * The origin the handoff is expected to point at.
- *
- * No longer where the link comes from — that is `siteSettings.professionalPortalUrl` as of Phase C4
- * — but kept as the one place the expected destination is written down, so tests and reviewers have
- * something to compare a CMS value against.
- *
- * It *was* the source, compiled in on the argument that the page's only conversion should not
- * depend on a field somebody could mistype. Task 144 checked the far side and reversed that:
- * professional.abofonsa.com resolves but nothing serves it, so a compiled-in destination meant the
- * live site carried eight buttons to a dead host with no way to withdraw them short of a release.
- * Whether a host is answering is not a build-time fact.
+ * The handoff contract moved to `core/api/professional-handoff.ts` in task 147, so the home page's
+ * professional call-to-action can build the same link without importing anything from this
+ * lazily-loaded chunk. Re-exported here because roughly a dozen call sites, tests and doc references
+ * name it at this path, and a silent move would be a worse trade than one line of indirection.
  */
-export const PROFESSIONAL_PORTAL = 'https://professional.abofonsa.com';
-
-/**
- * Builds the handoff URL (careers-plan.md §5).
- *
- * The three parameters are the entire contract with `hc-professional` — there is no shared cookie
- * or session across the domains, so anything that side needs has to be in the link:
- *
- * - `track` so the role chosen here is not asked again,
- * - `locale` so the candidate continues in the language they were reading,
- * - `src` so the funnel can be joined at the far end; without it the attribution in §8 is
- *   decorative and nobody can say whether this page works.
- */
-export function handoffUrl(base: string, track: CareerTrack | null, locale: string): string {
-  const url = new URL(base);
-  if (track) {
-    url.searchParams.set('track', track.authorityRole);
-  }
-  url.searchParams.set('locale', locale);
-  url.searchParams.set('src', 'web-careers');
-  return url.toString();
-}
+export { PROFESSIONAL_PORTAL, handoffUrl, registerUrlFor } from '../core/api/professional-handoff';
 
 /**
  * The careers page's content store.

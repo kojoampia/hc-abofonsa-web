@@ -3,7 +3,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SiteContentStore } from '../../core/api/site-content.store';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { CareerTrack } from '../../core/api/site-content.model';
-import { CareersContentStore, handoffUrl } from '../careers-content.store';
+import { CareersContentStore } from '../careers-content.store';
+import { handoffUrl, registerUrlFor } from '../../core/api/professional-handoff';
 
 /**
  * The handoff (careers-plan.md §5, task 137).
@@ -90,17 +91,18 @@ export class CareersCta {
 
   /**
    * The handoff link, or null while no portal is configured — in which case no apply button renders
-   * at all (careers-plan.md task 144).
+   * at all.
    *
-   * professional.abofonsa.com is not deployed: the hostname resolves, nothing answers. A button that
-   * leads to a connection error is worse than no button, because the page has already asked someone
-   * to gather a licence and a Ghana Card before pressing it. The track cards, requirements and
-   * document lists all still render — the page keeps doing everything except promising a door.
+   * Configured as of task 147: professional.abofonsa.com serves the `hc-professional` application
+   * and accepts the three parameters. The null branch stays, and is not dead code — it is how the
+   * buttons were withdrawn for the whole of Phase C4 while the host answered nothing, and how they
+   * would be withdrawn again from the CMS in one publish. A button that leads to a connection error
+   * is worse than no button on a page that has just asked someone to gather a licence and a Ghana
+   * Card before pressing it.
    */
-  protected readonly registerUrl = computed(() => {
-    const portal = this.settings()?.professionalPortalUrl;
-    return portal ? handoffUrl(`${portal.replace(/\/+$/, '')}/register`, this.track(), this.locale.current()) : null;
-  });
+  protected readonly registerUrl = computed(() =>
+    registerUrlFor(this.settings()?.professionalPortalUrl, this.track(), this.locale.current()),
+  );
 
   protected readonly invitationUrl = computed(() => {
     const configured = this.settings()?.professionalInvitationUrl;

@@ -23,7 +23,7 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
   imports: [MatMenuModule, MatButtonModule, TranslocoPipe, LanguageSwitcher, RouterLink],
   template: `
     <header class="sticky top-0 z-40 bg-brand-surface/95 backdrop-blur border-b border-brand-line">
-      <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-6">
+      <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
         <a
           href="#top"
           class="flex items-center gap-2.5 font-serif text-xl text-brand-navy font-semibold shrink-0"
@@ -55,7 +55,26 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
           <span class="hidden sm:inline">Abofonsa <span class="text-brand-gold-ink">BridgeCare</span></span>
         </a>
 
-        <nav class="hidden lg:flex items-center gap-5 text-sm ml-auto" [attr.aria-label]="'a11y.mainNav' | transloco">
+        <!--
+          Shown from 1240px, not from lg (1024), and the gaps are tighter than they were.
+
+          The bar did not fit at lg and never had: measured against the pre-change markup it needed
+          1066px in English and 1152px in German inside a 1024px viewport, so it overflowed in every
+          language at the width it first appeared, and in French it overflowed its own 1152px
+          container even on a 1440px screen. Nothing caught it — the horizontal-overflow guard in
+          branding.spec.ts runs at 390px, where this bar is hidden, and the visual baselines are
+          taken at 390, 834 and 1440, none of which is a width where the bar is both visible and
+          short of room.
+
+          Making the careers link a prominent button (task 147) added 42–63px to a bar that was
+          already over, which is how it was found. The fix is the breakpoint and the spacing rather
+          than a shorter label: below 1240px the drawer takes over, and the drawer now carries every
+          item the bar does.
+        -->
+        <nav
+          class="hidden min-[1240px]:flex items-center gap-4 text-sm ml-auto"
+          [attr.aria-label]="'a11y.mainNav' | transloco"
+        >
           @for (item of navItems; track item.id) {
             <a
               href="#{{ item.id }}"
@@ -68,15 +87,23 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
             </a>
           }
           <!-- Careers is a different page and a different audience, so it is a routerLink among
-               anchor links, and deliberately the quietest item in the bar. -->
-          <a [routerLink]="careersLink()" class="hover:text-brand-navy py-3" data-testid="nav-careers">
-            {{ 'careers.nav' | transloco }}
+               anchor links — and now a deliberately loud one. It was the quietest item in the bar
+               under careers-plan.md CR-1; the owner asked for prominence, so it is outlined in gold
+               and labelled for the audience it wants ("For professionals" says who it is for, where
+               "Careers" makes a visitor work that out). Gold ink, not a gold fill: white or navy on
+               a gold fill is 2.74:1 and fails AA, and this sits on cream. -->
+          <a
+            [routerLink]="careersLink()"
+            class="border border-brand-gold text-brand-gold-ink rounded px-3 py-2 font-medium hover:bg-brand-cream"
+            data-testid="nav-careers"
+          >
+            {{ 'careers.forProfessionals' | transloco }}
           </a>
           <a href="#contact" class="bg-brand-navy text-white rounded px-4 py-2">{{ 'nav.cta' | transloco }}</a>
           <abc-language-switcher />
         </nav>
 
-        <div class="lg:hidden ml-auto flex items-center gap-2">
+        <div class="min-[1240px]:hidden ml-auto flex items-center gap-2">
           <abc-language-switcher />
           <button
             mat-icon-button
@@ -91,6 +118,11 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
               <a mat-menu-item href="#{{ item.id }}">{{ item.key | transloco }}</a>
             }
             <a mat-menu-item href="#contact">{{ 'nav.cta' | transloco }}</a>
+            <!-- Absent entirely until now: the desktop bar had a careers link and this drawer did
+                 not, so below 1024px the only route to the page was the footer. -->
+            <a mat-menu-item [routerLink]="careersLink()" data-testid="mobile-nav-careers">
+              {{ 'careers.forProfessionals' | transloco }}
+            </a>
           </mat-menu>
         </div>
       </div>
