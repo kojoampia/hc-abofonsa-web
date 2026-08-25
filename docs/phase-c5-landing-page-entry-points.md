@@ -119,6 +119,28 @@ task — recorded here so the next person measures rather than rediscovers.
   code contributes 2.35 kB of the 5.24 kB overshoot. Worth a separate look; it is a warning, and the
   error threshold is 1 MB.
 
+## The visual baselines had never been compared anywhere but a laptop
+
+Fixing the backend job let the `e2e` job run for the first time — it `needs: [backend, frontend]`,
+and backend had been red for months. All twenty visual tests then failed in CI, **including the four
+careers ones and the two Material ones that this change never touches**.
+
+Not a regression. `--font-serif` is `Georgia, 'Times New Roman', serif`, and ubuntu-latest ships
+neither, so the runner substituted a different face: every line of text changed width and whole pages
+reflowed. The careers page differed by **16% of its pixels** against a 1% tolerance, and the Material
+button by 3%. Raising the tolerance cannot fix a layout shift — it would only blind the check to the
+regressions it exists to catch.
+
+So the rendering environment is now fixed by construction. CI runs the suite inside
+`mcr.microsoft.com/playwright:v1.62.0-noble`, pinned to the version in `package-lock.json`, and
+`npm run e2e:update-snapshots:ci` regenerates baselines through that same image — so what a developer
+commits is what CI compares against. All seventeen changed baselines here were regenerated that way
+and verified by a second, non-updating run: **91 passed**.
+
+One consequence worth stating plainly: the baselines now record the *container's* font fallback, not
+what a visitor with Georgia installed sees. That is the right trade for a regression check — it
+compares like with like — but it means these images are not a reference for how the site looks.
+
 ## Not done
 
 - **The handoff has not been clicked through in a browser.** The `200` from `/register` is a healthy

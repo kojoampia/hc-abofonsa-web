@@ -133,10 +133,6 @@ jobs:
         working-directory: web
         run: npm ci
 
-      - name: Install Playwright's browser
-        working-directory: web
-        run: npx playwright install --with-deps chromium
-
       - name: Build and start the full stack
         run: docker compose up -d --build --wait
 
@@ -146,9 +142,28 @@ jobs:
         if: always()
         run: docker compose ps
 
+      # Run inside Playwright's own image rather than on the runner, and pin it to the version in
+      # package-lock.json. The browser comes with the image, which is why the separate
+      # `playwright install` step is gone — but the fonts are the actual reason.
+      #
+      # This job had never run to completion: it needs `backend`, which was red for months, so the
+      # visual baselines had never once been compared anywhere but a developer's machine. The first
+      # green backend let it run, and all twenty visual tests failed — including the ones nobody had
+      # touched. Not a regression: `--font-serif` is `Georgia, 'Times New Roman', serif`, neither of
+      # which ships on ubuntu-latest, so the runner substituted a different face, every line of text
+      # changed width, and whole pages reflowed. The careers page differed by 16% of its pixels
+      # against a 1% tolerance; raising the tolerance could not fix a layout shift, and would have
+      # blinded the check to the regressions it exists to catch.
+      #
+      # A container fixes the font set by construction. `npm run e2e:update-snapshots:ci` regenerates
+      # baselines through this same image, so what a developer commits is what CI compares against.
+      # --network host so localhost:4000 reaches the compose stack published on the runner.
       - name: Run the suite
-        working-directory: web
-        run: npx playwright test
+        run: |
+          docker run --rm --network host \
+            -v "${{ github.workspace }}:/work" -w /work/web \
+            mcr.microsoft.com/playwright:v1.62.0-noble \
+            npx playwright test
 
       - name: Upload the report and any failure traces
         if: failure()
