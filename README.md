@@ -28,5 +28,7 @@ Run everything (including the built images) with `docker compose up`.
 
 - `Abofonsa_BridgeCare_Website.html` — approved prototype; visual and content design source of truth
 - `Abofonsa_BridgeCare_Demo.html` — earlier demo variant, reference only
-- `site_assets.json`, `abofonsa-logo-original.png` — asset reference
+- `site_assets.json`, `brand.png` — asset reference. `brand.png` is the workspace-wide convention:
+  every product repo keeps one, and the navy `#0d3058` / gold `#c59437` palette is derived from it.
+  It replaces `abofonsa-logo-original.png`, which was the same badge at 5.7 MB.
 - `Abofonsa_BridgeCare_Technical_Specification.md` — the technical specification this build implements
