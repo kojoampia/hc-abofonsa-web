@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ApplicationRef, provideZonelessChangeDetection, signal } from '@angular/core';
 import { of } from 'rxjs';
-import { CareersContentStore, PROFESSIONAL_PORTAL, handoffUrl } from './careers-content.store';
+import { CareersContentStore, PROFESSIONAL_PORTAL, handoffUrl, registerUrlFor } from './careers-content.store';
 import { ContentApi } from '../core/api/content.api';
 import { LocaleService } from '../core/i18n/locale.service';
 import { CareerTrack, CareersContent } from '../core/api/site-content.model';
@@ -51,6 +51,33 @@ describe('handoffUrl (careers-plan.md §5)', () => {
     const url = new URL(handoffUrl(`${PROFESSIONAL_PORTAL}/register`, null, 'en'));
     expect(url.searchParams.has('track')).toBe(false);
     expect(url.searchParams.get('src')).toBe('web-careers');
+  });
+
+  /**
+   * The shape an editor actually typed, on the day the buttons went live.
+   *
+   * `professionalPortalUrl` was set to `https://professional.abofonsa.com/register` — the page they
+   * had just been looking at, and a perfectly reasonable reading of a field labelled "Professional
+   * portal URL". The site appended its own `/register`, so every apply button on the live careers
+   * page pointed at `/register/register`. Every test was green throughout, because every test
+   * supplied the origin. This one supplies what production had.
+   */
+  it('does not double the path when the CMS value already ends in /register', () => {
+    const url = new URL(registerUrlFor(`${PROFESSIONAL_PORTAL}/register`, track(), 'en')!);
+    expect(url.pathname).toBe('/register');
+    expect(url.searchParams.get('track')).toBe('ROLE_NURSE');
+  });
+
+  it('still appends /register when given the portal root, with or without a trailing slash', () => {
+    expect(new URL(registerUrlFor(PROFESSIONAL_PORTAL, null, 'en')!).pathname).toBe('/register');
+    expect(new URL(registerUrlFor(`${PROFESSIONAL_PORTAL}/`, null, 'en')!).pathname).toBe('/register');
+    // A trailing slash on the registration URL is the same case wearing a hat.
+    expect(new URL(registerUrlFor(`${PROFESSIONAL_PORTAL}/register/`, null, 'en')!).pathname).toBe('/register');
+  });
+
+  it('renders no apply link at all when the portal is unset — the withdrawal path', () => {
+    expect(registerUrlFor(null, null, 'en')).toBeNull();
+    expect(registerUrlFor(undefined, track(), 'en')).toBeNull();
   });
 
   it('preserves a query string already present on a CMS-supplied invitation URL', () => {
