@@ -27,7 +27,9 @@ class ContentResourceTest extends AbstractIntegrationTest {
         assertThat(result).isNotNull();
         assertThat(result.locale()).isEqualTo(locale);
         assertThat(result.siteSettings().organisationName()).isEqualTo("Abofonsa BridgeCare");
-        assertThat(result.sections()).hasSize(7);
+        // Eight: the seven §6 sections plus patientOffer, which carries the first-month-free copy.
+        assertThat(result.sections()).hasSize(8);
+        assertThat(result.sections()).containsKey("patientOffer");
         assertThat(result.services()).hasSize(6);
         assertThat(result.plans()).hasSize(3);
         assertThat(result.testimonials()).hasSize(4);

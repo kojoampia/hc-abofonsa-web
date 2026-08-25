@@ -4,6 +4,7 @@ import { SeoService } from '../core/seo/seo.service';
 import { LocaleService } from '../core/i18n/locale.service';
 import { HeroSection } from './sections/hero-section';
 import { AssuranceBar } from './sections/assurance-bar';
+import { PatientOfferBand } from './sections/patient-offer-band';
 import { ServicesCarousel } from './sections/services-carousel';
 import { ProcessSteps } from './sections/process-steps';
 import { ApproachSection } from './sections/approach-section';
@@ -25,6 +26,7 @@ import { ContactSection } from './sections/contact-section';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     HeroSection,
+    PatientOfferBand,
     AssuranceBar,
     ServicesCarousel,
     ProcessSteps,
@@ -42,6 +44,10 @@ import { ContactSection } from './sections/contact-section';
   template: `
     <main id="main">
       <abc-hero-section />
+      <!-- Directly under the hero: an offer three screens down is a footnote. The opposite placement
+           to the professional band at the foot of the page, and for the opposite reason — this one
+           speaks to the audience the page is already for. -->
+      <abc-patient-offer-band />
       <abc-assurance-bar />
       <abc-services-carousel />
       <abc-process-steps />

@@ -43,7 +43,35 @@ competes with the real site, and is slow and only partly reversible to remove fr
 *Where:* `SITE_INDEXABLE` in the server's `.env` (`infra/prod-server/.env.example`);
 `infra/prod-server/nginx-abofonsa.conf` for the served hostnames.
 
-### 2. Testimonial consent
+### 2. The free-first-month offer
+
+- [ ] **Confirmed as a real offer, with someone who can honour it** — or the `patientOffer` section
+      unpublished in the CMS.
+
+The landing page pitches **the first month of care free**. That is a priced promise: at the seeded
+plan prices it is worth **GH₵3,000 to GH₵8,000** per subscriber, and it is the first thing a visitor
+reads after the hero. Nothing in the repository or the CMS said anything of the kind before
+2026-08-25 — it exists because it was asked for, not because it was found.
+
+Three things worth settling before it stays up:
+
+1. **Who absorbs it, and for how long?** A promotion with no end date is a price change wearing a
+   different hat. There is no expiry mechanism — an editor unpublishes the section when it ends.
+2. **What happens at the end of month one?** The band says the minimum three-month term and 30 days'
+   notice still apply, so a family who leaves after the free month is inside a term they agreed to.
+   That is defensible, but it must be what is actually intended, and billing has to match it.
+3. **Does `hc-patient` know?** A family arrives at `/account/register` expecting what the landing page
+   just promised. If registration or onboarding states pricing anywhere, the two must agree — see
+   [docs/patient-handoff-contract.md](docs/patient-handoff-contract.md).
+
+Withdrawing it is one action and needs no deploy: unpublish the `patientOffer` section. The sign-up
+button is separately switched by `siteSettings.patientPortalUrl`, so the offer and the door can be
+taken down independently.
+
+*Where:* CMS → Sections → `patientOffer`, and `api/.../dbmigrations/V020SeedPatientOfferSection.java`
+for the seeded wording.
+
+### 3. Testimonial consent
 
 - [ ] **The four seeded testimonials are real, with consent evidenced** — or they have been
       replaced.
@@ -59,7 +87,7 @@ actual person. Record the evidence reference in the CMS field provided.
 
 *Where:* CMS → Testimonials, or `api/.../dbmigrations/` if reseeding.
 
-### 3. Demonstration banner
+### 4. Demonstration banner
 
 - [ ] **The demo banner is gone in production.**
 
@@ -76,7 +104,7 @@ grep -qi "demonstration" <<<"$home" && echo "STILL PRESENT" || echo "clear"
 
 *Where:* `web/src/environments/environment.ts`.
 
-### 4. Bootstrap admin password rotated
+### 5. Bootstrap admin password rotated
 
 - [ ] **The first admin login rotated the password**, and the original from `.env` is now dead.
 
@@ -93,7 +121,7 @@ not reuse it anywhere.
 
 ## Confirm-or-change — defaults already built, no work needed if they are right
 
-### 5. Enquiry retention: 24 months
+### 6. Enquiry retention: 24 months
 
 - [ ] Confirmed, or changed.
 
@@ -106,7 +134,7 @@ been running since the first deploy.
 
 *Where:* `abofonsa.enquiry.retention-months` in `api/.../config/application.yml`.
 
-### 6. Pricing in GHS only
+### 7. Pricing in GHS only
 
 - [ ] Confirmed, or a second currency requested.
 
@@ -117,7 +145,7 @@ updates, which is a feature, not a setting.
 
 *Where:* `PriceFormatter`, and the `price.currency` field on each plan.
 
-### 7. Enquiries are stored, not emailed
+### 8. Enquiries are stored, not emailed
 
 - [ ] Confirmed, or forwarding requested.
 
@@ -130,7 +158,7 @@ retention, outside the TTL above.
 
 *Where:* `EnquiryService`.
 
-### 8. Four locales
+### 9. Four locales
 
 - [ ] Confirmed no fifth language is expected at launch.
 
@@ -143,7 +171,7 @@ a locale entry — so this is a "not now" rather than a "not ever".
 
 ## Operational — after the first deploy
 
-### 9. First backup verified by restoring it
+### 10. First backup verified by restoring it
 
 - [ ] A backup has been taken **and restored into a scratch stack**.
 
@@ -155,7 +183,7 @@ incident. Procedure in `infra/PRODUCTION_DEPLOYMENT_PLAN.md`.
 
 A cadence with no name against it does not happen.
 
-### 10. Monitoring is actually receiving data
+### 11. Monitoring is actually receiving data
 
 - [ ] Prometheus is scraping `/actuator/prometheus` and the alert rules are loaded.
 - [ ] The blackbox check is probing both the home page and `/api/v1/health`.
@@ -167,7 +195,7 @@ and an absent series is not an alert.
 
 *Where:* `infra/observability/`.
 
-### 11. Branch protection and the release gate
+### 12. Branch protection and the release gate
 
 - [ ] The four CI checks are required on `main`.
 - [ ] The `production` GitHub environment has required reviewers.

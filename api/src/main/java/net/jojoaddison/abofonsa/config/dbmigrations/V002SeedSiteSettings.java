@@ -49,6 +49,12 @@ public class V002SeedSiteSettings implements Changelog {
                 // what happened in production in task 147; this stays null so the default is still
                 // the safe one.
                 null,
+                // The patient portal, unlike the professional one above, is answering: /account/register
+                // serves the hc-patient application today. Seeded rather than left for an editor
+                // because a landing-page button that only appears after somebody remembers to fill in
+                // a CMS field is a feature that ships switched off. Clearing it still withdraws the
+                // button in one publish, which is the property that matters.
+                "https://patient.abofonsa.com",
                 new Address(
                         "Ankobra River Street #5",
                         "Teshie Nungua Estates",

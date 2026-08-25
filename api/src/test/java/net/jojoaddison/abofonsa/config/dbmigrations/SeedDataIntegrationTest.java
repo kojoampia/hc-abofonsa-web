@@ -140,9 +140,13 @@ class SeedDataIntegrationTest {
     @Test
     void oneSectionPerKeyAcrossBothPages() {
         var sections = sectionRepository.findAll();
-        // Seven home-page sections + four careers ones, each key used exactly once.
-        assertThat(sections).hasSize(11);
-        assertThat(sections.stream().map(s -> s.key()).distinct()).hasSize(11);
+        // Eight home-page sections (seven, plus the patient offer) + four careers ones, each key
+        // used exactly once.
+        assertThat(sections).hasSize(12);
+        assertThat(sections.stream().map(s -> s.key()).distinct()).hasSize(12);
+        assertThat(sections.stream().map(s -> s.key()))
+                .as("the offer band renders only while its section exists")
+                .contains(net.jojoaddison.abofonsa.domain.enumeration.SectionKey.PATIENT_OFFER);
         assertThat(sections.stream().filter(s -> s.key().name().startsWith("CAREERS_")))
                 .hasSize(4);
     }

@@ -148,6 +148,11 @@ export interface SiteSettings {
    * how the buttons come back down if that changes.
    */
   professionalPortalUrl?: string | null;
+  /**
+   * Where the landing page's patient "Create your account" button points. Absent hides the button —
+   * the offer band still renders, because the offer is content and the door is configuration.
+   */
+  patientPortalUrl?: string | null;
   onCallHours: string;
 }
 

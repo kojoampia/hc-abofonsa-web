@@ -135,7 +135,7 @@ Ordered by what actually decides someone, not by what is easiest to write.
    `returned_for_correction` is a real state and it is not a rejection — saying so prevents the
    silence that loses candidates.
 5. **Who would I be working with?** Real clinicians, not stock photography. Blocked on the same
-   consent evidence the testimonials need (`GO-LIVE-CHECKLIST.md` §2) — same rule applies: no
+   consent evidence the testimonials need (`GO-LIVE-CHECKLIST.md` §3) — same rule applies: no
    named person without recorded consent.
 6. **How do I start?** One CTA, repeated, going to exactly one place.
 

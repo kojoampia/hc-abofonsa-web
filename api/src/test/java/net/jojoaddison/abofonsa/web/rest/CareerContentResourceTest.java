@@ -147,7 +147,7 @@ class CareerContentResourceTest extends AbstractIntegrationTest {
         assertThat(site.sections().keySet()).noneMatch(key -> key.startsWith("careers"));
         assertThat(site.faqs()).noneMatch(faq -> faq.question().contains("apply"));
         // The home page's own content is untouched by any of this.
-        assertThat(site.sections()).hasSize(7);
+        assertThat(site.sections()).hasSize(8);
         assertThat(site.faqs()).hasSize(7);
     }
 

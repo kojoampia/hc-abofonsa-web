@@ -53,6 +53,7 @@ export function makeSiteContent(): SiteContent {
         city: 'Accra',
         country: 'Ghana',
       },
+      patientPortalUrl: 'https://patient.abofonsa.com',
       coordinationHours: 'Monday–Saturday, 07:00–19:00 GMT',
       onCallHours: '24 hours, every day',
     },
@@ -99,6 +100,12 @@ export function makeSiteContent(): SiteContent {
         eyebrow: 'The Angel network',
         heading: 'Someone is always accountable',
         items: [{ key: 'g1', icon: 'file', title: 'A report after every visit', body: 'Countersigned notes.' }],
+      }),
+      patientOffer: section({
+        eyebrow: 'Your first month is free',
+        heading: 'Start care at home this week, and pay nothing for the first month',
+        subheading: 'Creating an account and the first clinical assessment cost nothing.',
+        body: 'Free month applies to the first month of any plan. The minimum three-month term still applies.',
       }),
       cta: section({
         heading: "Discuss your family's needs with a nurse",

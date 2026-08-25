@@ -131,6 +131,11 @@
     "services": "Servicios",
     "testimonials": "Testimonios"
   },
+  "patient": {
+    "createAccount": "Cree su cuenta",
+    "signUp": "Regístrese",
+    "signUpFree": "Regístrese — primer mes gratis"
+  },
   "pricing": {
     "comparisonCaption": "Comparación completa de las prestaciones de los tres planes.",
     "enquireAbout": "Consultar sobre el plan {{ plan }}",

@@ -28,4 +28,14 @@ public record SiteSettingsDTO(
          * Clearing the field withdraws every button again in one publish: the page keeps every track
          * and everything an applicant needs to prepare, and stops promising only the door.
          */
-        String professionalPortalUrl) {}
+        String professionalPortalUrl,
+        /**
+         * Where the landing page's "Create your account" button sends a family, or {@code null} to
+         * hide it — the same withdrawal switch {@code professionalPortalUrl} is, for the same reason:
+         * whether patient.abofonsa.com is answering is not something this build can know.
+         *
+         * <p>Seeded with a value, unlike its professional counterpart, because that host was serving
+         * nothing when the careers page was built and this one is serving now. The default is a
+         * default, not a constant — an editor can point it elsewhere or clear it.
+         */
+        String patientPortalUrl) {}

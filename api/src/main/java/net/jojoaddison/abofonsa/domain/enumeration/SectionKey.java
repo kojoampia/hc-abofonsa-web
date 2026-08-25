@@ -15,6 +15,7 @@ public enum SectionKey {
     STATS,
     ANGEL,
     CTA,
+    PATIENT_OFFER,
     CAREERS_HERO,
     CAREERS_LIFE,
     CAREERS_PROCESS,

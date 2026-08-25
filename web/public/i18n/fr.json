@@ -131,6 +131,11 @@
     "services": "Services",
     "testimonials": "Témoignages"
   },
+  "patient": {
+    "createAccount": "Créer votre compte",
+    "signUp": "S'inscrire",
+    "signUpFree": "S'inscrire — premier mois offert"
+  },
   "pricing": {
     "comparisonCaption": "Comparatif complet des prestations des trois forfaits.",
     "enquireAbout": "Se renseigner sur le forfait {{ plan }}",
