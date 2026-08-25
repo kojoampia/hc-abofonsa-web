@@ -36,13 +36,33 @@ import org.testcontainers.utility.DockerImageName;
  * first test class finishes and every subsequent class fails with connection-refused. Managing
  * the lifecycle by hand (start once, never stop — Testcontainers' Ryuk reaper cleans up on JVM
  * exit) avoids that.
+ *
+ * <p><b>One container also means one database, and nothing resets it between classes.</b> Every
+ * subclass writes into the same seeded state, in whatever order surefire happens to pick — so an
+ * assertion of the form "this collection has exactly N documents" is an assertion about test
+ * ordering, not about the code. That is not theoretical: five such assertions in
+ * {@code SeedDataIntegrationTest} passed locally and failed in CI for months on end, for no reason
+ * except that CI ran the classes in a different order. Write assertions that name what they expect
+ * (by slug, key or id) rather than counting a whole collection; if a test genuinely needs a database
+ * nobody else has touched, do what that class now does and point {@code spring.mongodb.uri} at
+ * another database inside this same container.
+ *
+ * <p>A subclass cannot do that by adding its own {@code @DynamicPropertySource}: Spring applies the
+ * subclass's method first and this one last, so this registration wins and the override is silently
+ * ineffective. Such a test has to stand outside this hierarchy.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
-    static final MongoDBContainer MONGO =
+    /**
+     * Public so a test class that is <em>not</em> a subclass can still share this one container while
+     * pointing itself at a different database inside it — see {@code SeedDataIntegrationTest}, whose
+     * subject is a database nothing else has written to. Sharing the container is the point; sharing
+     * the database is what that class cannot do.
+     */
+    public static final MongoDBContainer MONGO =
             new MongoDBContainer(DockerImageName.parse("mongo:8.3")).withCommand("--replSet", "rs0", "--bind_ip_all");
 
     static {
