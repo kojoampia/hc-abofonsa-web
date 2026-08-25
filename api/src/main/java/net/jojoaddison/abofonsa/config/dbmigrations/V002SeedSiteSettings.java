@@ -49,10 +49,6 @@ public class V002SeedSiteSettings implements Changelog {
                 // what happened in production in task 147; this stays null so the default is still
                 // the safe one.
                 null,
-                // Null on purpose: enrolment is self-service (careers-plan.md D-1) and
-                // /request-invitation does not exist on professional.abofonsa.com yet. An editor
-                // sets this the day it does, and the secondary call-to-action appears.
-                null,
                 new Address(
                         "Ankobra River Street #5",
                         "Teshie Nungua Estates",

@@ -179,7 +179,6 @@ class CareerContentResourceTest extends AbstractIntegrationTest {
         assertThat(site.siteSettings().professionalPortalUrl())
                 .as("careers apply buttons must stay hidden until the portal serves (task 144)")
                 .isNull();
-        assertThat(site.siteSettings().professionalInvitationUrl()).isNull();
         // ...while the content behind those buttons is fully present.
         assertThat(careers("en").tracks()).hasSize(6);
     }

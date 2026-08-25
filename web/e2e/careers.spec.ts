@@ -73,13 +73,27 @@ test.describe('The careers page', () => {
   });
 
   /**
-   * Task 137's other half. The invitation route does not exist on professional.abofonsa.com yet,
-   * so the call-to-action must stay hidden until an editor supplies a destination — its presence,
-   * not a boolean, is the switch, precisely so it cannot be enabled while pointing at a 404.
+   * The invitation call-to-action is gone, not gated.
+   *
+   * It used to render whenever `professionalInvitationUrl` held a value, on the reasoning that
+   * presence is a switch nobody can flip before the destination exists. Somebody flipped it: the
+   * field was filled in with the registration URL, and the button went live advertising an invitation
+   * flow that has never been built. careers-plan.md D-1 puts that surface in `hc-professional` if it
+   * is ever wanted, so there is nothing here to switch on.
+   *
+   * Asserted with the portal configured — the state in which the *other* buttons render — because a
+   * test that only ever checks the switched-off page cannot tell "removed" from "not switched on".
    */
-  test('the invitation call-to-action is absent until a destination is configured', async ({ page }) => {
-    await page.goto('/careers');
-    await expect(page.getByTestId('request-invitation')).toHaveCount(0);
+  test('there is no invitation call-to-action to configure', async ({ page, request }) => {
+    await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
+      await page.goto('/careers');
+      // Two of them: the hero and the closing band. Their presence is what makes the absence below
+      // mean something.
+      await expect(page.getByTestId('apply-primary')).toHaveCount(2);
+      await expect(page.getByTestId('apply-primary').first()).toBeVisible();
+      await expect(page.getByTestId('request-invitation')).toHaveCount(0);
+      await expect(page.getByText(/request an invitation/i)).toHaveCount(0);
+    });
   });
 
   /**
