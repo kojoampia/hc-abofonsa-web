@@ -49,9 +49,16 @@ export function handoffUrl(
  * The registration URL for a CMS-configured portal, or null when none is configured — in which case
  * no apply button renders anywhere on the site.
  *
- * One function rather than the same `replace(/\/+$/, '')` in two components: an editor who pastes a
- * trailing slash would otherwise get `//register` in one place and not the other, and only one of
- * those would be noticed.
+ * One function rather than the same joining logic in two components: an editor who pastes a trailing
+ * slash would otherwise get `//register` in one place and not the other, and only one of those would
+ * be noticed.
+ *
+ * **Accepts either the portal root or the registration URL itself**, because the field is labelled
+ * "Professional portal URL" and an editor pasting the page they were just looking at is not making a
+ * mistake — the code was. That is not hypothetical: the value set in production on the day the
+ * buttons went live was `https://professional.abofonsa.com/register`, and appending `/register` to it
+ * put `/register/register` behind every apply button on the live site. The page's only conversion,
+ * broken, with every test green — because every test supplies the origin.
  */
 export function registerUrlFor(
   portal: string | null | undefined,
@@ -59,5 +66,9 @@ export function registerUrlFor(
   locale: string,
   source = 'web-careers',
 ): string | null {
-  return portal ? handoffUrl(`${portal.replace(/\/+$/, '')}/register`, track, locale, source) : null;
+  if (!portal) {
+    return null;
+  }
+  const base = portal.replace(/\/+$/, '');
+  return handoffUrl(/\/register$/i.test(base) ? base : `${base}/register`, track, locale, source);
 }

@@ -107,8 +107,21 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
     // added to the API in C2 and never surfaced, so "an editor supplies a destination" was only ever
     // true through the API. Leaving the portal URL blank hides every apply button on /careers, which
     // is the correct state until professional.abofonsa.com actually serves.
-    { key: 'professionalPortalUrl', label: 'Professional portal URL (blank hides the apply buttons)', kind: 'text' },
-    { key: 'professionalInvitationUrl', label: 'Invitation URL (blank hides the invitation button)', kind: 'text' },
+    // Both labels spell out the shape because both were filled in wrongly the first time they were
+    // used, and neither mistake announced itself. The portal field was given a /register URL, and
+    // the site appended its own /register behind every apply button; the invitation field was given
+    // the same URL, which switched on a call-to-action for a page that does not exist on the far
+    // side. A label is the only thing standing between an editor and either one.
+    {
+      key: 'professionalPortalUrl',
+      label: 'Professional portal URL — site root only, e.g. https://professional.abofonsa.com. /register is added automatically. Blank hides every apply button.',
+      kind: 'text',
+    },
+    {
+      key: 'professionalInvitationUrl',
+      label: 'Invitation URL — the full destination of a request-an-invitation page. No such page exists yet, so leave this blank; anything here shows the button.',
+      kind: 'text',
+    },
   ],
 };
 
