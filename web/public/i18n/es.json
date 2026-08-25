@@ -20,12 +20,18 @@
     "documents": "Qué le pediremos",
     "documentsNote": "Tenerlos preparados agiliza mucho el siguiente paso.",
     "faqHeading": "Preguntas de los candidatos",
+    "forProfessionals": "Para profesionales",
+    "homeBody": "Puestos de enfermería, cuidado, medicina y áreas afines en el Gran Acra: visitas programadas, supervisión asignada y un registro escrito de cada hora de trabajo.",
+    "homeEyebrow": "Para profesionales sanitarios",
+    "homeHeading": "Únase a los profesionales de BridgeCare",
+    "homePrepare": "El registro toma unos minutos. Tenga a mano su licencia colegial, su título y su Ghana Card o pasaporte.",
     "metaDescription": "Puestos de enfermería, cuidado y clínicos en el Gran Acra. Visitas programadas, supervisión asignada y un registro escrito de su trabajo.",
     "metaTitle": "Empleo — {{organisation}}",
     "nav": "Empleo",
     "recruiting": "Contratando ahora",
     "requestInvitation": "Solicitar una invitación",
     "requirements": "Qué buscamos",
+    "seeRoles": "Ver puestos y requisitos",
     "tracksHeading": "Puestos que buscamos"
   },
   "common": {

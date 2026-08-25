@@ -152,13 +152,16 @@ class CareerContentResourceTest extends AbstractIntegrationTest {
     }
 
     /**
-     * Task 144. The careers page's apply buttons are switched by the presence of a portal URL, and
-     * it must ship absent: professional.abofonsa.com resolves but serves nothing, so a configured
-     * value would put eight buttons to a dead host on a live page.
+     * Task 144. The apply buttons are switched by the presence of a portal URL, and the <em>seed</em>
+     * leaves it absent: a database created from scratch cannot know whether the far side is
+     * answering, and a button to a dead host costs more than an absent one on a page that has just
+     * asked someone to gather a licence and a Ghana Card.
      *
-     * <p>Asserted on the seed rather than trusted, because this is the safe state and safe states
-     * are the ones nobody notices regressing. The page still carries every track, so what is
-     * withheld is the promise of a door, not the reason to walk through it.
+     * <p>Production is a different matter — an editor set the field there once the portal started
+     * serving (task 147) and the buttons are live. What this pins is the default, because it is the
+     * safe state and safe states are the ones nobody notices regressing. The page still carries every
+     * track either way, so what is withheld is the promise of a door, not the reason to walk through
+     * it.
      */
     @Test
     void theProfessionalPortalIsUnconfiguredUntilItIsActuallyDeployed() {

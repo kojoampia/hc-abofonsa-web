@@ -160,9 +160,18 @@ in `hc-professional` if they are ever needed, next to the audit trail.
 (220 kB gzipped, currently 153 kB) must not move — `check-bundle-size.mjs` already fails the build
 if careers code reaches the initial chunk, exactly as it does for `/admin`.
 
-A restrained entry point only: one footer link, one nav item. Careers content does **not** go on the
+~~A restrained entry point only: one footer link, one nav item. Careers content does **not** go on the
 family-facing home page. A family evaluating care for a parent should not be reading recruitment
-copy — at best it is noise, at worst it reads as *"they are short-staffed"*.
+copy — at best it is noise, at worst it reads as *"they are short-staffed"*.~~
+
+**Superseded by task 147, on the owner's instruction.** The landing page now carries a prominent
+clinician call-to-action, the nav item is a gold-outlined button reading "For professionals", and the
+mobile drawer has a careers entry for the first time. The paragraph above is kept rather than deleted
+because its reasoning still shapes the implementation even though its conclusion no longer holds: the
+band sits *after* the family-facing close, its copy is addressed to clinicians rather than about
+staffing levels, and its primary route is still `/careers` — the page that states requirements and
+documents — with the direct registration link carrying that preparation with it. See
+[docs/phase-c5-landing-page-entry-points.md](docs/phase-c5-landing-page-entry-points.md).
 
 ### Handoff
 
@@ -281,13 +290,38 @@ throughout.
   by that decision. The soft-404 and missing-sitemap blockers were fixed anyway, so the flip is a
   `.env` change whenever it is wanted.
 
+### Phase C5 — the buttons go live and the landing page recruits (task 147) — **DONE**, see [docs/phase-c5-landing-page-entry-points.md](docs/phase-c5-landing-page-entry-points.md)
+
+- **[147]** `professional.abofonsa.com` serves, and `professionalPortalUrl` was set in the mini CMS —
+  so all eight apply calls-to-action on `/careers` are live, in every locale, with no deploy. Nothing
+  was seeded or compiled in: the switch stays the content field Phase C4 made it, and clearing it
+  still withdraws every button within one publish.
+  Alongside it, and reversing §5 on the owner's instruction, the landing page gained a clinician
+  band (after the family-facing close), the nav item became a prominent "For professionals" button,
+  and the mobile drawer gained a careers entry — it had none, so below 1024px the footer was the only
+  route to the page.
+  *Verify*: unit tests cover both states of the switch; e2e covers the band, its ordering relative to
+  the pricing and contact sections, the drawer, and the `src=web-home` attribution. All green against
+  the full local stack, with the twelve `home-*` baselines regenerated and reviewed.
+  **Found on the way:** the desktop header had never fitted at the `lg` width it appeared at — it
+  overflowed the viewport in all four languages — which nothing in the suite was positioned to catch.
+  The bar now starts at 1240px and six e2e cases hold it there.
+
+**Open, and each is one line of work rather than a phase:**
+
+- **D-6 is worth reopening.** "Indexing a page whose apply buttons are hidden converts nobody" was
+  half the argument for staying `noindex`, and that half has expired.
+- **`src=web-home` needs `hc-professional` to know about it.** It is a new value of an existing
+  parameter, not a fourth parameter, so nothing breaks — but a review queue that assumes `source` is
+  always `web-careers` will mis-attribute every candidate who came from the landing page.
+
 ---
 
 ## 7. Risks
 
 | ID | Risk | Mitigation |
 |---|---|---|
-| **CR-1** | Recruitment copy on a care-buying site reads as *"they are short-staffed"* | Separate route; no careers content on the home page; one restrained nav/footer entry |
+| **CR-1** | Recruitment copy on a care-buying site reads as *"they are short-staffed"* | ~~no careers content on the home page; one restrained nav/footer entry~~ **Revised, task 147:** the copy is still on a separate route, and the home page's band is placed after the family-facing close, addressed to clinicians rather than about staffing, and routed through `/careers`. The risk is now accepted rather than avoided — watch enquiry volume after launch, since this is the one change here a family sees |
 | **CR-2** | We advertise a track the platform cannot roster (workflow step 10) | D-2 gates which tracks publish; `openings: false` for the rest |
 | **CR-3** | Requirements drift from what step 6 actually enforces, so applicants arrive unprepared and bounce | Documents list cites the workflow doc; Phase C1 seeds from it; task 136 pins the status model |
 | **CR-4** | Terms implied without being agreed (D-3) | Publish nothing about pay or employment until confirmed; review copy against D-3 before launch |

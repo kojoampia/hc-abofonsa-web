@@ -239,3 +239,127 @@ test.describe('The careers page', () => {
     expect(fetched.length, 'careers code should arrive only on navigation').toBeGreaterThan(onHomePage);
   });
 });
+
+/**
+ * The landing page's clinician entry points (task 147).
+ *
+ * careers-plan.md §5 kept recruitment off the home page entirely and CR-1 gave the reason — a family
+ * evaluating care for a parent reads it as *"they are short-staffed"*. The owner reversed that and
+ * asked for prominence, so what is verified here is that the reversal is the intended one: a band
+ * addressed to clinicians, below the family-facing close, that still routes through the requirements
+ * rather than around them.
+ */
+test.describe('The landing page for professionals', () => {
+  test('carries a clinician call-to-action that reaches the careers page in every locale', async ({ page }) => {
+    for (const locale of ['en', 'es', 'fr', 'de']) {
+      await gotoLocale(page, locale);
+
+      const band = page.locator('[data-testid="home-professional-cta"]');
+      await expect(band).toBeVisible();
+      // Translated, not an untranslated key — the home page serves four locales where the careers
+      // page's CMS copy is English-only, which is why this copy comes from the bundles.
+      await expect(band).not.toContainText(/careers\.home/);
+
+      const expected = locale === 'en' ? '/careers' : `/${locale}/careers`;
+      await expect(page.locator('[data-testid="home-careers-cta"]')).toHaveAttribute('href', expected);
+    }
+  });
+
+  /**
+   * The band sits after the closing call to action, not before it. Asserted rather than left to a
+   * screenshot, because the ordering *is* the mitigation for CR-1 and a pixel diff would accept any
+   * arrangement it was shown first.
+   */
+  test('addresses clinicians only after the case for care has been made', async ({ page }) => {
+    await page.goto('/');
+
+    const positions = await page.evaluate(() => {
+      const top = (selector: string) => document.querySelector(selector)?.getBoundingClientRect().top ?? NaN;
+      return {
+        pricing: top('#pricing'),
+        professionals: top('#professionals'),
+        contact: top('#contact'),
+      };
+    });
+
+    expect(positions.professionals).toBeGreaterThan(positions.pricing);
+    expect(positions.professionals).toBeLessThan(positions.contact);
+  });
+
+  /**
+   * The header fits wherever it is shown — which it did not before this change, in any language.
+   *
+   * The desktop bar used to appear at `lg` (1024px) and needed 1066px in English and 1152px in
+   * German to draw itself; in French it needed 1218px, more than its own 1152px container, so it
+   * spilled even on a 1440px screen. Making the careers link a prominent button added 42–63px to
+   * that, which is how it was found. The bar now starts at 1240px with tighter gaps.
+   *
+   * Nothing existing could have caught this: `branding.spec.ts` guards 390px, where the bar is
+   * hidden, and the visual baselines are taken at 390, 834 and 1440 — no width where the bar is both
+   * visible and short of room. French and German because they are the two longest sets of labels;
+   * 1024 is a width where the drawer must have taken over, 1240 is the first width where the bar
+   * draws, and 1440 is the desktop baseline.
+   */
+  for (const locale of ['fr', 'de']) {
+    for (const width of [1024, 1240, 1440]) {
+      test(`the header fits at ${width}px in ${locale}`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        await gotoLocale(page, locale);
+
+        // Below 1240 the drawer is the navigation; at or above it the bar is.
+        await expect(page.locator('[data-testid="nav-careers"]')).toBeVisible({ visible: width >= 1240 });
+
+        const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth,
+        }));
+        expect(
+          scrollWidth,
+          `the page overflows by ${scrollWidth - clientWidth}px at ${width}px in ${locale}`,
+        ).toBeLessThanOrEqual(clientWidth);
+      });
+    }
+  }
+
+  /** Below 1024px the drawer is the only navigation there is, and it had no careers entry at all. */
+  test('the mobile drawer reaches the careers page too', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    await page.getByTestId('mobile-menu-button').click();
+    await page.getByTestId('mobile-nav-careers').click();
+
+    await expect(page).toHaveURL(/\/careers$/);
+    await expect(page.locator('[data-track]').first()).toBeVisible();
+  });
+
+  test('the direct registration link carries its own attribution, and no guessed track', async ({ page, request }) => {
+    await withPortalConfigured(request, PROFESSIONAL_PORTAL, async () => {
+      await page.goto('/fr');
+      const href = await page.getByTestId('home-apply').getAttribute('href');
+      const url = new URL(href!);
+
+      expect(url.origin).toBe(PROFESSIONAL_PORTAL);
+      expect(url.pathname).toBe('/register');
+      expect(url.searchParams.get('locale')).toBe('fr');
+      // Separately attributed from the careers page, or the funnel cannot say which argument works.
+      expect(url.searchParams.get('src')).toBe('web-home');
+      // The home page never asked which role they hold; a default would reach the credentialing
+      // queue as a stated fact (this is the defect task 144 found on the far side).
+      expect(url.searchParams.has('track')).toBe(false);
+    });
+  });
+
+  /**
+   * One switch, both pages. The CMS field that withdraws the careers page's apply buttons has to
+   * withdraw this one too, or the home page would advertise a door the careers page has closed.
+   */
+  test('offers no registration link while no portal is configured', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByTestId('home-apply')).toHaveCount(0);
+    await expect(page.locator('a[href*="/register"]')).toHaveCount(0);
+    // The entry point itself stays: the roles link is what a clinician follows to find out more.
+    await expect(page.getByTestId('home-careers-cta')).toBeVisible();
+  });
+});

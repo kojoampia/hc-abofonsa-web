@@ -41,11 +41,13 @@ public class V002SeedSiteSettings implements Changelog {
                 "info@abofonsa.com",
                 "https://www.abofonsa.com",
                 // Null on purpose, and this one is load-bearing: it is what keeps every "Create your
-                // account" button off the careers page. professional.abofonsa.com resolves but
-                // serves nothing (careers-plan.md task 144), and the page asks an applicant to
-                // gather a licence and a Ghana Card before pressing it — so a button ending in a
-                // connection error costs more than an absent one. An editor sets this the day the
-                // portal answers, and all eight buttons appear at once with no deploy.
+                // account" button off the careers page and the landing page. A fresh database cannot
+                // know whether professional.abofonsa.com is answering, and the page asks an applicant
+                // to gather a licence and a Ghana Card before pressing the button — so a button
+                // ending in a connection error costs more than an absent one. An editor sets this
+                // once the portal answers and all the buttons appear at once with no deploy, which is
+                // what happened in production in task 147; this stays null so the default is still
+                // the safe one.
                 null,
                 // Null on purpose: enrolment is self-service (careers-plan.md D-1) and
                 // /request-invitation does not exist on professional.abofonsa.com yet. An editor

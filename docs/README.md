@@ -12,4 +12,5 @@ Where a phase departed from its plan, the summary says so and gives the reason: 
 | [phase-c2-careers-page.md](phase-c2-careers-page.md) | C2 (tasks 134–139) | The /careers page and its handoff — plus the nginx compression defect that verifying its budget uncovered |
 | [phase-c3-careers-verification.md](phase-c3-careers-verification.md) | C3 (tasks 140–143) | Journey, axe-core, baselines and i18n checks for /careers — and the WCAG language-of-parts failure none of them could see |
 | [phase-c4-handoff-verification.md](phase-c4-handoff-verification.md) | C4 (task 144) | Checking hc-professional against the handoff contract, switching the apply buttons off, and three defects in the settings save path |
+| [phase-c5-landing-page-entry-points.md](phase-c5-landing-page-entry-points.md) | C5 (task 147) | The portal starts serving and the apply buttons go live from the CMS; the landing page gains a clinician call-to-action, reversing careers-plan.md §5 |
 | [careers-handoff-contract.md](careers-handoff-contract.md) | reference | What /careers sends to professional.abofonsa.com and what that side must do with it — written for the hc-professional owner |

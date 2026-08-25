@@ -16,10 +16,13 @@ the answer differs from the default.
 - [x] **Domain confirmed: `web.abofonsa.com`**, for a production review.
 - [ ] **Decide whether the apex `abofonsa.com` should also point here.** It is deliberately not
       claimed today — a server block for it would take it over for anything resolving to this host.
-- [x] **`SITE_INDEXABLE` stays `false`** — decided in careers-plan.md D-6. Flip it to `true` only
-      when this host is the announced public site **and** `professional.abofonsa.com` is serving:
-      indexing `/careers` while its apply buttons are hidden (task 144) puts a recruitment listing
-      in front of applicants who cannot apply.
+- [ ] **`SITE_INDEXABLE` — reopen the decision.** D-6 decided "stays off" on two grounds: this host
+      is not yet the announced public site, **and** `professional.abofonsa.com` was not serving, so
+      indexing `/careers` while its apply buttons were hidden would have put a recruitment listing in
+      front of applicants who could not apply. **The second ground has expired** (task 147: the portal
+      serves, the buttons are live, and the landing page now links to them). The first still stands,
+      so nothing has changed by itself — but the flip is now a domain decision alone, not a domain
+      decision waiting on another repository.
 - [ ] **When that flip happens, check `sitemap.xml` appears and `robots.txt` names it.** Both are
       generated from the same flag, so they cannot disagree — but confirm rather than assume, and
       submit `/careers` and `/{locale}/careers` at that point.

@@ -14,10 +14,12 @@ import { PricingTable } from './sections/pricing-table';
 import { TestimonialsCarousel } from './sections/testimonials-carousel';
 import { FaqSection } from './sections/faq-section';
 import { CtaBand } from './sections/cta-band';
+import { ProfessionalCta } from './sections/professional-cta';
 import { ContactSection } from './sections/contact-section';
 
 /** The single scrolling page (spec §5.4): the 18 §6 components stacked in prototype order, all
- * reading from the one SiteContentStore. */
+ * reading from the one SiteContentStore — plus the professional call-to-action added in task 147,
+ * which is the only one here whose copy comes from the translation bundles rather than the CMS. */
 @Component({
   selector: 'abc-home-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +36,7 @@ import { ContactSection } from './sections/contact-section';
     TestimonialsCarousel,
     FaqSection,
     CtaBand,
+    ProfessionalCta,
     ContactSection,
   ],
   template: `
@@ -50,6 +53,10 @@ import { ContactSection } from './sections/contact-section';
       <abc-testimonials-carousel />
       <abc-faq-section />
       <abc-cta-band />
+      <!-- The clinician entry point, placed after the family-facing close on purpose: the care
+           argument is made in full before the page addresses a different audience (careers-plan.md
+           CR-1). Nineteen components now, not the spec's eighteen. -->
+      <abc-professional-cta />
       <abc-contact-section />
     </main>
   `,

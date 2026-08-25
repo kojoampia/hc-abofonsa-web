@@ -13,6 +13,8 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:update-snapshots": "playwright test --update-snapshots",
+    "e2e:ci": "docker run --rm --network host -v \"$PWD/..\":/work -w /work/web --user $(id -u):$(id -g) mcr.microsoft.com/playwright:v1.62.0-noble npx playwright test",
+    "e2e:update-snapshots:ci": "npm run e2e:ci -- --update-snapshots",
     "check-bundle-size": "node scripts/check-bundle-size.mjs"
   },
   "private": true,
