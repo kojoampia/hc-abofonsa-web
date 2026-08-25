@@ -155,6 +155,11 @@
       "visits": "Visitas por semana"
     }
   },
+  "privacy": {
+    "deleteLink": "Eliminar su historial",
+    "englishOnly": "Este documento se publica en inglés.",
+    "link": "Política de privacidad"
+  },
   "services": {
     "availableOn": "Disponible en:",
     "slideCount": "{count, plural, one {# servicio} other {# servicios}}",
