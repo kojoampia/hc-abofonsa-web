@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { LanguageSwitcher } from './language-switcher';
 
-const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', 'faq', 'contact'];
+const SECTION_IDS = ['offer', 'services', 'how', 'approach', 'pricing', 'testimonials', 'faq', 'contact'];
 
 /** Spec §6 #3 — sticky nav with scroll-spy over the anchor sections; mat-menu mobile drawer. */
 @Component({
@@ -82,6 +82,7 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
               [class.text-brand-navy]="active() === item.id"
               [class.font-semibold]="active() === item.id"
               [attr.aria-current]="active() === item.id ? 'true' : null"
+              (click)="active.set(item.id)"
             >
               {{ item.key | transloco }}
             </a>
@@ -109,6 +110,8 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
             href="#offer"
             class="bg-brand-navy text-white rounded px-4 py-2 font-medium whitespace-nowrap"
             data-testid="nav-signup"
+            [attr.aria-current]="active() === 'offer' ? 'true' : null"
+            (click)="active.set('offer')"
           >
             {{ 'patient.signUp' | transloco }}
           </a>
@@ -116,7 +119,14 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
                1251px at a 1240px breakpoint with both. Rather than drop this, it appears only where
                there is room for it. Nothing is lost below that width — the sign-up button leads to
                the offer band, which carries this same link, and the drawer and footer both keep it. -->
-          <a href="#contact" class="hidden min-[1400px]:inline-flex py-3 hover:text-brand-navy">
+          <a
+            href="#contact"
+            class="hidden min-[1400px]:inline-flex py-3 hover:text-brand-navy"
+            [class.text-brand-navy]="active() === 'contact'"
+            [class.font-semibold]="active() === 'contact'"
+            [attr.aria-current]="active() === 'contact' ? 'true' : null"
+            (click)="active.set('contact')"
+          >
             {{ 'nav.cta' | transloco }}
           </a>
           <abc-language-switcher />
@@ -134,10 +144,32 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
           </button>
           <mat-menu #mobileMenu="matMenu">
             @for (item of navItems; track item.id) {
-              <a mat-menu-item href="#{{ item.id }}">{{ item.key | transloco }}</a>
+              <a
+                mat-menu-item
+                href="#{{ item.id }}"
+                [attr.aria-current]="active() === item.id ? 'true' : null"
+                (click)="active.set(item.id)"
+              >
+                {{ item.key | transloco }}
+              </a>
             }
-            <a mat-menu-item href="#offer" data-testid="mobile-nav-signup">{{ 'patient.signUpFree' | transloco }}</a>
-            <a mat-menu-item href="#contact">{{ 'nav.cta' | transloco }}</a>
+            <a
+              mat-menu-item
+              href="#offer"
+              data-testid="mobile-nav-signup"
+              [attr.aria-current]="active() === 'offer' ? 'true' : null"
+              (click)="active.set('offer')"
+            >
+              {{ 'patient.signUpFree' | transloco }}
+            </a>
+            <a
+              mat-menu-item
+              href="#contact"
+              [attr.aria-current]="active() === 'contact' ? 'true' : null"
+              (click)="active.set('contact')"
+            >
+              {{ 'nav.cta' | transloco }}
+            </a>
             <!-- Absent entirely until now: the desktop bar had a careers link and this drawer did
                  not, so below 1024px the only route to the page was the footer. -->
             <a mat-menu-item [routerLink]="careersLink()" data-testid="mobile-nav-careers">
@@ -165,12 +197,27 @@ export class SiteHeader {
    * rather than hard-coded — `/careers` in English, `/fr/careers` in French. */
   protected readonly careersLink = computed(() => `${this.locale.pathPrefix()}/careers`);
 
-  /** The section currently in view — drives aria-current and the highlight (scroll-spy). */
+  /**
+   * The section the visitor is on — what marks one nav item active and the rest inactive.
+   *
+   * Set by three things, and it used to be set by only one. The scroll-spy observer was the whole
+   * mechanism, so **clicking a nav item marked nothing**: the highlight appeared only once the
+   * section drifted into the observer's band, and with `rootMargin: -40% 0px -55%` a short section —
+   * or the last one on the page — can never reach it, so some items highlighted and some never did.
+   * Now a click marks its own item immediately, a deep link marks the section it names, and the
+   * observer keeps both honest as the page scrolls.
+   */
   readonly active = signal<string | null>(null);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
+      // Someone arriving on /#pricing has already chosen a section; the observer would not say so
+      // until they scrolled, and might never.
+      const fromHash = location.hash.replace('#', '');
+      if (SECTION_IDS.includes(fromHash)) {
+        this.active.set(fromHash);
+      }
       if (typeof IntersectionObserver !== 'function') {
         return;
       }

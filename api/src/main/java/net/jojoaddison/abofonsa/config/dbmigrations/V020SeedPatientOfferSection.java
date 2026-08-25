@@ -30,6 +30,11 @@ import org.springframework.stereotype.Component;
  * which is exactly what it did on the first attempt here, and what it did to the careers seeds before
  * V011 widened the same enumeration.
  *
+ * <p><b>The offer ends on 31 January 2027</b> (confirmed 2026-08-25), and the copy says so. A
+ * promotion whose end date lives only in a planning document is one a customer can argue was never
+ * communicated — and one that quietly becomes permanent, since nothing here expires on its own.
+ * V021 puts the same sentence into databases seeded before the date was known.
+ *
  * <p><b>The terms are stated in the offer itself.</b> The pricing cards say "Minimum three-month term
  * · 30 days' notice", and a free first month has to sit alongside that rather than appear to
  * contradict it on the same page: the commitment is unchanged, the first month of it costs nothing.
@@ -73,14 +78,18 @@ public class V020SeedPatientOfferSection implements Changelog {
                 // The terms, in the same breath as the offer. A promotion that hides its conditions one
                 // scroll away from the claim is the kind of thing that gets read back to you later.
                 lt(
-                        "Free month applies to the first month of any plan. The minimum three-month term and"
-                                + " 30 days' notice shown on each plan still apply.",
-                        "El mes gratuito se aplica al primer mes de cualquier plan. Siguen vigentes el plazo"
-                                + " mínimo de tres meses y el preaviso de 30 días indicados en cada plan.",
-                        "Le mois offert s'applique au premier mois de tout forfait. La durée minimale de trois"
-                                + " mois et le préavis de 30 jours indiqués sur chaque forfait restent applicables.",
-                        "Der Gratismonat gilt für den ersten Monat jedes Tarifs. Die auf jedem Tarif genannte"
-                                + " Mindestlaufzeit von drei Monaten und die Frist von 30 Tagen gelten weiterhin."),
+                        "Free month applies to the first month of any plan and to subscriptions started on or"
+                                + " before 31 January 2027. The minimum three-month term and 30 days' notice shown"
+                                + " on each plan still apply.",
+                        "El mes gratuito se aplica al primer mes de cualquier plan y a las suscripciones"
+                                + " iniciadas hasta el 31 de enero de 2027. Siguen vigentes el plazo mínimo de tres"
+                                + " meses y el preaviso de 30 días indicados en cada plan.",
+                        "Le mois offert s'applique au premier mois de tout forfait et aux abonnements souscrits"
+                                + " jusqu'au 31 janvier 2027. La durée minimale de trois mois et le préavis de 30"
+                                + " jours indiqués sur chaque forfait restent applicables.",
+                        "Der Gratismonat gilt für den ersten Monat jedes Tarifs und für Abschlüsse bis zum"
+                                + " 31. Januar 2027. Die auf jedem Tarif genannte Mindestlaufzeit von drei Monaten"
+                                + " und die Frist von 30 Tagen gelten weiterhin."),
                 List.of(),
                 null,
                 PublicationStatus.PUBLISHED,
