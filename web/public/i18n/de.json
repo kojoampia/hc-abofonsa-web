@@ -131,6 +131,11 @@
     "services": "Leistungen",
     "testimonials": "Erfahrungsberichte"
   },
+  "patient": {
+    "createAccount": "Konto erstellen",
+    "signUp": "Registrieren",
+    "signUpFree": "Registrieren — erster Monat gratis"
+  },
   "pricing": {
     "comparisonCaption": "Vollständiger Leistungsvergleich der drei Tarife.",
     "enquireAbout": "Zum {{ plan }}-Tarif beraten lassen",

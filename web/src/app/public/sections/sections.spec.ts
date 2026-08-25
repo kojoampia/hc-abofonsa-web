@@ -10,6 +10,7 @@ import { StatsBand } from './stats-band';
 import { AngelNetworkSection } from './angel-network-section';
 import { CtaBand } from './cta-band';
 import { ProfessionalCta } from './professional-cta';
+import { PatientOfferBand } from './patient-offer-band';
 import { TopContactStrip } from './top-contact-strip';
 import { SiteFooter } from './site-footer';
 import { SiteContent } from '../../core/api/site-content.model';
@@ -76,6 +77,53 @@ describe('static content sections (spec §6)', () => {
     const fixture = await render(TopContactStrip);
     expect(fixture.nativeElement.textContent).toContain('+233 302 717 577');
     expect(fixture.nativeElement.textContent).toContain('info@abofonsa.com');
+  });
+
+  it('PatientOfferBand pitches the offer and states its terms in the same band', async () => {
+    const fixture = await render(PatientOfferBand);
+    const text = (fixture.nativeElement as HTMLElement).textContent!;
+
+    expect(text).toContain('pay nothing for the first month');
+    // The conditions travel with the claim. A promotion whose terms live one scroll away is the
+    // kind of thing that gets read back to you later.
+    expect(text).toContain('minimum three-month term');
+  });
+
+  it('PatientOfferBand sends a family to the patient portal, at the path that portal actually uses', async () => {
+    const fixture = await render(PatientOfferBand);
+    const url = new URL(fixture.nativeElement.querySelector('[data-testid="patient-signup"]').getAttribute('href'));
+
+    expect(url.origin).toBe('https://patient.abofonsa.com');
+    // /account/register, not /register — the patient app mounts its public account screens under
+    // `account`, and both apps answer 200 on any path, so getting this wrong would look fine.
+    expect(url.pathname).toBe('/account/register');
+    expect(url.searchParams.get('locale')).toBe('en');
+    expect(url.searchParams.get('src')).toBe('web-home');
+  });
+
+  /**
+   * Two independent switches, and neither failure mode is a broken page: the offer is content and
+   * the door is configuration.
+   */
+  it('PatientOfferBand keeps the offer when no portal is configured, losing only the button', async () => {
+    const content = makeSiteContent();
+    content.siteSettings.patientPortalUrl = null;
+
+    const fixture = await render(PatientOfferBand, content);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="patient-signup"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('pay nothing for the first month');
+    // ...and the consultation route survives, so the band still leads somewhere.
+    expect(fixture.nativeElement.querySelector('[data-testid="patient-offer-enquiry"]')).not.toBeNull();
+  });
+
+  it('PatientOfferBand disappears entirely when the offer section is withdrawn', async () => {
+    const content = makeSiteContent();
+    delete content.sections['patientOffer'];
+
+    const fixture = await render(PatientOfferBand, content);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="patient-offer-band"]')).toBeNull();
   });
 
   it('ProfessionalCta gives clinicians a route off the landing page', async () => {

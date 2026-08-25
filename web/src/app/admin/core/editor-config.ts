@@ -117,6 +117,11 @@ export const EDITOR_CONFIG: Record<AdminContentType, FieldDef[]> = {
       label: 'Professional portal URL — site root only, e.g. https://professional.abofonsa.com. /register is added automatically. Blank hides every apply button.',
       kind: 'text',
     },
+    {
+      key: 'patientPortalUrl',
+      label: 'Patient portal URL — site root only, e.g. https://patient.abofonsa.com. /account/register is added automatically. Blank hides the landing page sign-up button.',
+      kind: 'text',
+    },
   ],
 };
 

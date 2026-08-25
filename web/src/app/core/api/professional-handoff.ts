@@ -72,3 +72,44 @@ export function registerUrlFor(
   const base = portal.replace(/\/+$/, '');
   return handoffUrl(/\/register$/i.test(base) ? base : `${base}/register`, track, locale, source);
 }
+
+/**
+ * The patient portal — `hc-patient`, served at patient.abofonsa.com, which owns patient accounts,
+ * care plans and everything this site refuses to hold.
+ *
+ * Registration lives at **`/account/register`**, not `/register`: the patient application mounts its
+ * public account screens under `account`, where the professional one puts registration at the root.
+ * Assuming the two were symmetrical would have produced a dead link that still answers `200`, because
+ * both are single-page apps and their fallback serves the shell for any path.
+ */
+export const PATIENT_PORTAL = 'https://patient.abofonsa.com';
+export const PATIENT_REGISTER_PATH = '/account/register';
+
+/**
+ * The patient registration URL for a CMS-configured portal, or null when none is configured — in
+ * which case the landing page's offer band renders without its button.
+ *
+ * Carries `locale` and `src` on the same reasoning as the careers handoff: the domains differ, so
+ * nothing is shared but the link. **`hc-patient` reads neither yet** — its register component takes
+ * no query parameters at all — so today they are a request written into the URL rather than a working
+ * contract, specified in `docs/patient-handoff-contract.md`. They cost nothing while ignored, and the
+ * day that side reads them the attribution starts working with no change here.
+ *
+ * No `track` equivalent: a family has not chosen a plan by pressing this, and inventing one would put
+ * a guess into someone's care record.
+ */
+export function patientRegisterUrlFor(
+  portal: string | null | undefined,
+  locale: string,
+  source = 'web-home',
+): string | null {
+  if (!portal) {
+    return null;
+  }
+  const base = portal.replace(/\/+$/, '');
+  const target = base.endsWith(PATIENT_REGISTER_PATH) ? base : `${base}${PATIENT_REGISTER_PATH}`;
+  const url = new URL(target);
+  url.searchParams.set('locale', locale);
+  url.searchParams.set('src', source);
+  return url.toString();
+}

@@ -99,7 +99,26 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
           >
             {{ 'careers.forProfessionals' | transloco }}
           </a>
-          <a href="#contact" class="bg-brand-navy text-white rounded px-4 py-2">{{ 'nav.cta' | transloco }}</a>
+          <!-- Two words, and nowrap. The offer itself belongs in the band, not here: spelled out in
+               the bar it became a 98×96px block of wrapped text inside a 64px-tall header, because
+               this bar has been one item away from full since long before it gained two. The drawer
+               below has room and says the whole thing.
+               It points at #offer rather than straight at the portal because the band is where the
+               terms are, and a family should pass them on the way to registering. -->
+          <a
+            href="#offer"
+            class="bg-brand-navy text-white rounded px-4 py-2 font-medium whitespace-nowrap"
+            data-testid="nav-signup"
+          >
+            {{ 'patient.signUp' | transloco }}
+          </a>
+          <!-- Two calls to action in one bar is one too many, and French proved it: the bar needs
+               1251px at a 1240px breakpoint with both. Rather than drop this, it appears only where
+               there is room for it. Nothing is lost below that width — the sign-up button leads to
+               the offer band, which carries this same link, and the drawer and footer both keep it. -->
+          <a href="#contact" class="hidden min-[1400px]:inline-flex py-3 hover:text-brand-navy">
+            {{ 'nav.cta' | transloco }}
+          </a>
           <abc-language-switcher />
         </nav>
 
@@ -117,6 +136,7 @@ const SECTION_IDS = ['services', 'how', 'approach', 'pricing', 'testimonials', '
             @for (item of navItems; track item.id) {
               <a mat-menu-item href="#{{ item.id }}">{{ item.key | transloco }}</a>
             }
+            <a mat-menu-item href="#offer" data-testid="mobile-nav-signup">{{ 'patient.signUpFree' | transloco }}</a>
             <a mat-menu-item href="#contact">{{ 'nav.cta' | transloco }}</a>
             <!-- Absent entirely until now: the desktop bar had a careers link and this drawer did
                  not, so below 1024px the only route to the page was the footer. -->

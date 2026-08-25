@@ -372,8 +372,70 @@ test.describe('The landing page for professionals', () => {
     await page.goto('/');
 
     await expect(page.getByTestId('home-apply')).toHaveCount(0);
-    await expect(page.locator('a[href*="/register"]')).toHaveCount(0);
+    // Scoped to the professional portal on purpose. The patient offer band links to
+    // patient.abofonsa.com/account/register, which a bare `*/register*` match also catches — this
+    // assertion is about the clinician door being shut, not about every registration link on the page.
+    await expect(page.locator('a[href*="professional.abofonsa.com"]')).toHaveCount(0);
     // The entry point itself stays: the roles link is what a clinician follows to find out more.
     await expect(page.getByTestId('home-careers-cta')).toBeVisible();
+  });
+});
+
+
+/**
+ * The landing page's offer to families (task 149).
+ *
+ * The claim and its conditions are one band, the button is a separate switch, and the page has to
+ * make sense in every combination of the two — which is the part a screenshot cannot check.
+ */
+test.describe('The first-month-free offer', () => {
+  test('states the offer and its terms together, in every locale', async ({ page }) => {
+    for (const locale of ['en', 'es', 'fr', 'de']) {
+      await gotoLocale(page, locale);
+
+      const band = page.getByTestId('patient-offer-band');
+      await expect(band).toBeVisible();
+      // Localised, not English served under a foreign lang attribute — families are the reason this
+      // site has four locales at all.
+      await expect(band).not.toContainText(/patient\.(createAccount|signUpFree)/);
+      // The conditions travel with the claim rather than sitting a scroll away.
+      await expect(band).toContainText(/three|tres|trois|drei/i);
+    }
+  });
+
+  /** An offer three screens down is a footnote; this one is meant to be the first thing after the hero. */
+  test('sits directly under the hero, above the plans it applies to', async ({ page }) => {
+    await page.goto('/');
+
+    const positions = await page.evaluate(() => {
+      const top = (s: string) => document.querySelector(s)?.getBoundingClientRect().top ?? NaN;
+      return { hero: top('#hero-heading'), offer: top('#offer'), pricing: top('#pricing') };
+    });
+
+    expect(positions.offer).toBeGreaterThan(positions.hero);
+    expect(positions.offer).toBeLessThan(positions.pricing);
+  });
+
+  test('sends a family to the patient portal at the path that portal really uses', async ({ page }) => {
+    await page.goto('/fr');
+
+    const href = await page.getByTestId('patient-signup').getAttribute('href');
+    const url = new URL(href!);
+
+    expect(url.origin).toBe('https://patient.abofonsa.com');
+    // /account/register. Both portals answer 200 on any path, so the wrong one would look healthy.
+    expect(url.pathname).toBe('/account/register');
+    expect(url.searchParams.get('locale')).toBe('fr');
+    expect(url.searchParams.get('src')).toBe('web-home');
+  });
+
+  test('the header and the drawer both lead to it', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('nav-signup')).toHaveAttribute('href', '#offer');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.getByTestId('mobile-menu-button').click();
+    await expect(page.getByTestId('mobile-nav-signup')).toBeVisible();
   });
 });
