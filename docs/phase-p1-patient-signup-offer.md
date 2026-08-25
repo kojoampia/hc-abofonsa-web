@@ -75,14 +75,31 @@ seed because `ChangelogRunner` orders by id.
   links to `/account/register` with both parameters, and is reachable from the header and the drawer.
 - Unit tests cover both switches independently, including the two withdrawal states.
 
+## Follow-on: the bar now says where you are (task 150)
+
+Auditing every clickable element on the page turned up an inconsistency the offer band made more
+visible. Four things carried state — the language switcher, the carousel dots, the FAQ headers and the
+menu button — and the nav items carried none. Their active mark came only from the scroll-spy
+observer, so **clicking a nav item marked nothing**, and with `rootMargin: -40% 0px -55%` a section
+shorter than that band, or the last one on the page, never reached it and never highlighted at all.
+
+A click now marks its own item, a deep link marks the section it names, and the observer keeps both
+honest while scrolling. The drawer's items gained the same state — below 1240px it is the only
+navigation there is. The `✓`/`—` glyphs on the pricing cards were deliberately **left inert**: they
+report what a plan includes, and a visitor able to click them would be reading an editable-looking
+control on published pricing.
+
 ## Not done, and one of them is not a code question
 
 - **The offer is not confirmed by anyone who can honour it.** It exists because it was asked for.
   `GO-LIVE-CHECKLIST.md` §2 now carries it as a client-owned decision: who absorbs the cost, when it
   ends, and whether billing agrees that a family leaving after the free month is still inside the
   three-month term.
-- **No expiry mechanism.** A promotion with no end date is a price change wearing a different hat.
-  Ending it is an editor unpublishing the section — deliberate, but manual.
+- **The end date is set but not enforced.** The offer ends **31 January 2027** (confirmed
+  2026-08-25) and the copy says so in all four languages — V021 adds it to databases seeded before
+  the date was known, without touching a locale an editor has since reworded. Nothing expires on its
+  own: on 1 February 2027 somebody unpublishes the section, or the page goes on offering a free month
+  it has already told visitors ended.
 - **Conversion cannot be measured on this side.** No client-side analytics, by design (spec §10.4,
   which is also why there is no consent banner), so the funnel is read from `hc-patient` — and only
   once it stores `src`.

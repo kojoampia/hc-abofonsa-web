@@ -45,8 +45,8 @@ competes with the real site, and is slow and only partly reversible to remove fr
 
 ### 2. The free-first-month offer
 
-- [ ] **Confirmed as a real offer, with someone who can honour it** — or the `patientOffer` section
-      unpublished in the CMS.
+- [x] **Confirmed as a real offer, and it ends 31 January 2027** (confirmed 2026-08-25).
+- [ ] **Someone diarises the end date.** Nothing expires on its own — see below.
 
 The landing page pitches **the first month of care free**. That is a priced promise: at the seeded
 plan prices it is worth **GH₵3,000 to GH₵8,000** per subscriber, and it is the first thing a visitor
@@ -55,8 +55,11 @@ reads after the hero. Nothing in the repository or the CMS said anything of the 
 
 Three things worth settling before it stays up:
 
-1. **Who absorbs it, and for how long?** A promotion with no end date is a price change wearing a
-   different hat. There is no expiry mechanism — an editor unpublishes the section when it ends.
+1. **Who absorbs it?** The end date is settled — **31 January 2027**, and the page says so — but
+   **nothing enforces it.** There is no scheduled unpublish: on 1 February 2027 an editor has to
+   unpublish the `patientOffer` section, or the site goes on offering a free month indefinitely. The
+   date is in the copy, so until someone acts the page contradicts itself rather than merely
+   over-promising, which is the better of the two failures but still one to diarise.
 2. **What happens at the end of month one?** The band says the minimum three-month term and 30 days'
    notice still apply, so a family who leaves after the free month is inside a term they agreed to.
    That is defensible, but it must be what is actually intended, and billing has to match it.

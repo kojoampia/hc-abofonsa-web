@@ -78,6 +78,49 @@ describe('public shell and navigation chrome', () => {
       expect(current.getAttribute('href')).toBe('#pricing');
     });
 
+    /**
+     * The defect this covers: `active` used to be written only by the scroll-spy observer, so
+     * clicking a nav item marked nothing. The highlight arrived when the section drifted into the
+     * observer's band — and with `rootMargin: -40% 0px -55%` a short section, or the last one on the
+     * page, never gets there. Some items highlighted, some never did.
+     */
+    it('a clicked nav item marks itself active, without waiting for a scroll that may never come', async () => {
+      const fixture = await render(SiteHeader);
+      const link = fixture.nativeElement.querySelector('nav a[href="#faq"]') as HTMLAnchorElement;
+
+      link.click();
+      fixture.detectChanges();
+
+      expect(link.getAttribute('aria-current')).toBe('true');
+    });
+
+    it('marking one item active marks the previous one inactive — exactly one is current', async () => {
+      const fixture = await render(SiteHeader);
+      const services = fixture.nativeElement.querySelector('nav a[href="#services"]') as HTMLAnchorElement;
+      const pricing = fixture.nativeElement.querySelector('nav a[href="#pricing"]') as HTMLAnchorElement;
+
+      services.click();
+      fixture.detectChanges();
+      expect(services.getAttribute('aria-current')).toBe('true');
+
+      pricing.click();
+      fixture.detectChanges();
+      expect(services.getAttribute('aria-current')).toBeNull();
+      // Anchors inside the bar only: the language switcher marks the current locale with the same
+      // attribute on a <button>, and the drawer renders its own copy of every item.
+      expect(fixture.nativeElement.querySelectorAll('nav a[aria-current="true"]').length).toBe(1);
+    });
+
+    it('the sign-up button is a nav item too, and marks itself like one', async () => {
+      const fixture = await render(SiteHeader);
+      const signup = fixture.nativeElement.querySelector('[data-testid="nav-signup"]') as HTMLAnchorElement;
+
+      signup.click();
+      fixture.detectChanges();
+
+      expect(signup.getAttribute('aria-current')).toBe('true');
+    });
+
     it('exposes a mobile menu trigger for small viewports', async () => {
       const fixture = await render(SiteHeader);
       expect(fixture.nativeElement.querySelector('[data-testid="mobile-menu-button"]')).toBeTruthy();

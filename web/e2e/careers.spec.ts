@@ -439,3 +439,57 @@ test.describe('The first-month-free offer', () => {
     await expect(page.getByTestId('mobile-nav-signup')).toBeVisible();
   });
 });
+
+
+/**
+ * Navigation state (task 150).
+ *
+ * The bar's active mark used to come only from the scroll-spy observer, so clicking an item marked
+ * nothing and some items never highlighted at all — a section shorter than the observer's band, or
+ * the last one on the page, never reaches it. These assert the state through a real click and a real
+ * scroll, because that gap lived precisely in the difference between the two.
+ */
+test.describe('Navigation marks where you are', () => {
+  test('a clicked nav item becomes current, and the previous one stops being current', async ({ page }) => {
+    await page.goto('/');
+
+    // header nav, not any nav: the footer's columns are <nav> elements carrying the same anchors.
+    const services = page.locator('header nav a[href="#services"]');
+    const pricing = page.locator('header nav a[href="#pricing"]');
+
+    await services.click();
+    await expect(services).toHaveAttribute('aria-current', 'true');
+
+    await pricing.click();
+    await expect(pricing).toHaveAttribute('aria-current', 'true');
+    await expect(services).not.toHaveAttribute('aria-current', 'true');
+    await expect(page.locator('header nav a[aria-current="true"]')).toHaveCount(1);
+  });
+
+  test('the sign-up button marks itself like any other nav item', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByTestId('nav-signup').click();
+
+    await expect(page.getByTestId('nav-signup')).toHaveAttribute('aria-current', 'true');
+  });
+
+  /** Arriving on a deep link has already chosen a section; the observer would not say so until a scroll. */
+  test('a deep link marks the section it names, before anyone scrolls', async ({ page }) => {
+    await page.goto('/#faq');
+
+    await expect(page.locator('header nav a[href="#faq"]')).toHaveAttribute('aria-current', 'true');
+  });
+
+  /** The drawer had no state on any item; below 1240px it is the only navigation there is. */
+  test('the drawer marks its items too', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    await page.getByTestId('mobile-menu-button').click();
+    await page.getByTestId('mobile-nav-signup').click();
+
+    await page.getByTestId('mobile-menu-button').click();
+    await expect(page.getByTestId('mobile-nav-signup')).toHaveAttribute('aria-current', 'true');
+  });
+});
