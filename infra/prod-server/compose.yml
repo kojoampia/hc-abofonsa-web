@@ -27,6 +27,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env (openssl rand -hex 24)}
     networks:
       - abofonsanet
+    mem_limit: 512m
     volumes:
       - mongo-data:/data/db
       # Mode 400, owned by uid 999 (the image's mongodb user). Root-owned or group-readable and
@@ -87,6 +88,7 @@ services:
       # External, shared with the rest of this server's apps (~/webroot/00-admin/monitoring) —
       # lets the API reach the OTel collector and lets Prometheus scrape /actuator/prometheus.
       - monitoring
+    mem_limit: 256m
     environment:
       SPRING_PROFILES_ACTIVE: prod
       MONGODB_URI: mongodb://${MONGO_APP_USERNAME}:${MONGO_APP_PASSWORD}@mongo:27017/abofonsa?replicaSet=rs0&authSource=admin
@@ -149,6 +151,7 @@ services:
         condition: service_healthy
     networks:
       - abofonsanet
+    mem_limit: 128m
     environment:
       # SSR runs in Node, where fetch has no origin, so the API base must be absolute.
       API_URL: http://api:8080
