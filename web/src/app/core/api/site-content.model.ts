@@ -140,8 +140,6 @@ export interface SiteSettings {
   email: string;
   address: Address;
   coordinationHours: string;
-  /** Set to show "Request an invitation" on the careers page; absent hides it. Presence is the
-   * switch, so it cannot be enabled without a destination (careers-plan.md D-1). */
   /**
    * Where the apply buttons point — the eight on `/careers` and the landing page's. Absent hides
    * every one of them, which is how they shipped while professional.abofonsa.com resolved and served
@@ -150,7 +148,6 @@ export interface SiteSettings {
    * how the buttons come back down if that changes.
    */
   professionalPortalUrl?: string | null;
-  professionalInvitationUrl?: string | null;
   onCallHours: string;
 }
 

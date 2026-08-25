@@ -26,7 +26,6 @@ public record SiteSettings(
         String email,
         String website,
         @Field("professionalPortalUrl") String professionalPortalUrl,
-        @Field("professionalInvitationUrl") String professionalInvitationUrl,
         Address address,
         @Field("coordinationHours") LocalizedText coordinationHours,
         @Field("onCallHours") LocalizedText onCallHours,

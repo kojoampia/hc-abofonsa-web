@@ -43,8 +43,16 @@ we state clearly here is a review cycle the credentialing reviewer does not have
 ### D-1 — Enrolment policy — **RESOLVED 2026-07-28: both, self-service primary**
 
 The primary call-to-action is **"Create your account"**, linking to
-`professional.abofonsa.com/register`. A secondary **"Request an invitation"** is built into the
-page but hidden behind a CMS boolean, so the policy can tighten later without a rebuild.
+`professional.abofonsa.com/register`. ~~A secondary **"Request an invitation"** is built into the
+page but hidden behind a CMS boolean, so the policy can tighten later without a rebuild.~~
+
+**Amended 2026-08-25 (task 148): the invitation call-to-action is removed, not hidden.** Keeping it
+behind a switch was supposed to make it impossible to enable before a destination existed. It was
+enabled anyway — an editor filled `professionalInvitationUrl` with the *registration* URL, and the
+button went live on production advertising a flow nobody has built, pointing at the form the button
+beside it already linked to. A switch whose only safe position is "off" is not a safeguard, it is a
+trap with a label on it. The paragraph below already said where that surface belongs if the policy
+ever tightens, which is what makes removing it here the cheap option rather than the lossy one.
 
 This unblocks the careers page immediately: `/register` already exists on the professional side, so
 the only ask of that repo is that it accept three query parameters (§5). If the invitation path is
@@ -240,7 +248,8 @@ the rest of this project.
   *Verify*: reviewed against `professional-onboarding-workflow.md` §Status model so the two cannot
   drift silently.
 - **[137]** The handoff CTA per §5, with the `src`/`track`/`locale` parameters, plus the
-  invitation-request secondary behind its CMS boolean (default off, per D-1).
+  invitation-request secondary behind its CMS boolean (default off, per D-1). *The secondary was
+  removed entirely in task 148 — see D-1.*
   *Verify*: e2e asserts each track's CTA carries its own `authorityRole`, and that the secondary
   CTA is absent while the flag is off.
 - **[138]** SEO: title, description, canonical, `JobPosting`-adjacent structured data **only if**
@@ -307,6 +316,14 @@ throughout.
   overflowed the viewport in all four languages — which nothing in the suite was positioned to catch.
   The bar now starts at 1240px and six e2e cases hold it there.
 
+- **[148]** Remove the invitation call-to-action. `professionalInvitationUrl` was set to the
+  registration URL, so "Request an invitation" went live pointing at the form the button beside it
+  already linked to, for a flow that has never been built. Removed end to end — component, settings
+  field, DTO, CMS editor entry, all four translation bundles — with **V017** unsetting the stored
+  value so an existing database stops carrying a key nothing reads. See D-1, amended.
+  *Verify*: e2e asserts the button is absent **with the portal configured**, since a page checked only
+  in its switched-off state cannot tell "removed" from "not switched on".
+
 **Open, and each is one line of work rather than a phase:**
 
 - **D-6 is worth reopening.** "Indexing a page whose apply buttons are hidden converts nobody" was
@@ -361,4 +378,5 @@ D-1 and D-2 are settled, so the remaining asks on that repo are narrower:
 3. **Does the flow tolerate an approved professional with no duty roster?** Now that paramedics,
    pharmacists and therapists are advertised ahead of their rotas, step 10 can be reached with
    nothing to assign.
-4. Deferred until the invitation path is switched on: a `request-invitation` surface.
+4. Deferred until the invitation path is switched on: a `request-invitation` surface. Now the only
+   place it can be built — this site no longer has a switch for one (task 148).

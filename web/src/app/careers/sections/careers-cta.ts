@@ -4,15 +4,21 @@ import { SiteContentStore } from '../../core/api/site-content.store';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { CareerTrack } from '../../core/api/site-content.model';
 import { CareersContentStore } from '../careers-content.store';
-import { handoffUrl, registerUrlFor } from '../../core/api/professional-handoff';
+import { registerUrlFor } from '../../core/api/professional-handoff';
 
 /**
  * The handoff (careers-plan.md §5, task 137).
  *
- * Enrolment is self-service primary (D-1), so "Create your account" is the button. The secondary
- * "Request an invitation" renders only when an editor has supplied a destination in
- * `siteSettings.professionalInvitationUrl` — presence is the switch, so it cannot be turned on
- * before the page it points at exists.
+ * Enrolment is self-service (D-1), so "Create your account" is the only button here.
+ *
+ * There was a second one. "Request an invitation" rendered whenever `professionalInvitationUrl` held
+ * a value, on the reasoning that presence is a switch which cannot be flipped before the page it
+ * points at exists. It could: the field was filled in with the *registration* URL, so the button
+ * appeared on the live site advertising an invitation flow that has never been built, and pointed at
+ * the form its neighbour already links to. Removed rather than re-gated, because D-1 settled where
+ * that surface belongs if it is ever wanted — in `hc-professional`, next to the audit trail, where
+ * the email address can be captured inside the audited flow rather than on a site that identifies
+ * nobody.
  *
  * `rel="noopener"` on an external link, and no `target="_blank"`: a candidate who is about to fill
  * in a long form is better served staying in one tab than accumulating them.
@@ -38,16 +44,6 @@ import { handoffUrl, registerUrlFor } from '../../core/api/professional-handoff'
         {{ 'careers.apply' | transloco }}
       }
     </a>
-    }
-    @if (invitationUrl(); as invitation) {
-      <a
-        [href]="invitation"
-        rel="noopener"
-        class="border border-white/40 rounded px-5 py-3 inline-flex items-center min-h-11"
-        data-testid="request-invitation"
-      >
-        {{ 'careers.requestInvitation' | transloco }}
-      </a>
     }
   `,
 })
@@ -104,8 +100,4 @@ export class CareersCta {
     registerUrlFor(this.settings()?.professionalPortalUrl, this.track(), this.locale.current()),
   );
 
-  protected readonly invitationUrl = computed(() => {
-    const configured = this.settings()?.professionalInvitationUrl;
-    return configured ? handoffUrl(configured, this.track(), this.locale.current()) : null;
-  });
 }

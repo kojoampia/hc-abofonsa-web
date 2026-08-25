@@ -210,7 +210,6 @@ public class ContentMapper {
                 address,
                 resolve(doc.coordinationHours(), locale),
                 resolve(doc.onCallHours(), locale),
-                doc.professionalPortalUrl(),
-                doc.professionalInvitationUrl());
+                doc.professionalPortalUrl());
     }
 }

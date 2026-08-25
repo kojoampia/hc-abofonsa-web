@@ -80,9 +80,9 @@ describe('handoffUrl (careers-plan.md §5)', () => {
     expect(registerUrlFor(undefined, track(), 'en')).toBeNull();
   });
 
-  it('preserves a query string already present on a CMS-supplied invitation URL', () => {
+  it('preserves a query string already present on the configured URL', () => {
     // An editor may paste a URL that already carries parameters; appending must not destroy them.
-    const url = new URL(handoffUrl('https://professional.abofonsa.com/invite?ref=partner', track(), 'de'));
+    const url = new URL(handoffUrl('https://professional.abofonsa.com/register?ref=partner', track(), 'de'));
     expect(url.searchParams.get('ref')).toBe('partner');
     expect(url.searchParams.get('locale')).toBe('de');
   });
