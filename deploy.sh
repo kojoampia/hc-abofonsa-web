@@ -809,11 +809,23 @@ remote "docker inspect $WEB_CONTAINER --format '{{.State.Status}}'" | grep -qx r
 
 # Publishing content uses multi-document transactions, which MongoDB only offers on a replica set.
 # If rs.initiate() never ran, reads work and every publish fails - so check it explicitly.
-RS_STATE="$(remote "docker exec $MONGO_CONTAINER mongosh --quiet --eval 'rs.status().myState' 2>/dev/null" || echo "?")"
-if [[ "$RS_STATE" == "1" ]]; then
+#
+# `db.hello()`, not `rs.status()`. rs.status() runs replSetGetStatus, which requires authentication:
+# against this server - where compose sets MONGO_INITDB_ROOT_PASSWORD - it returned
+# "requires authentication" on stderr, the 2>/dev/null swallowed it, and the `|| echo "?"` turned a
+# permissions error into the report "replica set state is '?'". Every run of this script therefore
+# aborted here with a message about a broken replica set, on a server whose replica set was PRIMARY
+# and serving. A --verify-only run said so; a real deploy would have said it *after* pulling and
+# recreating the stack, which is the worst moment to be told something untrue.
+#
+# `hello` is one of the few commands MongoDB answers before authentication, which is what makes it
+# usable from a deploy script that holds no credentials - the whole point of not putting the root
+# password in a command line on the server.
+RS_PRIMARY="$(remote "docker exec $MONGO_CONTAINER mongosh --quiet --eval 'db.hello().isWritablePrimary' 2>/dev/null" || echo "?")"
+if [[ "$RS_PRIMARY" == "true" ]]; then
   ok "MongoDB replica set is PRIMARY (transactions available)"
 else
-  fail "MongoDB replica set state is '$RS_STATE', expected 1 (PRIMARY)."
+  fail "MongoDB is not a writable primary (db.hello().isWritablePrimary = '$RS_PRIMARY')."
   die "publishing content will fail without a replica set. Check: docker logs hc_abofonsa_mongo_init"
 fi
 
