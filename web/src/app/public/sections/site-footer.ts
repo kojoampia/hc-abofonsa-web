@@ -36,6 +36,19 @@ import { SiteContentStore } from '../../core/api/site-content.store';
               <a class="hover:underline inline-flex items-center min-h-6" [routerLink]="careersLink()"
                 data-testid="footer-careers">{{ 'careers.nav' | transloco }}</a>
             </li>
+            <li>
+              <a class="hover:underline inline-flex items-center min-h-6" [routerLink]="privacyLink()"
+                data-testid="footer-privacy">{{ 'privacy.link' | transloco }}</a>
+            </li>
+            <!--
+              In the footer on every page, which is where Google Play's reviewer looks for it and
+              where a person looks when they have decided to leave. Both are static routes — see
+              privacy.page.ts for why they do not come from the CMS.
+            -->
+            <li>
+              <a class="hover:underline inline-flex items-center min-h-6" [routerLink]="deleteAccountLink()"
+                data-testid="footer-delete-account">{{ 'privacy.deleteLink' | transloco }}</a>
+            </li>
           </ul>
         </nav>
         <div class="prose-reset">
@@ -68,6 +81,8 @@ export class SiteFooter {
 
   /** Locale-prefixed like every other route. */
   protected readonly careersLink = computed(() => `${this.locale.pathPrefix()}/careers`);
+  protected readonly privacyLink = computed(() => `${this.locale.pathPrefix()}/privacy`);
+  protected readonly deleteAccountLink = computed(() => `${this.locale.pathPrefix()}/delete-account`);
 
   protected readonly store = inject(SiteContentStore);
   protected readonly year = new Date().getFullYear();

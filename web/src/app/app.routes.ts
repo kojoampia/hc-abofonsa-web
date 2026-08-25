@@ -1,6 +1,8 @@
 import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { NotFoundPage } from './public/not-found.page';
 import { HomePage } from './public/home.page';
+import { PrivacyPage } from './public/privacy.page';
+import { DeleteAccountPage } from './public/delete-account.page';
 import { PublicShell } from './public/public-shell';
 import { adminShellGuard } from './core/auth/admin-shell.guard';
 import { isSupportedLocale, DEFAULT_LOCALE } from './core/i18n/locales';
@@ -32,6 +34,14 @@ function publicChildren(): Routes {
       path: 'careers',
       loadComponent: () => import('./careers/careers.page').then((m) => m.CareersPage),
     },
+    /*
+     * Both eagerly imported, unlike `careers`. They are small, and more to the point they must
+     * render on a bad day: Google Play fetches `/privacy` during app review and follows
+     * `/delete-account` from the store listing, so a failed lazy chunk here is a rejected app
+     * rather than a slow page. `check-bundle-size.mjs` is the thing to watch if they grow.
+     */
+    { path: 'privacy', component: PrivacyPage },
+    { path: 'delete-account', component: DeleteAccountPage },
   ];
 }
 

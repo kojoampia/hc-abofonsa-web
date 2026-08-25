@@ -155,6 +155,11 @@
       "visits": "Besuche pro Woche"
     }
   },
+  "privacy": {
+    "deleteLink": "Akte löschen",
+    "englishOnly": "Dieses Dokument wird auf Englisch veröffentlicht.",
+    "link": "Datenschutzerklärung"
+  },
   "services": {
     "availableOn": "Verfügbar in:",
     "slideCount": "{count, plural, one {# Leistung} other {# Leistungen}}",
