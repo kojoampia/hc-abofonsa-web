@@ -5,6 +5,16 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+# The api bind-mounts this and loads it with -javaagent. Docker silently creates an empty DIRECTORY
+# for a missing bind source, and a JVM pointed at a directory refuses to start — so without this
+# check a missing jar takes the api down with an error that names neither. infra.sh fetches it; run
+# `./infra.sh` if this fires.
+if [ ! -f agent/otel-javaagent.jar ]; then
+  echo "ERROR: agent/otel-javaagent.jar is missing. Run ./infra.sh first." >&2
+  echo "       Starting without it would leave the api unable to boot." >&2
+  exit 1
+fi
+
 docker compose --env-file .env -f compose.yml pull
 docker compose --env-file .env -f compose.yml up -d --remove-orphans --force-recreate
 
