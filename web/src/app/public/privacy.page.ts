@@ -95,9 +95,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
           </p>
           <p class="mt-2">When the deletion is carried out, we erase:</p>
           <ul class="mt-2 grid gap-1">
-            <li>your profile and contact details;</li>
+            <li>your profile and contact details, and your saved addresses;</li>
             <li>your conditions, medications, allergies and vital-sign readings;</li>
             <li>your clinical cases, reports and the files attached to them, care plans, appointments and visits;</li>
+            <li>your membership and the plan you chose;</li>
+            <li>your saved payment methods;</li>
             <li>your activity history;</li>
             <li>any permission you had given someone to act for you, and any you held to act for someone else.</li>
           </ul>
@@ -105,6 +107,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
             <strong>What we keep.</strong> A record that a deletion was requested and carried out — the date, who authorised it, and
             how many items were removed from each category. It holds no clinical information about you. We keep it because we have to
             be able to show that we did what we said we would.
+          </p>
+          <p class="mt-2">
+            <strong>Your sign-in account is separate.</strong> Deleting your record removes your health information; it does not
+            close your Abofonsa account, and you will still be able to sign in. If you want the account closed as well, tell us and
+            we will close it.
           </p>
           <p class="mt-2">
             We may refuse a deletion request where the law requires us to keep the records — a legal hold or an open investigation.
