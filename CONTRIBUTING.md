@@ -125,6 +125,12 @@ gate. Someone has to do these by hand, once.
 - `Frontend (lint, test, i18n, build, budget)`
 - `E2E (Playwright against docker compose)`
 
+**This is still unconfigured** (checked 2026-09-12: `main` returns *Branch not protected*, and the
+repository has no rulesets). Every merge to `main` today is unguarded, and the four checks above are
+what someone intends, not what GitHub enforces. Note before turning it on that requiring the
+dependency-check means no merge lands while a newly published CVE is outstanding — see "Keeping the
+dependency floor" below.
+
 **Environments** (Settings → Environments), which `.github/workflows/release.yml` targets:
 
 | Environment | Protection | Secrets | Variables |
@@ -132,13 +138,44 @@ gate. Someone has to do these by hand, once.
 | `staging` | none | `STAGING_HOST`, `STAGING_USER`, `STAGING_SSH_KEY`, `STAGING_PATH` | `STAGING_URL` |
 | `production` | **Required reviewers** — this is spec §12.2's manual approval gate | `PRODUCTION_HOST`, `PRODUCTION_USER`, `PRODUCTION_SSH_KEY`, `PRODUCTION_PATH` | `PRODUCTION_URL` |
 
+**The `production` environment now exists** (created 2026-09-12) with a required reviewer and a
+deployment branch policy limiting it to `main`. Its secrets and `PRODUCTION_URL` are still unset, so
+`deploy-production` cannot yet do anything — but the approval rule that `release.yml` promises is now
+real rather than assumed. `staging` exists with **no** protection rules and none of its secrets.
+
+That ordering was deliberate and is worth keeping if these are ever recreated: GitHub silently
+auto-creates a missing environment on first use, with no protection on it. So an unconfigured
+`production` is not a closed door — it is an open one that happens to be unreachable. Until
+2026-09-12 the only thing standing between a push to `main` and an unattended production deploy was
+that `deploy-staging` failed first.
+
 **Repository secret**: `NVD_API_KEY` — free from <https://nvd.nist.gov/developers/request-an-api-key>.
 Without it the dependency-check job still runs but is rate-limited to the point of timing out.
 
-Until the environments exist, `release.yml` builds and pushes images to GHCR and then stops: the
-deploy jobs have nothing to connect to. That is the intended state before Phase 20 provisions the
-server, not a misconfiguration — and the images it pushed are still deployable by hand with
-`./deploy.sh --channel github` (see "Deploy channels" below), which is the point of that channel.
+**`release.yml` does not stop cleanly after `build-images`, and this paragraph used to say it did.**
+`build-images` succeeds and the GHCR images for merged commits are there. Then `deploy-staging` runs
+anyway — the `staging` environment exists, so nothing holds the job back — and fails with
+`error: missing server host`, because the `STAGING_*` secrets were never created. That is why **every
+`Release` run on `main` is red**, and why a red Release badge here currently means "the deploy
+secrets are absent", not "the build broke".
+
+The images it pushed are still deployable by hand with `./deploy.sh --channel github` (see "Deploy
+channels" below), which is the point of that channel. So the practical state before Phase 20
+provisions the server is: images good, automated deploy inoperative, and the workflow noisy about it
+rather than silent.
+
+## Keeping the dependency floor
+
+The `Backend dependency vulnerabilities (CVSS >= 7 fails)` job fails when a CVE is *published*, with
+no commit involved — so it goes red on its own, on branches nobody has touched. Treat a red scan as
+a maintenance signal, not as something the current change broke; check whether the same job is red on
+`main` before hunting through a diff.
+
+`api/pom.xml`'s `<tomcat.version>` is a deliberate forward pin, ahead of what the Boot parent manages.
+**Re-check it when Boot moves; do not assume a Boot bump makes it removable.** It has now moved twice
+for exactly this reason — 11.0.22 → 11.0.24 → 11.0.25 — and on the second occasion the Boot parent had
+caught up to the pinned value while fresh CVEs had already been published against it, so deleting the
+override would have silently reintroduced nine findings.
 
 ## Production deployment
 

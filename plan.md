@@ -637,3 +637,18 @@ documented *default*; confirm before removing the "placeholder" framing in produ
 - CI/CD automation for the production deploy itself (Phase 20 stays a manual runbook, matching
   every other app on `webserver` today) — revisit only if deploy frequency increases enough to
   justify it.
+- **The dependency floor needs periodic lifting, not a one-off.** The CVSS >= 7 gate turns red when a
+  CVE is published against a pinned transitive, with no commit involved — so "the scan is red" is
+  routine maintenance rather than evidence about the branch under review. `api/pom.xml`'s
+  `<tomcat.version>` is a forward pin to re-check whenever Boot moves, not to delete: the Boot parent
+  reaching the pinned version is not the same as the pinned version being safe. See CONTRIBUTING.md
+  "Keeping the dependency floor".
+- **`./mvnw verify` in `api/` is not reliable on `jacserver` while the quality stacks are up.**
+  `MongoDBContainer`'s single-node replica set fails to initialise within its 60-attempt timeout
+  roughly two runs in three when ~45 containers are running and load sits at 8–12, which surfaces as
+  ~100 cascading `NoClassDefFoundError: Could not initialize class AbstractIntegrationTest` and looks
+  convincingly like a code regression. Measured 2026-09-12 by interleaving the suite against an
+  unmodified `origin/main` control: **both arms passed 1 run in 3**, so the failure is the host, not
+  the diff. Consequence worth internalising — a red local `verify` here is not evidence against a
+  change, and a green one is not evidence for it. CI is the instrument; if a local answer is really
+  needed, stop the quality stacks first.
