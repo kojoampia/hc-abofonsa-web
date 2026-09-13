@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.0</version>
+    <version>4.1.1</version>
     <relativePath/>
   </parent>
 
@@ -24,13 +24,15 @@
     <!-- Where the shipped UI bundles live relative to this module. Overridden in the Docker
          build, whose context root is the repository root. -->
     <abofonsa.i18n.dir>${project.basedir}/../web/public/i18n</abofonsa.i18n.dir>
-    <!-- Ahead of what Boot 4.1.0 pins (11.0.22). The OWASP scan found five CVEs against that
-         version, four of them rated 9.1 — CVE-2026-53434 (CRL handling on FFM connectors),
-         CVE-2026-55276 and CVE-2026-53404 (effective web.xml logging omits security constraints),
-         CVE-2026-59083 (URL hex-encoding) and CVE-2026-59084 (EncryptInterceptor configuration).
-         Apache fixed the last of them in 11.0.24. Remove this override once the Boot parent
-         catches up; leaving a manual pin behind is how a dependency silently goes backwards. -->
-    <tomcat.version>11.0.24</tomcat.version>
+    <!-- Ahead of what Boot 4.1.1 pins (11.0.24). The parent did catch up to this override's
+         previous value, and then a second batch of nine CVEs was published against 11.0.24
+         itself — CVE-2026-65637 and CVE-2026-65905 (both 9.8), CVE-2026-65182 and
+         CVE-2026-68525 (9.1), CVE-2026-65183, CVE-2026-66422 and CVE-2026-68569 (8.1), and
+         CVE-2026-65927 and CVE-2026-68763 (7.5). Apache lists all nine as fixed in 11.0.25.
+         So this pin is not stale: bumping Boot alone leaves every one of them in the tree.
+         Remove the override once the Boot parent reaches 11.0.25 or later; leaving a manual
+         pin behind is how a dependency silently goes backwards. -->
+    <tomcat.version>11.0.25</tomcat.version>
   </properties>
 
   <dependencies>
