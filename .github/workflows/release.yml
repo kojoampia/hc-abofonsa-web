@@ -5,9 +5,14 @@
 # The approval gate is a GitHub *environment* protection rule, not a step in this file: a job that
 # targets `environment: production` will not start until a required reviewer approves it, and that
 # rule lives in repo settings where a workflow edit cannot quietly remove it. Configuring it is a
-# one-time manual step — see CONTRIBUTING.md "Branch protection". Until it is configured, this
-# workflow builds and pushes images and stops before staging, because neither environment's
-# secrets exist yet.
+# one-time manual step — see CONTRIBUTING.md "Branch protection". The `production` environment and
+# its required reviewer were created on 2026-09-12, so that gate is live; its secrets are not set,
+# so the job behind it still cannot deploy.
+#
+# This comment used to claim the workflow "builds and pushes images and stops before staging".
+# It does not stop. `staging` exists, so `deploy-staging` runs and fails on `missing server host`
+# for want of the STAGING_* secrets — which is why every run of this workflow on main is red while
+# `build-images` itself is fine.
 #
 # The images this builds are the `github` deploy channel. `./deploy.sh --channel github` deploys
 # exactly these, by hand, to the same servers with the same `./start` — so a CI deploy and a manual
