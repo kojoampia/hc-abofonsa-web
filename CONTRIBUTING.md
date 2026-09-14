@@ -125,11 +125,21 @@ gate. Someone has to do these by hand, once.
 - `Frontend (lint, test, i18n, build, budget)`
 - `E2E (Playwright against docker compose)`
 
-**This is still unconfigured** (checked 2026-09-12: `main` returns *Branch not protected*, and the
-repository has no rulesets). Every merge to `main` today is unguarded, and the four checks above are
-what someone intends, not what GitHub enforces. Note before turning it on that requiring the
-dependency-check means no merge lands while a newly published CVE is outstanding — see "Keeping the
-dependency floor" below.
+**This is configured as of 2026-09-14** — `main` reports `protected: true` with all four checks
+required. Alongside them:
+
+| Setting | Value | Why |
+|---|---|---|
+| Require branches up to date before merging | **on** | A stale branch's scan result is about a tree nobody is merging. Three PRs in this repo were red on a CVE that `main` had already fixed, purely because they predated the fix. |
+| Include administrators | **on** | A gate the owner walks around is documentation. `git push origin main` is refused here, for everyone. |
+| Force pushes / branch deletion | **off** | `main`'s history is append-only, so a bad commit is reverted rather than erased. |
+| Required approving reviews | **none** | This repo has one maintainer, and GitHub does not let you approve your own PR — requiring an approval would deadlock every merge. The checks are the gate; review is a habit, not a rule. |
+
+Two consequences to expect rather than be surprised by. **Requiring the dependency-check means no
+merge lands while a newly published CVE is outstanding** — that is the intent, but it does mean an
+unrelated CVE can block unrelated work, so see "Keeping the dependency floor" below before reaching
+for the settings page. And **"include administrators" applies to emergencies too**: the way out is to
+turn the setting off deliberately in repo settings, not to find a command that bypasses it.
 
 **Environments** (Settings → Environments), which `.github/workflows/release.yml` targets:
 
