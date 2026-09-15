@@ -204,9 +204,17 @@ export class ContactSection {
     // been on screen for the minimum by the time we send, so the guard sees the truth. It costs a
     // decisive visitor at most a couple of seconds, spent inside the "Sending…" state they are
     // already watching. A scripted POST does not run this code and is still rejected.
-    const elapsed = Date.now() - this.mountedAt;
-    if (elapsed < MIN_DWELL_MS) {
-      await new Promise((resolve) => setTimeout(resolve, MIN_DWELL_MS - elapsed));
+    // ⚠ RE-CHECK AFTER WAITING. `setTimeout(fn, N)` is a minimum delay before the callback is
+    // SCHEDULED, not a guarantee that N milliseconds of wall clock have passed — timer granularity,
+    // coalescing and clamping can all land it a fraction early. A single `if` plus one `setTimeout`
+    // therefore did NOT establish the postcondition the paragraph above claims: `dwellMs` was
+    // observed at 2999 against a floor of 3000, one millisecond short and rejected by the server,
+    // which is exactly the failure this code exists to prevent. Re-checking after the wait makes the
+    // invariant true by construction instead of trusting the timer. See issue #15.
+    let remaining = MIN_DWELL_MS - (Date.now() - this.mountedAt);
+    while (remaining > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+      remaining = MIN_DWELL_MS - (Date.now() - this.mountedAt);
     }
 
     this.api
